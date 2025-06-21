@@ -1,0 +1,32 @@
+# Web framework
+Flask
+Werkzeug
+
+python-dotenv
+
+# AI and ML
+openai
+sentence-transformers
+scikit-learn
+hdbscan
+numpy
+
+# PDF processing
+pdfminer.six
+
+# Audio/Video processing
+whisperx
+torch
+torchaudio
+torchvision
+
+# Additional ML dependencies
+transformers
+accelerate
+
+# Audio processing dependencies
+ffmpeg-python
+faster-whisper
+pyannote.audio
+# Production server
+gunicorn

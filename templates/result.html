@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}AI-конспект - Результаты{% endblock %}
+
+{% block content %}
+<div class="main-container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-success mb-0">
+            <i class="fas fa-check-circle me-2"></i>Анализ завершен!
+        </h2>
+        <a href="{{ url_for('index') }}" class="btn btn-outline-primary">
+            <i class="fas fa-plus me-2"></i>Обработать другой файл
+        </a>
+    </div>
+
+    <div class="alert alert-info">
+        <i class="fas fa-file me-2"></i>
+        <strong>Файл:</strong> {{ filename }}
+    </div>
+
+    <!-- Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-primary">{{ topics|length }}</h3>
+                    <p class="mb-0">Тем выделено</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-success">{{ flashcards|length }}</h3>
+                    <p class="mb-0">Флеш-карт создано</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-info">{{ summary.split('\n')|length }}</h3>
+                    <p class="mb-0">Пунктов в резюме</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Topics Section -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">
+                <i class="fas fa-tags me-2"></i>Основные темы
+            </h4>
+        </div>
+        <div class="card-body">
+            {% for topic in topics %}
+                <div class="topic-item">
+                    <i class="fas fa-lightbulb text-warning me-2"></i>
+                    {{ topic }}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Summary Section -->
+    <div class="card mb-4">
+        <div class="card-header bg-success text-white">
+            <h4 class="mb-0">
+                <i class="fas fa-file-text me-2"></i>Краткое резюме
+            </h4>
+        </div>
+        <div class="card-body">
+            <div class="summary-box">
+                {{ summary|safe|replace('\n', '<br>') }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Flashcards Section -->
+    <div class="card mb-4">
+        <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">
+                <i class="fas fa-brain me-2"></i>Флеш-карты для самопроверки
+            </h4>
+            <a href="{{ url_for('download_flashcards', result_id=result_id) }}" class="btn btn-light btn-sm">
+                <i class="fas fa-download me-2"></i>Скачать JSON
+            </a>
+        </div>
+        <div class="card-body">
+            <div class="accordion" id="flashcardsAccordion">
+                {% for card in flashcards %}
+                <div class="accordion-item flashcard">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" 
+                                data-bs-toggle="collapse" 
+                                data-bs-target="#collapse{{ loop.index }}"
+                                aria-expanded="false">
+                            <i class="fas fa-question-circle text-primary me-2"></i>
+                            {{ card.q }}
+                        </button>
+                    </h2>
+                    <div id="collapse{{ loop.index }}" 
+                         class="accordion-collapse collapse" 
+                         data-bs-parent="#flashcardsAccordion">
+                        <div class="accordion-body">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            {{ card.a }}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="text-center mt-4">
+                <button class="btn btn-primary me-2" onclick="expandAll()">
+                    <i class="fas fa-expand me-2"></i>Развернуть все
+                </button>
+                <button class="btn btn-outline-primary" onclick="collapseAll()">
+                    <i class="fas fa-compress me-2"></i>Свернуть все
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    function expandAll() {
+        $('.accordion-collapse').collapse('show');
+    }
+
+    function collapseAll() {
+        $('.accordion-collapse').collapse('hide');
+    }
+</script>
+{% endblock %}

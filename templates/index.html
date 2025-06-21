@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}AI-конспект - Главная{% endblock %}
+
+{% block content %}
+<div class="main-container">
+    <div class="text-center mb-5">
+        <h1 class="display-4 text-primary">
+            <i class="fas fa-brain me-3"></i>AI-конспект
+        </h1>
+        <p class="lead text-muted">
+            Загрузите PDF или видео, получите темы, резюме и флеш-карты для изучения
+        </p>
+    </div>
+
+    <form id="upload-form" action="{{ url_for('upload_file') }}" method="POST" enctype="multipart/form-data">
+        <div class="upload-area" id="upload-area">
+            <i class="fas fa-cloud-upload-alt fa-3x text-primary mb-3"></i>
+            <h3>Перетащите файл сюда или нажмите для выбора</h3>
+            <p class="text-muted mt-3">
+                <i class="fas fa-file-pdf text-danger me-2"></i>PDF (до 30 МБ)
+                <span class="mx-2">|</span>
+                <i class="fas fa-video text-info me-2"></i>MP4, MOV, MKV (до {{ config.MAX_CONTENT_LENGTH // (1024*1024) }} МБ)
+            </p>
+            <input type="file" name="file" id="file-input" accept=".pdf,.mp4,.mov,.mkv" style="display: none;" required>
+            <button type="button" class="btn btn-primary btn-lg mt-3" onclick="document.getElementById('file-input').click()">
+                <i class="fas fa-upload me-2"></i>Выбрать файл
+            </button>
+        </div>
+    </form>
+
+    <div class="mt-5 text-center text-muted">
+        <p><i class="fas fa-info-circle me-2"></i>Поддерживаемые форматы: PDF, MP4, MOV, MKV</p>
+        <p><i class="fas fa-clock me-2"></i>Обработка занимает 1-3 минуты в зависимости от размера файла</p>
+    </div>
+</div>
+
+<!-- Processing Modal -->
+<div class="modal fade" id="processingModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center py-5">
+                <div class="mb-4">
+                    <div class="spinner-grow text-primary" role="status"></div>
+                    <div class="spinner-grow text-primary" role="status"></div>
+                    <div class="spinner-grow text-primary" role="status"></div>
+                </div>
+                <h4>Обрабатываем ваш файл с помощью ИИ</h4>
+                <p class="text-muted mb-0">Это может занять 1-3 минуты...</p>
+                <div class="progress mt-4" style="height: 10px;">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 100%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const uploadArea = document.getElementById('upload-area');
+    const fileInput = document.getElementById('file-input');
+    const uploadForm = document.getElementById('upload-form');
+
+    // Drag and drop
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
+
+    uploadArea.addEventListener('dragleave', () => {
+        uploadArea.classList.remove('dragover');
+    });
+
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput.files = files;
+            handleFileSelect();
+        }
+    });
+
+    // Click to upload
+    uploadArea.addEventListener('click', (e) => {
+        // Prevent triggering file dialog if clicking on a button
+        if (e.target.tagName !== 'BUTTON' && !e.target.closest('button')) {
+            fileInput.click();
+        }
+    });
+
+    // File selection
+    fileInput.addEventListener('change', handleFileSelect);
+
+    function handleFileSelect() {
+        if (fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            const fileName = file.name;
+            const fileSize = (file.size / (1024 * 1024)).toFixed(2);
+            
+            // Update UI to show selected file
+            uploadArea.innerHTML = `
+                <i class="fas fa-file-check fa-3x text-success mb-3"></i>
+                <h4>${fileName}</h4>
+                <p class="text-muted">Размер: ${fileSize} МБ</p>
+                <button type="submit" class="btn btn-success btn-lg mt-3" onclick="submitForm(event)">
+                    <i class="fas fa-rocket me-2"></i>Начать обработку
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm mt-2" onclick="resetUpload(event)">
+                    Выбрать другой файл
+                </button>
+            `;
+            
+            // Remove click listener from upload area to prevent interference
+            uploadArea.style.cursor = 'default';
+        }
+    }
+    
+    function submitForm(e) {
+        e.stopPropagation();
+        uploadForm.submit();
+    }
+
+    function resetUpload(e) {
+        e.stopPropagation();
+        fileInput.value = '';
+        location.reload();
+    }
+
+    // Show processing modal on form submit
+    uploadForm.addEventListener('submit', (e) => {
+        const modal = new bootstrap.Modal(document.getElementById('processingModal'));
+        modal.show();
+    });
+</script>
+{% endblock %}
