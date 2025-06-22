@@ -10,6 +10,7 @@ sentence-transformers
 scikit-learn
 hdbscan
 numpy
+nltk
 
 # PDF processing
 pdfminer.six

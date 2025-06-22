@@ -1,124 +1,545 @@
 {% extends "base.html" %}
 
-{% block title %}AI-конспект - Результаты{% endblock %}
+{% block title %}AI-конспект Pro - Результаты анализа{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .quality-badge {
+        display: inline-block;
+        padding: 10px 20px;
+        border-radius: 25px;
+        font-weight: bold;
+        color: white;
+    }
+    .quality-excellent { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .quality-good { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+    .quality-fair { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+    
+    .topic-card {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 15px;
+        transition: all 0.3s ease;
+    }
+    .topic-card:hover {
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+    }
+    
+    .subtopic {
+        padding: 8px 15px;
+        background: #f8f9fa;
+        border-left: 3px solid #dee2e6;
+        margin: 5px 0 5px 20px;
+        font-size: 0.9rem;
+    }
+    
+    .concept-badge {
+        display: inline-block;
+        padding: 5px 12px;
+        background: #e9ecef;
+        border-radius: 15px;
+        margin: 2px;
+        font-size: 0.85rem;
+    }
+    
+    .flashcard-advanced {
+        border: none;
+        border-radius: 10px;
+        overflow: hidden;
+        margin-bottom: 15px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    .flashcard-header {
+        background: #f8f9fa;
+        padding: 15px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .difficulty-1 { border-left: 5px solid #28a745; }
+    .difficulty-2 { border-left: 5px solid #ffc107; }
+    .difficulty-3 { border-left: 5px solid #dc3545; }
+    
+    .study-session {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 10px;
+    }
+    
+    .mind-map-container {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        min-height: 400px;
+        position: relative;
+    }
+    
+    .video-timeline {
+        background: #343a40;
+        color: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-top: 20px;
+    }
+    
+    .key-moment {
+        padding: 10px 15px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 5px;
+        margin-bottom: 10px;
+        cursor: pointer;
+    }
+    .key-moment:hover {
+        background: rgba(255,255,255,0.2);
+    }
+    
+    .progress-ring {
+        transform: rotate(-90deg);
+    }
+    
+    .nav-pills .nav-link.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="main-container">
+    <!-- Header with Quality Score -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="text-success mb-0">
-            <i class="fas fa-check-circle me-2"></i>Анализ завершен!
-        </h2>
-        <a href="{{ url_for('index') }}" class="btn btn-outline-primary">
-            <i class="fas fa-plus me-2"></i>Обработать другой файл
-        </a>
+        <div>
+            <h2 class="text-success mb-2">
+                <i class="fas fa-check-circle me-2"></i>Глубокий анализ завершен!
+            </h2>
+            <p class="text-muted mb-0">
+                <i class="fas fa-file me-2"></i>{{ filename }} 
+                {% if file_type == '.mp4' or file_type == '.mov' or file_type == '.mkv' %}
+                <span class="badge bg-info ms-2">Видео</span>
+                {% else %}
+                <span class="badge bg-danger ms-2">PDF</span>
+                {% endif %}
+            </p>
+        </div>
+        <div class="text-center">
+            <div class="quality-badge {% if quality_assessment.overall_score >= 0.8 %}quality-excellent{% elif quality_assessment.overall_score >= 0.6 %}quality-good{% else %}quality-fair{% endif %}">
+                <i class="fas fa-star me-2"></i>
+                Качество анализа: {{ (quality_assessment.overall_score * 100)|round }}%
+            </div>
+            <div class="mt-2">
+                <a href="{{ url_for('index') }}" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-plus me-2"></i>Новый файл
+                </a>
+            </div>
+        </div>
     </div>
 
-    <div class="alert alert-info">
-        <i class="fas fa-file me-2"></i>
-        <strong>Файл:</strong> {{ filename }}
-    </div>
-
-    <!-- Statistics -->
+    <!-- Quality Metrics -->
     <div class="row mb-4">
-        <div class="col-md-4">
+        <div class="col-md-3">
             <div class="card text-center">
                 <div class="card-body">
-                    <h3 class="text-primary">{{ topics|length }}</h3>
-                    <p class="mb-0">Тем выделено</p>
+                    <svg width="60" height="60">
+                        <circle cx="30" cy="30" r="25" stroke="#e9ecef" stroke-width="5" fill="none"></circle>
+                        <circle class="progress-ring" cx="30" cy="30" r="25" stroke="#667eea" stroke-width="5" fill="none"
+                                stroke-dasharray="{{ quality_assessment.depth_score * 157 }} 157"></circle>
+                    </svg>
+                    <h6 class="mt-2 mb-0">Глубина</h6>
+                    <small class="text-muted">{{ (quality_assessment.depth_score * 100)|round }}%</small>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
             <div class="card text-center">
                 <div class="card-body">
-                    <h3 class="text-success">{{ flashcards|length }}</h3>
-                    <p class="mb-0">Флеш-карт создано</p>
+                    <svg width="60" height="60">
+                        <circle cx="30" cy="30" r="25" stroke="#e9ecef" stroke-width="5" fill="none"></circle>
+                        <circle class="progress-ring" cx="30" cy="30" r="25" stroke="#4facfe" stroke-width="5" fill="none"
+                                stroke-dasharray="{{ quality_assessment.coverage_score * 157 }} 157"></circle>
+                    </svg>
+                    <h6 class="mt-2 mb-0">Охват</h6>
+                    <small class="text-muted">{{ (quality_assessment.coverage_score * 100)|round }}%</small>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
             <div class="card text-center">
                 <div class="card-body">
-                    <h3 class="text-info">{{ summary.split('\n')|length }}</h3>
-                    <p class="mb-0">Пунктов в резюме</p>
+                    <svg width="60" height="60">
+                        <circle cx="30" cy="30" r="25" stroke="#e9ecef" stroke-width="5" fill="none"></circle>
+                        <circle class="progress-ring" cx="30" cy="30" r="25" stroke="#fa709a" stroke-width="5" fill="none"
+                                stroke-dasharray="{{ quality_assessment.practical_score * 157 }} 157"></circle>
+                    </svg>
+                    <h6 class="mt-2 mb-0">Практичность</h6>
+                    <small class="text-muted">{{ (quality_assessment.practical_score * 100)|round }}%</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <svg width="60" height="60">
+                        <circle cx="30" cy="30" r="25" stroke="#e9ecef" stroke-width="5" fill="none"></circle>
+                        <circle class="progress-ring" cx="30" cy="30" r="25" stroke="#00f2fe" stroke-width="5" fill="none"
+                                stroke-dasharray="{{ quality_assessment.clarity_score * 157 }} 157"></circle>
+                    </svg>
+                    <h6 class="mt-2 mb-0">Ясность</h6>
+                    <small class="text-muted">{{ (quality_assessment.clarity_score * 100)|round }}%</small>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Topics Section -->
-    <div class="card mb-4">
-        <div class="card-header bg-primary text-white">
-            <h4 class="mb-0">
-                <i class="fas fa-tags me-2"></i>Основные темы
+    <!-- Navigation Tabs -->
+    <ul class="nav nav-pills mb-4" id="resultTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="topics-tab" data-bs-toggle="tab" data-bs-target="#topics" type="button">
+                <i class="fas fa-sitemap me-2"></i>Темы и структура
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="summary-tab" data-bs-toggle="tab" data-bs-target="#summary" type="button">
+                <i class="fas fa-file-text me-2"></i>Резюме
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="flashcards-tab" data-bs-toggle="tab" data-bs-target="#flashcards" type="button">
+                <i class="fas fa-layer-group me-2"></i>Флеш-карты
+                <span class="badge bg-danger ms-1">{{ flashcards|length }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="mindmap-tab" data-bs-toggle="tab" data-bs-target="#mindmap" type="button">
+                <i class="fas fa-project-diagram me-2"></i>Mind Map
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="studyplan-tab" data-bs-toggle="tab" data-bs-target="#studyplan" type="button">
+                <i class="fas fa-calendar-check me-2"></i>План обучения
+            </button>
+        </li>
+        {% if key_moments %}
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="video-tab" data-bs-toggle="tab" data-bs-target="#video" type="button">
+                <i class="fas fa-video me-2"></i>Видео
+            </button>
+        </li>
+        {% endif %}
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="resultTabContent">
+        <!-- Topics Tab -->
+        <div class="tab-pane fade show active" id="topics" role="tabpanel">
+            <h4 class="mb-3">
+                <i class="fas fa-sitemap me-2"></i>Иерархия тем
+                <small class="text-muted">({{ topics_data.main_topics|length }} основных тем)</small>
             </h4>
-        </div>
-        <div class="card-body">
-            {% for topic in topics %}
-                <div class="topic-item">
-                    <i class="fas fa-lightbulb text-warning me-2"></i>
-                    {{ topic }}
+            
+            {% for topic in topics_data.main_topics %}
+            <div class="topic-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <h5 class="mb-2">
+                            <i class="fas fa-lightbulb text-warning me-2"></i>
+                            {{ topic.title }}
+                        </h5>
+                        <p class="text-muted mb-3">{{ topic.summary }}</p>
+                        
+                        {% if topic.subtopics %}
+                        <h6 class="text-secondary mb-2">Подтемы:</h6>
+                        {% for subtopic in topic.subtopics %}
+                        <div class="subtopic">{{ subtopic }}</div>
+                        {% endfor %}
+                        {% endif %}
+                        
+                        {% if topic.key_concepts %}
+                        <h6 class="text-secondary mb-2 mt-3">Ключевые концепции:</h6>
+                        <div>
+                            {% for concept in topic.key_concepts %}
+                            <span class="concept-badge">{{ concept }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
+                        {% if topic.examples %}
+                        <h6 class="text-secondary mb-2 mt-3">Примеры:</h6>
+                        <ul class="mb-0">
+                            {% for example in topic.examples %}
+                            <li class="text-muted">{{ example }}</li>
+                            {% endfor %}
+                        </ul>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <span class="badge bg-{% if topic.complexity == 'advanced' %}danger{% elif topic.complexity == 'intermediate' %}warning{% else %}success{% endif %}">
+                            {{ topic.complexity }}
+                        </span>
+                    </div>
                 </div>
+            </div>
             {% endfor %}
+            
+            {% if topics_data.concept_map.relationships %}
+            <h5 class="mt-4 mb-3"><i class="fas fa-link me-2"></i>Связи между темами</h5>
+            <div class="card">
+                <div class="card-body">
+                    {% for rel in topics_data.concept_map.relationships %}
+                    <p class="mb-2">
+                        <span class="badge bg-secondary">{{ rel.from[:30] }}</span>
+                        <i class="fas fa-arrow-right mx-2 text-muted"></i>
+                        <span class="badge bg-primary">{{ rel.type }}</span>
+                        <i class="fas fa-arrow-right mx-2 text-muted"></i>
+                        <span class="badge bg-secondary">{{ rel.to[:30] }}</span>
+                    </p>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
         </div>
-    </div>
 
-    <!-- Summary Section -->
-    <div class="card mb-4">
-        <div class="card-header bg-success text-white">
-            <h4 class="mb-0">
-                <i class="fas fa-file-text me-2"></i>Краткое резюме
-            </h4>
-        </div>
-        <div class="card-body">
-            <div class="summary-box">
-                {{ summary|safe|replace('\n', '<br>') }}
+        <!-- Summary Tab -->
+        <div class="tab-pane fade" id="summary" role="tabpanel">
+            <div class="card">
+                <div class="card-body">
+                    <div class="summary-content">
+                        {{ summary|safe|replace('\n', '<br>') }}
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- Flashcards Section -->
-    <div class="card mb-4">
-        <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
-            <h4 class="mb-0">
-                <i class="fas fa-brain me-2"></i>Флеш-карты для самопроверки
-            </h4>
-            <a href="{{ url_for('download_flashcards', result_id=result_id) }}" class="btn btn-light btn-sm">
-                <i class="fas fa-download me-2"></i>Скачать JSON
-            </a>
-        </div>
-        <div class="card-body">
+        <!-- Flashcards Tab -->
+        <div class="tab-pane fade" id="flashcards" role="tabpanel">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4>
+                    <i class="fas fa-layer-group me-2"></i>Умные флеш-карты
+                    <small class="text-muted">({{ flashcards|length }} карт)</small>
+                </h4>
+                <div>
+                    <button class="btn btn-primary btn-sm me-2" onclick="startStudySession()">
+                        <i class="fas fa-graduation-cap me-2"></i>Начать изучение
+                    </button>
+                    <a href="{{ url_for('download_flashcards', result_id=result_id) }}" class="btn btn-success btn-sm">
+                        <i class="fas fa-download me-2"></i>Экспорт
+                    </a>
+                </div>
+            </div>
+
+            <!-- Flashcard filters -->
+            <div class="mb-3">
+                <button class="btn btn-sm btn-outline-secondary active" onclick="filterCards('all')">Все</button>
+                <button class="btn btn-sm btn-outline-success" onclick="filterCards('definition')">Определения</button>
+                <button class="btn btn-sm btn-outline-info" onclick="filterCards('concept')">Концепции</button>
+                <button class="btn btn-sm btn-outline-warning" onclick="filterCards('application')">Применение</button>
+                <button class="btn btn-sm btn-outline-danger" onclick="filterCards('comparison')">Сравнение</button>
+                <button class="btn btn-sm btn-outline-primary" onclick="filterCards('problem')">Задачи</button>
+            </div>
+
             <div class="accordion" id="flashcardsAccordion">
                 {% for card in flashcards %}
-                <div class="accordion-item flashcard">
-                    <h2 class="accordion-header">
-                        <button class="accordion-button collapsed" type="button" 
-                                data-bs-toggle="collapse" 
-                                data-bs-target="#collapse{{ loop.index }}"
-                                aria-expanded="false">
-                            <i class="fas fa-question-circle text-primary me-2"></i>
-                            {{ card.q }}
-                        </button>
-                    </h2>
-                    <div id="collapse{{ loop.index }}" 
-                         class="accordion-collapse collapse" 
-                         data-bs-parent="#flashcardsAccordion">
+                <div class="accordion-item flashcard-advanced difficulty-{{ card.difficulty }}" data-type="{{ card.type }}">
+                    <div class="flashcard-header">
+                        <div class="d-flex align-items-center flex-grow-1">
+                            <button class="accordion-button collapsed p-0 bg-transparent border-0 text-start" 
+                                    type="button" data-bs-toggle="collapse" 
+                                    data-bs-target="#card{{ loop.index }}">
+                                <div>
+                                    <i class="fas fa-question-circle text-primary me-2"></i>
+                                    {{ card.q }}
+                                    {% if card.hint %}
+                                    <small class="text-muted d-block mt-1">
+                                        <i class="fas fa-lightbulb me-1"></i>Подсказка: {{ card.hint }}
+                                    </small>
+                                    {% endif %}
+                                </div>
+                            </button>
+                        </div>
+                        <div class="ms-3">
+                            <span class="badge bg-secondary">{{ card.type }}</span>
+                            <span class="badge bg-{% if card.difficulty == 3 %}danger{% elif card.difficulty == 2 %}warning{% else %}success{% endif %}">
+                                Уровень {{ card.difficulty }}
+                            </span>
+                        </div>
+                    </div>
+                    <div id="card{{ loop.index }}" class="accordion-collapse collapse">
                         <div class="accordion-body">
-                            <i class="fas fa-check-circle text-success me-2"></i>
-                            {{ card.a }}
+                            <p><i class="fas fa-check-circle text-success me-2"></i>{{ card.a }}</p>
+                            
+                            {% if card.memory_hook %}
+                            <div class="alert alert-info mb-2">
+                                <i class="fas fa-brain me-2"></i><strong>Запоминалка:</strong> {{ card.memory_hook }}
+                            </div>
+                            {% endif %}
+                            
+                            {% if card.common_mistakes %}
+                            <div class="alert alert-warning mb-2">
+                                <i class="fas fa-exclamation-triangle me-2"></i><strong>Частая ошибка:</strong> {{ card.common_mistakes }}
+                            </div>
+                            {% endif %}
+                            
+                            {% if card.related_topics %}
+                            <div class="mt-2">
+                                <small class="text-muted">
+                                    <i class="fas fa-tags me-1"></i>
+                                    {% for topic in card.related_topics %}
+                                    <span class="badge bg-light text-dark">{{ topic }}</span>
+                                    {% endfor %}
+                                </small>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="mt-3">
+                                <button class="btn btn-sm btn-success" onclick="markCardReviewed('{{ result_id }}', '{{ loop.index0 }}', true)">
+                                    <i class="fas fa-check me-1"></i>Знаю
+                                </button>
+                                <button class="btn btn-sm btn-danger" onclick="markCardReviewed('{{ result_id }}', '{{ loop.index0 }}', false)">
+                                    <i class="fas fa-times me-1"></i>Повторить
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
                 {% endfor %}
             </div>
+        </div>
 
-            <div class="text-center mt-4">
-                <button class="btn btn-primary me-2" onclick="expandAll()">
-                    <i class="fas fa-expand me-2"></i>Развернуть все
+        <!-- Mind Map Tab -->
+        <div class="tab-pane fade" id="mindmap" role="tabpanel">
+            <h4 class="mb-3"><i class="fas fa-project-diagram me-2"></i>Ментальная карта</h4>
+            <div class="mind-map-container" id="mindMapContainer">
+                <canvas id="mindMapCanvas" width="800" height="400"></canvas>
+            </div>
+            <div class="text-center mt-3">
+                <button class="btn btn-primary" onclick="downloadMindMap()">
+                    <i class="fas fa-download me-2"></i>Скачать изображение
                 </button>
-                <button class="btn btn-outline-primary" onclick="collapseAll()">
-                    <i class="fas fa-compress me-2"></i>Свернуть все
-                </button>
+            </div>
+        </div>
+
+        <!-- Study Plan Tab -->
+        <div class="tab-pane fade" id="studyplan" role="tabpanel">
+            <h4 class="mb-3">
+                <i class="fas fa-calendar-check me-2"></i>Персональный план обучения
+                <small class="text-muted">({{ study_plan.total_hours|round(1) }} часов)</small>
+            </h4>
+            
+            <div class="row">
+                <div class="col-md-8">
+                    <h5 class="mb-3">Расписание сессий</h5>
+                    {% for session in study_plan.sessions %}
+                    <div class="study-session">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">
+                                    <i class="fas fa-calendar-day me-2"></i>День {{ session.day }}
+                                    <small class="text-muted">({{ session.duration_minutes }} минут)</small>
+                                </h6>
+                                <p class="mb-2 text-muted">{{ session.focus }}</p>
+                                <div class="mb-2">
+                                    <strong>Темы:</strong>
+                                    {% for topic in session.topics %}
+                                    <span class="badge bg-primary">{{ topic }}</span>
+                                    {% endfor %}
+                                </div>
+                                {% if session.exercises %}
+                                <div>
+                                    <strong>Упражнения:</strong>
+                                    <ul class="mb-0 mt-1">
+                                        {% for exercise in session.exercises %}
+                                        <li class="text-muted">{{ exercise }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <button class="btn btn-sm btn-outline-primary" onclick="startSession('{{ session.day }}')">
+                                    <i class="fas fa-play me-1"></i>Начать
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="col-md-4">
+                    <h5 class="mb-3">Цели обучения</h5>
+                    <div class="card">
+                        <div class="card-body">
+                            <h6 class="card-title">Контрольные точки:</h6>
+                            <ul class="mb-0">
+                                {% for milestone in study_plan.milestones %}
+                                <li class="mb-2">{{ milestone }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="card mt-3">
+                        <div class="card-body">
+                            <h6 class="card-title">График повторений:</h6>
+                            <p class="text-muted mb-2">Для закрепления материала</p>
+                            <div>
+                                {% for day in study_plan.review_schedule %}
+                                <span class="badge bg-info me-1">{{ day }} дней</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card mt-3">
+                        <div class="card-body">
+                            <h6 class="card-title">Дата завершения:</h6>
+                            <p class="mb-0">
+                                <i class="fas fa-flag-checkered me-2"></i>
+                                {{ study_plan.completion_date }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Video Tab (if applicable) -->
+        {% if key_moments %}
+        <div class="tab-pane fade" id="video" role="tabpanel">
+            <h4 class="mb-3"><i class="fas fa-video me-2"></i>Анализ видео</h4>
+            
+            <div class="video-timeline">
+                <h5 class="mb-3">🎯 Ключевые моменты</h5>
+                {% for moment in key_moments %}
+                <div class="key-moment" onclick="seekToTime('{{ moment.time }}')">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="fas fa-play-circle me-2"></i>
+                            <strong>{{ (moment.time // 60)|int }}:{{ '%02d'|format(moment.time % 60|int) }}</strong>
+                            - {{ moment.description }}
+                        </div>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Study Progress Card -->
+    <div class="card mt-4">
+        <div class="card-body">
+            <h5 class="card-title">
+                <i class="fas fa-chart-line me-2"></i>Прогресс изучения
+            </h5>
+            <div id="progressContainer">
+                <div class="text-center text-muted">
+                    <i class="fas fa-spinner fa-spin"></i> Загрузка прогресса...
+                </div>
             </div>
         </div>
     </div>
@@ -127,12 +548,212 @@
 
 {% block extra_scripts %}
 <script>
+    // Load study progress
+    fetch(`/api/study_progress/{{ result_id }}`)
+        .then(response => response.json())
+        .then(data => {
+            const progressHtml = `
+                <div class="row text-center">
+                    <div class="col-md-4">
+                        <h3 class="text-primary">${data.total_cards}</h3>
+                        <p class="text-muted mb-0">Всего карточек</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h3 class="text-info">${data.reviewed_cards}</h3>
+                        <p class="text-muted mb-0">Изучено</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h3 class="text-success">${data.mastered_cards}</h3>
+                        <p class="text-muted mb-0">Освоено</p>
+                    </div>
+                </div>
+                <div class="progress mt-3" style="height: 25px;">
+                    <div class="progress-bar bg-success" style="width: ${data.progress_percentage}%">
+                        ${data.progress_percentage}%
+                    </div>
+                </div>
+            `;
+            document.getElementById('progressContainer').innerHTML = progressHtml;
+        });
+
+    // Filter flashcards
+    function filterCards(type) {
+        const cards = document.querySelectorAll('.flashcard-advanced');
+        cards.forEach(card => {
+            if (type === 'all' || card.dataset.type === type) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+        
+        // Update active button
+        document.querySelectorAll('.btn-outline-secondary, .btn-outline-success, .btn-outline-info, .btn-outline-warning, .btn-outline-danger, .btn-outline-primary').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        event.target.classList.add('active');
+    }
+
+    // Mark card as reviewed
+    function markCardReviewed(resultId, cardId, correct) {
+        fetch('/api/flashcard_progress', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                result_id: resultId,
+                flashcard_id: cardId,
+                correct: correct
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const btn = event.target;
+                btn.disabled = true;
+                btn.innerHTML = correct ? 
+                    '<i class="fas fa-check me-1"></i>Повторить через ' + data.next_review_days + ' дн.' :
+                    '<i class="fas fa-redo me-1"></i>Повторить завтра';
+                
+                // Refresh progress
+                loadProgress();
+            }
+        });
+    }
+
+    // Draw mind map
+    function drawMindMap() {
+        fetch(`/api/mind_map/{{ result_id }}`)
+            .then(response => response.json())
+            .then(data => {
+                const canvas = document.getElementById('mindMapCanvas');
+                const ctx = canvas.getContext('2d');
+                
+                // Clear canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw central topic
+                const centerX = canvas.width / 2;
+                const centerY = canvas.height / 2;
+                
+                ctx.font = 'bold 16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#667eea';
+                ctx.fillText(data.central_topic, centerX, centerY);
+                
+                // Draw branches
+                const angleStep = (2 * Math.PI) / data.branches.length;
+                data.branches.forEach((branch, index) => {
+                    const angle = index * angleStep;
+                    const branchX = centerX + Math.cos(angle) * 150;
+                    const branchY = centerY + Math.sin(angle) * 150;
+                    
+                    // Draw line
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, centerY);
+                    ctx.lineTo(branchX, branchY);
+                    ctx.strokeStyle = branch.color;
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+                    
+                    // Draw branch text
+                    ctx.font = '14px Arial';
+                    ctx.fillStyle = branch.color;
+                    ctx.fillText(branch.name, branchX, branchY);
+                    
+                    // Draw children
+                    branch.children.forEach((child, childIndex) => {
+                        const childAngle = angle + (childIndex - 1) * 0.3;
+                        const childX = branchX + Math.cos(childAngle) * 80;
+                        const childY = branchY + Math.sin(childAngle) * 80;
+                        
+                        ctx.beginPath();
+                        ctx.moveTo(branchX, branchY);
+                        ctx.lineTo(childX, childY);
+                        ctx.strokeStyle = '#dee2e6';
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+                        
+                        ctx.font = '12px Arial';
+                        ctx.fillStyle = '#6c757d';
+                        ctx.fillText(child.name, childX, childY);
+                    });
+                });
+            });
+    }
+
+    // Download mind map as image
+    function downloadMindMap() {
+        const canvas = document.getElementById('mindMapCanvas');
+        const link = document.createElement('a');
+        link.download = 'mind_map.png';
+        link.href = canvas.toDataURL();
+        link.click();
+    }
+
+    // Start study session
+    function startStudySession() {
+        // TODO: Implement interactive study mode
+        alert('Интерактивный режим изучения будет добавлен в следующей версии');
+    }
+
+    // Start specific session
+    function startSession(day) {
+        // TODO: Implement session start
+        alert(`Начать сессию дня ${day}`);
+    }
+
+    // Seek to video time
+    function seekToTime(seconds) {
+        // TODO: Implement video player integration
+        alert(`Перейти к ${Math.floor(seconds / 60)}:${Math.floor(seconds % 60).toString().padStart(2, '0')}`);
+    }
+
+    // Load progress function
+    function loadProgress() {
+        fetch(`/api/study_progress/{{ result_id }}`)
+            .then(response => response.json())
+            .then(data => {
+                const progressHtml = `
+                    <div class="row text-center">
+                        <div class="col-md-4">
+                            <h3 class="text-primary">${data.total_cards}</h3>
+                            <p class="text-muted mb-0">Всего карточек</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h3 class="text-info">${data.reviewed_cards}</h3>
+                            <p class="text-muted mb-0">Изучено</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h3 class="text-success">${data.mastered_cards}</h3>
+                            <p class="text-muted mb-0">Освоено</p>
+                        </div>
+                    </div>
+                    <div class="progress mt-3" style="height: 25px;">
+                        <div class="progress-bar bg-success" style="width: ${data.progress_percentage}%">
+                            ${data.progress_percentage}%
+                        </div>
+                    </div>
+                `;
+                document.getElementById('progressContainer').innerHTML = progressHtml;
+            });
+    }
+
+    // Initialize on tab change
+    document.getElementById('mindmap-tab').addEventListener('shown.bs.tab', function() {
+        drawMindMap();
+    });
+
+    // Expand/collapse all flashcards
     function expandAll() {
-        $('.accordion-collapse').collapse('show');
+        document.querySelectorAll('.accordion-collapse').forEach(el => {
+            new bootstrap.Collapse(el, { show: true });
+        });
     }
 
     function collapseAll() {
-        $('.accordion-collapse').collapse('hide');
+        document.querySelectorAll('.accordion-collapse').forEach(el => {
+            new bootstrap.Collapse(el, { hide: true });
+        });
     }
 </script>
 {% endblock %}
