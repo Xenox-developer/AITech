@@ -197,7 +197,7 @@ def extract_topics_with_gpt(text: str) -> Dict[str, Any]:
 Текст для анализа:"""
         
         response = openai_client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-4.1-mini",
             messages=[
                 {"role": "system", "content": "Ты - эксперт по созданию учебных материалов. Извлекай осмысленные темы, а не копируй текст."},
                 {"role": "user", "content": f"{prompt}\n\n{text}"}
@@ -701,7 +701,7 @@ def generate_summary(text: str) -> str:
 - Пиши на русском языке"""
         
         response = openai_client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-4.1-mini",
             messages=[
                 {"role": "system", "content": "Ты - эксперт по созданию учебных материалов. НЕ копируй текст, а объясняй своими словами."},
                 {"role": "user", "content": f"{prompt}\n\nТекст для анализа:\n{text}"}
@@ -777,7 +777,7 @@ def generate_flashcards(text: str) -> List[Dict]:
 Верни ТОЛЬКО валидный JSON массив."""
 
         response = openai_client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-4.1-mini",
             messages=[
                 {"role": "system", "content": "Ты создаешь флеш-карты СТРОГО по содержанию предоставленного текста. НЕ используй свои общие знания о теме. Если информации нет в тексте - не создавай карточку. Отвечай только валидным JSON."},
                 {"role": "user", "content": f"{prompt}\n\nТекст для создания карточек:\n{text}"}
