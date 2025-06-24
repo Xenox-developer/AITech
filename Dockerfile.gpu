@@ -1,0 +1,57 @@
+# GPU версия с поддержкой CUDA
+FROM nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu22.04
+
+# Установка Python 3.10
+RUN apt-get update && apt-get install -y \
+    python3.10 \
+    python3.10-dev \
+    python3-pip \
+    ffmpeg \
+    git \
+    wget \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Создание символических ссылок для python
+RUN ln -s /usr/bin/python3.10 /usr/bin/python
+
+# Обновление pip
+RUN python -m pip install --upgrade pip
+
+# Создание пользователя
+RUN useradd -m -u 1000 appuser
+
+# Установка рабочей директории
+WORKDIR /app
+
+# Копирование requirements
+COPY requirements.txt .
+
+# Установка зависимостей с поддержкой CUDA
+RUN pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Копирование файлов приложения
+COPY --chown=appuser:appuser . .
+
+# Создание необходимых директорий
+RUN mkdir -p uploads data && \
+    chown -R appuser:appuser /app
+
+# Переключение на непривилегированного пользователя
+USER appuser
+
+# Переменные окружения
+ENV FLASK_APP=app.py
+ENV PYTHONUNBUFFERED=1
+ENV CUDA_VISIBLE_DEVICES=0
+
+# Порт приложения
+EXPOSE 5000
+
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:5000/ || exit 1
+
+# Запуск приложения
+CMD ["gunicorn", "-w", "2", "-b", "0.0.0.0:5000", "--timeout", "600", "--access-logfile", "-", "--error-logfile", "-", "app:app"]
