@@ -9,6 +9,9 @@ pdfminer.six
 # Audio/Video Processing
 openai-whisper
 ffmpeg-python
+phonemizer
+pyannote.audio
+pydub
 
 # Machine Learning & AI
 openai

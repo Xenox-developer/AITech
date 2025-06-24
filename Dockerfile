@@ -12,6 +12,8 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --user --no-cache-dir -r requirements.txt
 
+RUN pip install --user --no-cache-dir git+https://github.com/m-bain/whisperx.git
+
 # Финальный образ
 FROM python:3.10-slim
 
