@@ -80,6 +80,169 @@
         position: relative;
     }
     
+    .mind-map-modern {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .mind-map-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    .mind-map-svg-container {
+        position: relative;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: inset 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .mind-map-svg-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: 
+            radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3), transparent 50%),
+            radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3), transparent 50%),
+            radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.3), transparent 50%);
+        pointer-events: none;
+        z-index: 1;
+    }
+    
+    #mindMapSvg {
+        position: relative;
+        z-index: 2;
+        background: rgba(255,255,255,0.9);
+        backdrop-filter: blur(10px);
+    }
+    
+    /* Mind Map Node Styles */
+    .mind-node {
+        transition: all 0.3s ease;
+    }
+    
+    .mind-node:hover {
+        filter: drop-shadow(0 5px 15px rgba(0,0,0,0.3));
+    }
+    
+    .mind-node circle {
+        transition: all 0.3s ease;
+    }
+    
+    .mind-node text {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-weight: 500;
+        pointer-events: none;
+    }
+    
+    .mind-link {
+        transition: all 0.3s ease;
+    }
+    
+    .mind-link:hover {
+        stroke-width: 4 !important;
+        opacity: 1 !important;
+    }
+    
+    /* Node Details Panel */
+    #nodeDetailsPanel {
+        animation: slideUp 0.3s ease-out;
+    }
+    
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes slideDown {
+        from { 
+            opacity: 0; 
+            max-height: 0; 
+            transform: translateY(-10px);
+        }
+        to { 
+            opacity: 1; 
+            max-height: 1000px; 
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes slideUpHide {
+        from { 
+            opacity: 1; 
+            max-height: 1000px; 
+            transform: translateY(0);
+        }
+        to { 
+            opacity: 0; 
+            max-height: 0; 
+            transform: translateY(-10px);
+        }
+    }
+    
+    #nodeDetailsPanel .card {
+        border: none;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        border-radius: 15px;
+    }
+    
+    #nodeDetailsPanel .card-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px 15px 0 0 !important;
+        border: none;
+    }
+    
+    /* Loading Animation */
+    #mindMapLoading {
+        z-index: 10;
+    }
+    
+    #mindMapLoading .spinner-border {
+        width: 3rem;
+        height: 3rem;
+        border-width: 0.3em;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .mind-map-controls {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .mind-map-controls .btn-group {
+            width: 100%;
+        }
+        
+        .mind-map-controls .btn-group .btn {
+            flex: 1;
+        }
+        
+        .mind-map-svg-container {
+            margin: 0 -10px;
+        }
+        
+        #mindMapSvg {
+            width: 100%;
+            height: 400px;
+        }
+    }
+    
     .video-timeline {
         background: #343a40;
         color: white;
@@ -105,6 +268,1035 @@
     
     .nav-pills .nav-link.active {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    /* Enhanced Summary Styles */
+    .summary-modern {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    
+    .summary-header {
+        border-bottom: 2px solid #f8f9fa;
+        padding-bottom: 20px;
+    }
+    
+    .summary-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    
+    .summary-content-enhanced {
+        line-height: 1.8;
+        font-size: 16px;
+        color: #2c3e50;
+    }
+    
+    .summary-content-enhanced h2 {
+        color: #667eea;
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin: 25px 0 15px 0;
+        padding-left: 15px;
+        border-left: 4px solid #667eea;
+        display: flex;
+        align-items: center;
+    }
+    
+    .summary-content-enhanced h3 {
+        color: #4a5568;
+        font-size: 1.25rem;
+        font-weight: 500;
+        margin: 20px 0 12px 0;
+    }
+    
+    .summary-content-enhanced p {
+        margin-bottom: 15px;
+        text-align: justify;
+    }
+    
+    .summary-content-enhanced ul {
+        padding-left: 25px;
+        margin-bottom: 20px;
+    }
+    
+    .summary-content-enhanced li {
+        margin-bottom: 8px;
+        position: relative;
+    }
+    
+    .summary-content-enhanced li::marker {
+        color: #667eea;
+        font-weight: bold;
+    }
+    
+    .summary-content-enhanced strong {
+        color: #2d3748;
+        font-weight: 600;
+    }
+    
+    .summary-content-enhanced .emoji-section {
+        background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+        border-radius: 12px;
+        padding: 20px;
+        margin: 20px 0;
+        border-left: 5px solid #667eea;
+    }
+    
+    .summary-content-enhanced .key-point {
+        background: #fff5f5;
+        border: 1px solid #fed7d7;
+        border-radius: 8px;
+        padding: 12px 16px;
+        margin: 10px 0;
+        position: relative;
+    }
+    
+    .summary-content-enhanced .key-point::before {
+        content: "💡";
+        position: absolute;
+        left: -10px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: white;
+        padding: 4px;
+        border-radius: 50%;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .reading-progress {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 15px;
+    }
+    
+    .summary-stats {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        padding: 20px;
+        color: white;
+    }
+    
+    .stat-item {
+        padding: 10px;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        color: white;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .summary-compact .summary-content-enhanced {
+        font-size: 14px;
+        line-height: 1.6;
+    }
+    
+    .summary-compact .summary-content-enhanced h2 {
+        font-size: 1.2rem;
+        margin: 15px 0 10px 0;
+    }
+    
+    .summary-compact .summary-content-enhanced h3 {
+        font-size: 1.1rem;
+        margin: 12px 0 8px 0;
+    }
+    
+    .summary-compact .emoji-section {
+        padding: 15px;
+        margin: 15px 0;
+    }
+    
+    /* Responsive Design for Summary */
+    @media (max-width: 768px) {
+        .summary-actions {
+            justify-content: center;
+            width: 100%;
+        }
+        
+        .summary-actions .btn {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .summary-stats .row {
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 1.5rem;
+        }
+    }
+    
+    /* Enhanced Study Plan Styles */
+    .study-plan-modern {
+        background: white;
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+    }
+    
+    .study-plan-header {
+        border-bottom: 3px solid #f8f9fa;
+        padding-bottom: 25px;
+    }
+    
+    .study-stats .stat-item {
+        text-align: center;
+        padding: 15px;
+    }
+    
+    .study-stats .stat-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #667eea;
+        display: block;
+    }
+    
+    .study-stats .stat-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    /* Material Analysis Cards */
+    .material-analysis {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 15px;
+        padding: 25px;
+    }
+    
+    .analysis-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        transition: transform 0.3s ease;
+    }
+    
+    .analysis-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .analysis-icon {
+        font-size: 2rem;
+        margin-bottom: 10px;
+    }
+    
+    .analysis-title {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 8px;
+    }
+    
+    .analysis-value {
+        font-size: 1.1rem;
+        font-weight: bold;
+    }
+    
+    /* Learning Path Timeline */
+    .learning-path {
+        background: #f8f9fa;
+        border-radius: 15px;
+        padding: 25px;
+    }
+    
+    .path-timeline {
+        display: flex;
+        overflow-x: auto;
+        padding: 20px 0;
+        gap: 20px;
+    }
+    
+    .timeline-item {
+        min-width: 120px;
+        text-align: center;
+        position: relative;
+    }
+    
+    .timeline-item:not(:last-child)::after {
+        content: '';
+        position: absolute;
+        top: 25px;
+        right: -20px;
+        width: 20px;
+        height: 2px;
+        background: #dee2e6;
+    }
+    
+    .timeline-marker {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        margin: 0 auto 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    .timeline-number {
+        color: white;
+        font-weight: bold;
+        font-size: 1.1rem;
+    }
+    
+    .timeline-content {
+        font-size: 0.9rem;
+    }
+    
+    .timeline-phase {
+        font-weight: 600;
+        color: #495057;
+    }
+    
+    .timeline-date {
+        color: #6c757d;
+        font-size: 0.8rem;
+    }
+    
+    /* Enhanced Session Cards */
+    .sessions-container {
+        /* Removed max-height to allow full page display */
+        overflow-y: visible;
+        padding-right: 10px;
+    }
+    
+    .session-card.enhanced {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 15px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+    
+    .session-card.enhanced:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    }
+    
+    .session-header {
+        padding: 20px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        border-bottom: 1px solid #e9ecef;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .session-info {
+        flex-grow: 1;
+    }
+    
+    .session-title h6 {
+        margin-bottom: 5px;
+        color: #2d3748;
+        font-weight: 600;
+    }
+    
+    .session-phase {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+    }
+    
+    .phase-foundation {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .phase-development {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+    
+    .phase-mastery {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    
+    .session-meta {
+        display: flex;
+        gap: 15px;
+        margin-top: 8px;
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+    
+    .session-meta span {
+        display: flex;
+        align-items: center;
+    }
+    
+    .session-difficulty {
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+    }
+    
+    .difficulty-basic {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .difficulty-intermediate {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .difficulty-advanced {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    
+    .session-actions {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .session-details {
+        padding: 25px;
+        background: #fafbfc;
+        border-top: 1px solid #e9ecef;
+        transition: all 0.4s ease;
+    }
+    
+    .session-card.expanded {
+        box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+        transform: translateY(-5px);
+    }
+    
+    .session-card.expanded .session-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .session-card.expanded .session-title h6,
+    .session-card.expanded .session-meta {
+        color: white;
+    }
+    
+    .session-card.expanded .session-phase {
+        background: rgba(255,255,255,0.2);
+        color: white;
+    }
+    
+    .session-card.expanded .session-difficulty {
+        background: rgba(255,255,255,0.2);
+        color: white;
+    }
+    
+    /* Activities Timeline */
+    .activities-timeline {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .activity-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 15px;
+        padding: 15px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .activity-icon {
+        font-size: 1.5rem;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f8f9fa;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+    
+    .activity-content {
+        flex-grow: 1;
+    }
+    
+    .activity-name {
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 4px;
+    }
+    
+    .activity-duration {
+        font-size: 0.8rem;
+        color: #667eea;
+        font-weight: 500;
+        margin-bottom: 6px;
+    }
+    
+    .activity-description {
+        font-size: 0.9rem;
+        color: #6c757d;
+        line-height: 1.4;
+    }
+    
+    /* Objectives and Exercises */
+    .objectives-list {
+        list-style: none;
+        padding: 0;
+    }
+    
+    .objectives-list li {
+        padding: 8px 0;
+        border-bottom: 1px solid #e9ecef;
+        position: relative;
+        padding-left: 25px;
+    }
+    
+    .objectives-list li:before {
+        content: "🎯";
+        position: absolute;
+        left: 0;
+        top: 8px;
+    }
+    
+    .exercises-grid {
+        display: grid;
+        gap: 12px;
+    }
+    
+    .exercise-card {
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+        border-left: 4px solid #667eea;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .exercise-check {
+        color: #28a745;
+        margin-top: 2px;
+        flex-shrink: 0;
+    }
+    
+    .success-criteria {
+        display: grid;
+        gap: 10px;
+    }
+    
+    .criterion-item {
+        padding: 10px 15px;
+        background: #fff5f5;
+        border-radius: 8px;
+        border-left: 4px solid #ffc107;
+        font-size: 0.9rem;
+    }
+    
+    /* Study Sidebar */
+    .study-sidebar {
+        position: sticky;
+        top: 20px;
+    }
+    
+    .milestones-card,
+    .success-metrics-card,
+    .repetition-schedule-card,
+    .completion-card {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+    
+    .milestones-card .card-title,
+    .success-metrics-card .card-title,
+    .repetition-schedule-card .card-title,
+    .completion-card .card-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+    }
+    
+    /* Milestone Items */
+    .milestone-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 15px;
+        padding: 15px 0;
+        border-bottom: 1px solid #f1f3f4;
+    }
+    
+    .milestone-item:last-child {
+        border-bottom: none;
+    }
+    
+    .milestone-progress {
+        flex-shrink: 0;
+    }
+    
+    .progress-circle {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: conic-gradient(#667eea 0deg, #667eea calc(var(--progress, 0) * 3.6deg), #e9ecef calc(var(--progress, 0) * 3.6deg));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        font-weight: bold;
+        color: #667eea;
+    }
+    
+    .milestone-content h6 {
+        margin-bottom: 5px;
+        color: #2d3748;
+    }
+    
+    .milestone-content p {
+        margin-bottom: 5px;
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+    
+    /* Success Metrics */
+    .metrics-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .metric-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 15px;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+    
+    .metric-label {
+        font-size: 0.9rem;
+        color: #495057;
+    }
+    
+    .metric-value {
+        font-weight: 600;
+        color: #667eea;
+    }
+    
+    /* Repetition Schedule */
+    .repetition-intervals {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .interval-badge {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    /* Completion Card */
+    .completion-date {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #28a745;
+        margin-bottom: 15px;
+    }
+    
+    .adaptive-features h6 {
+        font-size: 0.9rem;
+        color: #495057;
+        margin-bottom: 10px;
+    }
+    
+    .feature-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .feature-list li {
+        padding: 5px 0;
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+    
+    /* Responsive Design for Study Plan */
+    @media (max-width: 768px) {
+        .study-plan-modern {
+            padding: 20px;
+        }
+        
+        .path-timeline {
+            justify-content: flex-start;
+        }
+        
+        .timeline-item {
+            min-width: 100px;
+        }
+        
+        .session-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+        }
+        
+        .session-actions {
+            width: 100%;
+            justify-content: space-between;
+        }
+        
+        .session-meta {
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .activities-timeline {
+            gap: 10px;
+        }
+        
+        .activity-item {
+            padding: 12px;
+        }
+        
+        .exercises-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    /* Enhanced Math Support Styles - Beautiful Typography */
+    .math-formula {
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        border: 2px solid #e3f2fd;
+        border-radius: 15px;
+        padding: 25px 30px;
+        margin: 20px 0;
+        font-family: 'Cambria', 'Times New Roman', serif;
+        font-size: 1.4em;
+        text-align: center;
+        position: relative;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+        border-left: 6px solid #667eea;
+        line-height: 1.6;
+        color: #2c3e50;
+        transition: all 0.3s ease;
+    }
+    
+    .math-formula:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 35px rgba(0,0,0,0.15);
+    }
+    
+    .math-formula::before {
+        content: "📐";
+        position: absolute;
+        top: 12px;
+        right: 18px;
+        font-size: 1.4rem;
+        opacity: 0.7;
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+    }
+    
+    .math-inline {
+        background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+        padding: 4px 10px;
+        border-radius: 8px;
+        font-family: 'Cambria', 'Times New Roman', serif;
+        color: #1565c0;
+        font-weight: 600;
+        margin: 0 4px;
+        display: inline-block;
+        transition: all 0.3s ease;
+        border: 1px solid rgba(21, 101, 192, 0.2);
+        font-size: 1.05em;
+    }
+    
+    .math-inline:hover {
+        background: linear-gradient(135deg, #bbdefb 0%, #e1bee7 100%);
+        transform: scale(1.08);
+        box-shadow: 0 4px 12px rgba(21, 101, 192, 0.3);
+        border-color: #1565c0;
+    }
+    
+    .math-symbol {
+        font-family: 'Cambria', 'Times New Roman', serif;
+        font-size: 1.3em;
+        color: #667eea;
+        font-weight: 700;
+        background: linear-gradient(135deg, #e8eaf6 0%, #f3e5f5 100%);
+        padding: 3px 8px;
+        border-radius: 6px;
+        margin: 0 3px;
+        display: inline-block;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        border: 1px solid rgba(102, 126, 234, 0.2);
+        transition: all 0.2s ease;
+    }
+    
+    .math-symbol:hover {
+        transform: scale(1.1);
+        background: linear-gradient(135deg, #c5cae9 0%, #e1bee7 100%);
+    }
+    
+    .math-fraction {
+        font-family: 'Cambria', 'Times New Roman', serif;
+        color: #667eea;
+        font-weight: 600;
+        background: linear-gradient(135deg, #f3e5f5 0%, #fce4ec 100%);
+        padding: 6px 12px;
+        border-radius: 8px;
+        margin: 0 4px;
+        display: inline-block;
+        position: relative;
+        border: 1px solid rgba(156, 39, 176, 0.2);
+        font-size: 1.1em;
+    }
+    
+    /* Beautiful fraction display */
+    .math-frac {
+        display: inline-block;
+        vertical-align: middle;
+        text-align: center;
+        margin: 0 6px;
+        position: relative;
+        background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+        padding: 8px 12px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 152, 0, 0.3);
+    }
+    
+    .math-frac .numerator {
+        display: block;
+        font-size: 0.9em;
+        padding-bottom: 3px;
+        border-bottom: 2px solid #667eea;
+        margin-bottom: 3px;
+        color: #2c3e50;
+        font-weight: 700;
+    }
+    
+    .math-frac .denominator {
+        display: block;
+        font-size: 0.9em;
+        padding-top: 3px;
+        color: #2c3e50;
+        font-weight: 700;
+    }
+    
+    /* Superscript and subscript styling */
+    .math-sup {
+        font-size: 0.7em;
+        vertical-align: super;
+        color: #e91e63;
+        font-weight: 700;
+        margin-left: 1px;
+        background: rgba(233, 30, 99, 0.1);
+        padding: 1px 3px;
+        border-radius: 3px;
+    }
+    
+    .math-sub {
+        font-size: 0.7em;
+        vertical-align: sub;
+        color: #3f51b5;
+        font-weight: 700;
+        margin-left: 1px;
+        background: rgba(63, 81, 181, 0.1);
+        padding: 1px 3px;
+        border-radius: 3px;
+    }
+    
+    /* Parentheses styling */
+    .math-paren {
+        font-size: 1.3em;
+        color: #795548;
+        font-weight: 600;
+        margin: 0 2px;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    
+    /* Function names styling */
+    .math-func {
+        font-family: 'Cambria', serif;
+        color: #4caf50;
+        font-weight: 700;
+        font-style: italic;
+        margin-right: 2px;
+        background: rgba(76, 175, 80, 0.1);
+        padding: 2px 6px;
+        border-radius: 4px;
+    }
+    
+    .math-toolbar {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 12px;
+        padding: 15px;
+        border: 1px solid #dee2e6;
+    }
+    
+    .math-toolbar .alert {
+        margin-bottom: 0;
+        border: none;
+        background: rgba(255,255,255,0.8);
+        backdrop-filter: blur(10px);
+    }
+    
+    /* MathJax Override Styles */
+    mjx-container[jax="CHTML"][display="true"] {
+        margin: 1.5em 0 !important;
+        padding: 20px !important;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
+        border-radius: 12px !important;
+        border-left: 5px solid #667eea !important;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+        position: relative !important;
+    }
+    
+    mjx-container[jax="CHTML"][display="true"]::before {
+        content: "📐";
+        position: absolute;
+        top: 10px;
+        right: 15px;
+        font-size: 1.2rem;
+        opacity: 0.6;
+    }
+    
+    mjx-container[jax="CHTML"] {
+        color: #2c3e50 !important;
+        font-size: 1.1em !important;
+    }
+    
+    mjx-container[jax="CHTML"]:not([display="true"]) {
+        background: #e3f2fd !important;
+        padding: 3px 8px !important;
+        border-radius: 6px !important;
+        margin: 0 3px !important;
+        display: inline-block !important;
+        color: #1565c0 !important;
+        font-weight: 500 !important;
+        transition: all 0.2s ease !important;
+    }
+    
+    mjx-container[jax="CHTML"]:not([display="true"]):hover {
+        background: #bbdefb !important;
+        transform: scale(1.05) !important;
+        box-shadow: 0 2px 8px rgba(21, 101, 192, 0.2) !important;
+    }
+    
+    /* Math in different contexts */
+    .summary-content-enhanced mjx-container[jax="CHTML"][display="true"] {
+        background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%) !important;
+        border-left-color: #ff9800 !important;
+    }
+    
+    .flashcard-advanced mjx-container[jax="CHTML"][display="true"] {
+        background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%) !important;
+        border-left-color: #9c27b0 !important;
+    }
+    
+    .accordion-body mjx-container[jax="CHTML"][display="true"] {
+        background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%) !important;
+        border-left-color: #4caf50 !important;
+    }
+    
+    /* Math processing indicators */
+    .math-processing {
+        position: relative;
+    }
+    
+    .math-processing::after {
+        content: "⚡ Обработка формул...";
+        position: absolute;
+        top: 0;
+        right: 0;
+        background: #667eea;
+        color: white;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        animation: pulse 1s infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+    
+    .math-processed {
+        position: relative;
+    }
+    
+    .math-processed::after {
+        content: "✓";
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        background: #28a745;
+        color: white;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        font-size: 0.7rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        animation: fadeInOut 2s ease-in-out;
+    }
+    
+    @keyframes fadeInOut {
+        0%, 100% { opacity: 0; }
+        20%, 80% { opacity: 1; }
+    }
+    
+    /* Math toolbar responsive */
+    @media (max-width: 768px) {
+        .math-toolbar .row {
+            flex-direction: column;
+        }
+        
+        .math-toolbar .col-md-6 {
+            margin-bottom: 10px;
+        }
+        
+        mjx-container[jax="CHTML"][display="true"] {
+            padding: 15px !important;
+            margin: 1em 0 !important;
+        }
+        
+        mjx-container[jax="CHTML"]:not([display="true"]) {
+            font-size: 0.9em !important;
+            padding: 2px 6px !important;
+        }
     }
 </style>
 {% endblock %}
@@ -305,201 +1497,794 @@
 
         <!-- Summary Tab -->
         <div class="tab-pane fade" id="summary" role="tabpanel">
-            <div class="card">
-                <div class="card-body">
-                    <div class="summary-content">
-                        {{ summary|replace('<br>', '\n')|replace('#', '')|striptags|safe }}
+            <div class="summary-modern">
+                <div class="summary-header mb-4">
+                    <h4 class="mb-2">
+                        <i class="fas fa-file-text text-primary me-2"></i>
+                        Структурированное резюме
+                    </h4>
+                    <div class="summary-actions">
+                        <button class="btn btn-outline-primary btn-sm me-2" onclick="toggleSummaryView()">
+                            <i class="fas fa-eye me-1"></i>
+                            <span id="viewToggleText">Компактный вид</span>
+                        </button>
+                        <button class="btn btn-outline-success btn-sm me-2" onclick="copySummary()">
+                            <i class="fas fa-copy me-1"></i>Копировать
+                        </button>
+                        <button class="btn btn-outline-info btn-sm" onclick="printSummary()">
+                            <i class="fas fa-print me-1"></i>Печать
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="summary-content-enhanced" id="summaryContent">
+                    <!-- Content will be populated by JavaScript -->
+                </div>
+                
+                <!-- Reading Progress -->
+                <div class="reading-progress mt-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <small class="text-muted">Прогресс чтения</small>
+                        <small class="text-muted" id="readingProgress">0%</small>
+                    </div>
+                    <div class="progress" style="height: 4px;">
+                        <div class="progress-bar bg-gradient-primary" id="progressBar" style="width: 0%"></div>
+                    </div>
+                </div>
+                
+                <!-- Summary Stats -->
+                <div class="summary-stats mt-4">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <div class="stat-item">
+                                <div class="stat-number" id="wordCount">-</div>
+                                <div class="stat-label">Слов</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-item">
+                                <div class="stat-number" id="readingTime">-</div>
+                                <div class="stat-label">Мин. чтения</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-item">
+                                <div class="stat-number" id="sectionCount">-</div>
+                                <div class="stat-label">Разделов</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-item">
+                                <div class="stat-number" id="keyPoints">-</div>
+                                <div class="stat-label">Ключевых точек</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Flashcards Tab -->
+        <!-- Enhanced Flashcards Tab -->
         <div class="tab-pane fade" id="flashcards" role="tabpanel">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h4>
-                    <i class="fas fa-layer-group me-2"></i>Умные флеш-карты
-                    <small class="text-muted">({{ flashcards|length }} карт)</small>
-                </h4>
-                <div>
-                    <button class="btn btn-primary btn-sm me-2" onclick="startStudySession()">
-                        <i class="fas fa-graduation-cap me-2"></i>Начать изучение
-                    </button>
-                    <a href="{{ url_for('download_flashcards', result_id=result_id) }}" class="btn btn-success btn-sm">
-                        <i class="fas fa-download me-2"></i>Экспорт
-                    </a>
-                </div>
-            </div>
-
-            <!-- Flashcard filters -->
-            <div class="mb-3">
-                <button class="btn btn-sm btn-outline-secondary active" onclick="filterCards('all')">Все</button>
-                <button class="btn btn-sm btn-outline-success" onclick="filterCards('definition')">Определения</button>
-                <button class="btn btn-sm btn-outline-info" onclick="filterCards('concept')">Концепции</button>
-                <button class="btn btn-sm btn-outline-warning" onclick="filterCards('application')">Применение</button>
-                <button class="btn btn-sm btn-outline-danger" onclick="filterCards('comparison')">Сравнение</button>
-                <button class="btn btn-sm btn-outline-primary" onclick="filterCards('problem')">Задачи</button>
-            </div>
-
-            <div class="accordion" id="flashcardsAccordion">
-                {% for card in flashcards %}
-                <div class="accordion-item flashcard-advanced difficulty-{{ card.difficulty }}" data-type="{{ card.type }}">
-                    <div class="flashcard-header">
-                        <div class="d-flex align-items-center flex-grow-1">
-                            <button class="accordion-button collapsed p-0 bg-transparent border-0 text-start" 
-                                    type="button" data-bs-toggle="collapse" 
-                                    data-bs-target="#card{{ loop.index }}">
-                                <div>
-                                    <i class="fas fa-question-circle text-primary me-2"></i>
-                                    {{ card.q }}
-                                    {% if card.hint %}
-                                    <small class="text-muted d-block mt-1">
-                                        <i class="fas fa-lightbulb me-1"></i>Подсказка: {{ card.hint }}
-                                    </small>
-                                    {% endif %}
-                                </div>
-                            </button>
-                        </div>
-                        <div class="ms-3">
-                            <span class="badge bg-secondary">{{ card.type }}</span>
-                            <span class="badge bg-{% if card.difficulty == 3 %}danger{% elif card.difficulty == 2 %}warning{% else %}success{% endif %}">
-                                Уровень {{ card.difficulty }}
-                            </span>
-                        </div>
+            <!-- Header with Statistics -->
+            <div class="flashcards-header mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4>
+                        <i class="fas fa-layer-group me-2"></i>Умные флеш-карты
+                        <small class="text-muted">({{ flashcards|length }} карт)</small>
+                    </h4>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-primary btn-sm" onclick="startInteractiveStudy()">
+                            <i class="fas fa-play me-1"></i>Интерактивное изучение
+                        </button>
+                        <button class="btn btn-info btn-sm" onclick="startQuizMode()">
+                            <i class="fas fa-question-circle me-1"></i>Режим теста
+                        </button>
+                        <button class="btn btn-warning btn-sm" onclick="showCreateCardModal()">
+                            <i class="fas fa-plus me-1"></i>Создать карту
+                        </button>
+                        <a href="{{ url_for('download_flashcards', result_id=result_id) }}" class="btn btn-success btn-sm">
+                            <i class="fas fa-download me-1"></i>Экспорт
+                        </a>
                     </div>
-                    <div id="card{{ loop.index }}" class="accordion-collapse collapse">
-                        <div class="accordion-body">
-                            <p><i class="fas fa-check-circle text-success me-2"></i>{{ card.a }}</p>
-                            
-                            {% if card.memory_hook %}
-                            <div class="alert alert-info mb-2">
-                                <i class="fas fa-brain me-2"></i><strong>Запоминалка:</strong> {{ card.memory_hook }}
+                </div>
+                
+                <!-- Progress Statistics -->
+                <div class="flashcards-stats mb-3">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="stat-card text-center p-3 bg-success text-white rounded">
+                                <div class="stat-number" id="masteredCount">0</div>
+                                <div class="stat-label">Изучено</div>
                             </div>
-                            {% endif %}
-                            
-                            {% if card.common_mistakes %}
-                            <div class="alert alert-warning mb-2">
-                                <i class="fas fa-exclamation-triangle me-2"></i><strong>Частая ошибка:</strong> {{ card.common_mistakes }}
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-card text-center p-3 bg-warning text-white rounded">
+                                <div class="stat-number" id="reviewCount">0</div>
+                                <div class="stat-label">На повторение</div>
                             </div>
-                            {% endif %}
-                            
-                            {% if card.related_topics %}
-                            <div class="mt-2">
-                                <small class="text-muted">
-                                    <i class="fas fa-tags me-1"></i>
-                                    {% for topic in card.related_topics %}
-                                    <span class="badge bg-light text-dark">{{ topic }}</span>
-                                    {% endfor %}
-                                </small>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-card text-center p-3 bg-info text-white rounded">
+                                <div class="stat-number" id="newCount">{{ flashcards|length }}</div>
+                                <div class="stat-label">Новые</div>
                             </div>
-                            {% endif %}
-                            
-                            <div class="mt-3">
-                                <button class="btn btn-sm btn-success" onclick="markCardReviewed('{{ result_id }}', '{{ loop.index0 }}', true)">
-                                    <i class="fas fa-check me-1"></i>Знаю
-                                </button>
-                                <button class="btn btn-sm btn-danger" onclick="markCardReviewed('{{ result_id }}', '{{ loop.index0 }}', false)">
-                                    <i class="fas fa-times me-1"></i>Повторить
-                                </button>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-card text-center p-3 bg-primary text-white rounded">
+                                <div class="stat-number" id="progressPercent">0%</div>
+                                <div class="stat-label">Прогресс</div>
                             </div>
                         </div>
                     </div>
                 </div>
-                {% endfor %}
             </div>
-        </div>
 
-        <!-- Mind Map Tab -->
-        <div class="tab-pane fade" id="mindmap" role="tabpanel">
-            <h4 class="mb-3"><i class="fas fa-project-diagram me-2"></i>Ментальная карта</h4>
-            <div class="mind-map-container" id="mindMapContainer">
-                <canvas id="mindMapCanvas" width="800" height="400"></canvas>
+            <!-- Enhanced Controls -->
+            <div class="flashcards-controls mb-4">
+                <div class="row">
+                    <div class="col-md-8">
+                        <!-- Search and Filters -->
+                        <div class="d-flex flex-wrap gap-2 align-items-center">
+                            <!-- Search -->
+                            <div class="input-group" style="width: 250px;">
+                                <input type="text" class="form-control form-control-sm" placeholder="Поиск по картам..." id="flashcardSearch">
+                                <button class="btn btn-outline-secondary btn-sm" type="button" onclick="searchFlashcards()">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                            
+                            <!-- Type Filters -->
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button class="btn btn-outline-secondary active" onclick="filterCards('all')" data-filter="all">Все</button>
+                                <button class="btn btn-outline-success" onclick="filterCards('definition')" data-filter="definition">Определения</button>
+                                <button class="btn btn-outline-info" onclick="filterCards('concept')" data-filter="concept">Концепции</button>
+                                <button class="btn btn-outline-warning" onclick="filterCards('application')" data-filter="application">Применение</button>
+                                <button class="btn btn-outline-danger" onclick="filterCards('comparison')" data-filter="comparison">Сравнение</button>
+                                <button class="btn btn-outline-primary" onclick="filterCards('problem')" data-filter="problem">Задачи</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <!-- View Controls -->
+                        <div class="d-flex gap-2 justify-content-end">
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button class="btn btn-outline-secondary" onclick="sortCards('difficulty')">
+                                    <i class="fas fa-sort-amount-up me-1"></i>По сложности
+                                </button>
+                                <button class="btn btn-outline-secondary" onclick="sortCards('type')">
+                                    <i class="fas fa-tags me-1"></i>По типу
+                                </button>
+                                <button class="btn btn-outline-secondary" onclick="sortCards('progress')">
+                                    <i class="fas fa-chart-line me-1"></i>По прогрессу
+                                </button>
+                            </div>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button class="btn btn-outline-success" onclick="expandAll()">
+                                    <i class="fas fa-expand me-1"></i>Развернуть
+                                </button>
+                                <button class="btn btn-outline-warning" onclick="collapseAll()">
+                                    <i class="fas fa-compress me-1"></i>Свернуть
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="text-center mt-3">
-                <button class="btn btn-primary" onclick="downloadMindMap()">
-                    <i class="fas fa-download me-2"></i>Скачать изображение
-                </button>
-            </div>
-        </div>
 
-        <!-- Study Plan Tab -->
-        <div class="tab-pane fade" id="studyplan" role="tabpanel">
-            <h4 class="mb-3">
-                <i class="fas fa-calendar-check me-2"></i>Персональный план обучения
-                <small class="text-muted">({{ study_plan.total_hours|round(1) }} часов)</small>
-            </h4>
-            
-            <div class="row">
-                <div class="col-md-8">
-                    <h5 class="mb-3">Расписание сессий</h5>
-                    {% for session in study_plan.sessions %}
-                    <div class="study-session">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="mb-1">
-                                    <i class="fas fa-calendar-day me-2"></i>День {{ session.day }}
-                                    <small class="text-muted">({{ session.duration_minutes }} минут)</small>
-                                </h6>
-                                <p class="mb-2 text-muted">{{ session.focus }}</p>
-                                <div class="mb-2">
-                                    <strong>Темы:</strong>
-                                    {% for topic in session.topics %}
-                                    <span class="badge bg-primary">{{ topic }}</span>
-                                    {% endfor %}
+            <!-- Enhanced Flashcards Container -->
+            <div class="flashcards-container">
+                <div class="accordion" id="flashcardsAccordion">
+                    {% for card in flashcards %}
+                    <div class="accordion-item flashcard-advanced difficulty-{{ card.difficulty }}" 
+                         data-type="{{ card.type }}" 
+                         data-difficulty="{{ card.difficulty }}"
+                         data-card-id="{{ loop.index0 }}">
+                        <div class="flashcard-header">
+                            <div class="d-flex align-items-center flex-grow-1">
+                                <button class="accordion-button collapsed p-0 bg-transparent border-0 text-start" 
+                                        type="button" data-bs-toggle="collapse" 
+                                        data-bs-target="#card{{ loop.index }}">
+                                    <div class="flashcard-question-container">
+                                        <div class="d-flex align-items-center mb-1">
+                                            <i class="fas fa-question-circle text-primary me-2"></i>
+                                            <span class="card-number text-muted me-2">#{{ loop.index }}</span>
+                                            <span class="flashcard-question">{{ card.q }}</span>
+                                        </div>
+                                        {% if card.hint %}
+                                        <small class="text-muted d-block">
+                                            <i class="fas fa-lightbulb me-1"></i>Подсказка: {{ card.hint }}
+                                        </small>
+                                        {% endif %}
+                                    </div>
+                                </button>
+                            </div>
+                            <div class="flashcard-meta d-flex align-items-center gap-2">
+                                <span class="badge bg-secondary">{{ card.type }}</span>
+                                <span class="badge bg-{% if card.difficulty == 3 %}danger{% elif card.difficulty == 2 %}warning{% else %}success{% endif %}">
+                                    <i class="fas fa-{% if card.difficulty == 3 %}fire{% elif card.difficulty == 2 %}bolt{% else %}leaf{% endif %} me-1"></i>
+                                    Уровень {{ card.difficulty }}
+                                </span>
+                                <div class="flashcard-progress-indicator" data-card="{{ loop.index0 }}">
+                                    <i class="fas fa-circle text-muted" title="Не изучено"></i>
                                 </div>
-                                {% if session.exercises %}
-                                <div>
-                                    <strong>Упражнения:</strong>
-                                    <ul class="mb-0 mt-1">
-                                        {% for exercise in session.exercises %}
-                                        <li class="text-muted">{{ exercise }}</li>
-                                        {% endfor %}
-                                    </ul>
+                            </div>
+                        </div>
+                        <div id="card{{ loop.index }}" class="accordion-collapse collapse">
+                            <div class="accordion-body">
+                                <!-- Answer Section -->
+                                <div class="flashcard-answer mb-3">
+                                    <h6 class="text-success mb-2">
+                                        <i class="fas fa-check-circle me-2"></i>Ответ:
+                                    </h6>
+                                    <div class="answer-content p-3 bg-light rounded">
+                                        {{ card.a }}
+                                    </div>
+                                </div>
+                                
+                                <!-- Additional Information -->
+                                {% if card.memory_hook %}
+                                <div class="alert alert-info mb-3">
+                                    <div class="d-flex align-items-start">
+                                        <i class="fas fa-brain me-2 mt-1"></i>
+                                        <div>
+                                            <strong>Запоминалка:</strong>
+                                            <p class="mb-0 mt-1">{{ card.memory_hook }}</p>
+                                        </div>
+                                    </div>
                                 </div>
                                 {% endif %}
-                            </div>
-                            <div>
-                                <button class="btn btn-sm btn-outline-primary" onclick="startSession('{{ session.day }}')">
-                                    <i class="fas fa-play me-1"></i>Начать
-                                </button>
+                                
+                                {% if card.common_mistakes %}
+                                <div class="alert alert-warning mb-3">
+                                    <div class="d-flex align-items-start">
+                                        <i class="fas fa-exclamation-triangle me-2 mt-1"></i>
+                                        <div>
+                                            <strong>Частая ошибка:</strong>
+                                            <p class="mb-0 mt-1">{{ card.common_mistakes }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                
+                                <!-- Related Topics -->
+                                {% if card.related_topics %}
+                                <div class="related-topics mb-3">
+                                    <h6 class="text-secondary mb-2">
+                                        <i class="fas fa-tags me-1"></i>Связанные темы:
+                                    </h6>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        {% for topic in card.related_topics %}
+                                        <span class="badge bg-light text-dark border">{{ topic }}</span>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endif %}
+                                
+                                <!-- Action Buttons -->
+                                <div class="flashcard-actions d-flex justify-content-between align-items-center pt-3 border-top">
+                                    <div class="confidence-buttons">
+                                        <small class="text-muted me-2">Насколько хорошо знаете?</small>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <button class="btn btn-outline-danger" onclick="markCardReviewed('{{ result_id }}', '{{ loop.index0 }}', false, 1)">
+                                                <i class="fas fa-times me-1"></i>Не знаю
+                                            </button>
+                                            <button class="btn btn-outline-warning" onclick="markCardReviewed('{{ result_id }}', '{{ loop.index0 }}', true, 2)">
+                                                <i class="fas fa-question me-1"></i>Частично
+                                            </button>
+                                            <button class="btn btn-outline-success" onclick="markCardReviewed('{{ result_id }}', '{{ loop.index0 }}', true, 3)">
+                                                <i class="fas fa-check me-1"></i>Хорошо знаю
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="card-tools">
+                                        <button class="btn btn-sm btn-outline-primary" onclick="addToFavorites('{{ loop.index0 }}')" title="В избранное">
+                                            <i class="fas fa-star"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-info" onclick="shareCard('{{ loop.index0 }}')" title="Поделиться">
+                                            <i class="fas fa-share"></i>
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                     {% endfor %}
                 </div>
                 
-                <div class="col-md-4">
-                    <h5 class="mb-3">Цели обучения</h5>
-                    <div class="card">
-                        <div class="card-body">
-                            <h6 class="card-title">Контрольные точки:</h6>
-                            <ul class="mb-0">
-                                {% for milestone in study_plan.milestones %}
-                                <li class="mb-2">{{ milestone }}</li>
-                                {% endfor %}
-                            </ul>
+                <!-- No cards message -->
+                <div id="noCardsMessage" class="text-center py-5" style="display: none;">
+                    <i class="fas fa-search text-muted" style="font-size: 3rem;"></i>
+                    <h5 class="text-muted mt-3">Карты не найдены</h5>
+                    <p class="text-muted">Попробуйте изменить фильтры или поисковый запрос</p>
+                </div>
+            </div>
+            
+            <!-- Interactive Study Modal -->
+            <div class="modal fade" id="interactiveStudyModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">
+                                <i class="fas fa-play me-2"></i>Интерактивное изучение
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body" id="studyModalBody">
+                            <!-- Study content will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Create Card Modal -->
+            <div class="modal fade" id="createCardModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">
+                                <i class="fas fa-plus me-2"></i>Создать флеш-карту
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="createCardForm">
+                                <div class="mb-3">
+                                    <label class="form-label">Вопрос</label>
+                                    <textarea class="form-control" id="newCardQuestion" rows="2" required></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Ответ</label>
+                                    <textarea class="form-control" id="newCardAnswer" rows="3" required></textarea>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Тип</label>
+                                        <select class="form-select" id="newCardType">
+                                            <option value="definition">Определение</option>
+                                            <option value="concept">Концепция</option>
+                                            <option value="application">Применение</option>
+                                            <option value="comparison">Сравнение</option>
+                                            <option value="problem">Задача</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Сложность</label>
+                                        <select class="form-select" id="newCardDifficulty">
+                                            <option value="1">Легкая</option>
+                                            <option value="2">Средняя</option>
+                                            <option value="3">Сложная</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="mb-3 mt-3">
+                                    <label class="form-label">Подсказка (необязательно)</label>
+                                    <input type="text" class="form-control" id="newCardHint">
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                            <button type="button" class="btn btn-primary" onclick="createNewCard()">Создать карту</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mind Map Tab -->
+        <div class="tab-pane fade" id="mindmap" role="tabpanel">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="mb-0"><i class="fas fa-project-diagram me-2"></i>Интерактивная ментальная карта</h4>
+                <div>
+                    <button class="btn btn-outline-secondary btn-sm me-2" onclick="resetMindMapView()">
+                        <i class="fas fa-expand-arrows-alt me-1"></i>Сбросить вид
+                    </button>
+                    <button class="btn btn-primary btn-sm" onclick="downloadMindMap()">
+                        <i class="fas fa-download me-1"></i>Скачать PNG
+                    </button>
+                </div>
+            </div>
+            
+            <div class="mind-map-modern" id="mindMapContainer">
+                <!-- Enhanced Controls -->
+                <div class="mind-map-controls mb-3">
+                    <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+                        <!-- Layout Controls -->
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-outline-primary active" onclick="setMindMapLayout('radial')">
+                                <i class="fas fa-sun me-1"></i>Радиальная
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" onclick="setMindMapLayout('tree')">
+                                <i class="fas fa-sitemap me-1"></i>Дерево
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" onclick="setMindMapLayout('force')">
+                                <i class="fas fa-project-diagram me-1"></i>Сеть
+                            </button>
+                        </div>
+                        
+                        <!-- Search -->
+                        <div class="input-group input-group-sm" style="width: 200px;">
+                            <input type="text" class="form-control" placeholder="Поиск узлов..." id="mindMapSearch">
+                            <button class="btn btn-outline-secondary" type="button" onclick="searchMindMapNodes()">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                        
+                        <!-- Filter Controls -->
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-outline-info active" onclick="filterNodes('all')" data-filter="all">
+                                <i class="fas fa-eye me-1"></i>Все
+                            </button>
+                            <button type="button" class="btn btn-outline-info" onclick="filterNodes('branch')" data-filter="branch">
+                                <i class="fas fa-sitemap me-1"></i>Ветки
+                            </button>
+                            <button type="button" class="btn btn-outline-info" onclick="filterNodes('child')" data-filter="child">
+                                <i class="fas fa-leaf me-1"></i>Подтемы
+                            </button>
+                        </div>
+                        
+                        <!-- Size Controls -->
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-outline-secondary" onclick="adjustMindMapSize('small')">
+                                <i class="fas fa-compress-arrows-alt me-1"></i>Мал.
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary active" onclick="adjustMindMapSize('medium')">
+                                <i class="fas fa-arrows-alt me-1"></i>Сред.
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="adjustMindMapSize('large')">
+                                <i class="fas fa-expand-arrows-alt me-1"></i>Бол.
+                            </button>
                         </div>
                     </div>
                     
-                    <div class="card mt-3">
-                        <div class="card-body">
-                            <h6 class="card-title">График повторений:</h6>
-                            <p class="text-muted mb-2">Для закрепления материала</p>
-                            <div>
-                                {% for day in study_plan.review_schedule %}
-                                <span class="badge bg-info me-1">{{ day }} дней</span>
-                                {% endfor %}
+                    <!-- Statistics and Info -->
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex gap-3">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Кликните на узел для детальной информации
+                            </small>
+                            <small class="text-muted" id="mindMapStats">
+                                <i class="fas fa-chart-bar me-1"></i>
+                                Узлов: <span id="nodeCount">0</span> | Связей: <span id="linkCount">0</span>
+                            </small>
+                        </div>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-outline-success" onclick="fitToScreen()">
+                                <i class="fas fa-expand me-1"></i>По размеру
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" onclick="centerView()">
+                                <i class="fas fa-crosshairs me-1"></i>Центр
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mind-map-svg-container" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 15px; padding: 20px; position: relative; overflow: hidden;">
+                    <svg id="mindMapSvg" width="100%" height="600" style="background: rgba(255,255,255,0.95); border-radius: 10px;">
+                        <!-- Mind map will be rendered here -->
+                    </svg>
+                    
+                    <!-- Loading indicator -->
+                    <div id="mindMapLoading" class="position-absolute top-50 start-50 translate-middle text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Загрузка...</span>
+                        </div>
+                        <div class="mt-2 text-white">Создание ментальной карты...</div>
+                    </div>
+                </div>
+                
+                <!-- Enhanced Node details panel -->
+                <div id="nodeDetailsPanel" class="mt-3" style="display: none;">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0" id="nodeTitle">
+                                <i class="fas fa-info-circle me-2"></i>Детали узла
+                            </h6>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-sm btn-outline-light" onclick="createFlashcardFromNode()" title="Создать флеш-карту">
+                                    <i class="fas fa-layer-group"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-light" onclick="addToStudyPlan()" title="Добавить в план обучения">
+                                    <i class="fas fa-calendar-plus"></i>
+                                </button>
+                                <button type="button" class="btn-close" onclick="hideNodeDetails()"></button>
+                            </div>
+                        </div>
+                        <div class="card-body" id="nodeContent">
+                            <!-- Enhanced node details will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Enhanced Study Plan Tab -->
+        <div class="tab-pane fade" id="studyplan" role="tabpanel">
+            <div class="study-plan-modern">
+                <!-- Header with Analytics -->
+                <div class="study-plan-header mb-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h4 class="mb-2">
+                                <i class="fas fa-graduation-cap text-primary me-2"></i>
+                                Персональный план обучения
+                            </h4>
+                            <p class="text-muted mb-0">
+                                Научно обоснованный план с учетом сложности материала и кривой забывания
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="study-stats">
+                                <div class="stat-item">
+                                    <div class="stat-number">{{ study_plan.total_hours|round(1) }}</div>
+                                    <div class="stat-label">часов</div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="card mt-3">
-                        <div class="card-body">
-                            <h6 class="card-title">Дата завершения:</h6>
-                            <p class="mb-0">
-                                <i class="fas fa-flag-checkered me-2"></i>
-                                {{ study_plan.completion_date }}
-                            </p>
+                </div>
+
+                <!-- Material Analysis -->
+                {% if study_plan.material_analysis %}
+                <div class="material-analysis mb-4">
+                    <h5 class="mb-3"><i class="fas fa-chart-bar me-2"></i>Анализ материала</h5>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="analysis-card">
+                                <div class="analysis-icon">📊</div>
+                                <div class="analysis-title">Сложность</div>
+                                <div class="analysis-value">
+                                    {% if study_plan.difficulty_level < 1.5 %}
+                                        <span class="badge bg-success">Базовый</span>
+                                    {% elif study_plan.difficulty_level < 2.5 %}
+                                        <span class="badge bg-warning">Средний</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Продвинутый</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="analysis-card">
+                                <div class="analysis-icon">⏱️</div>
+                                <div class="analysis-title">Время изучения</div>
+                                <div class="analysis-value">{{ study_plan.material_analysis.estimated_study_time.study_time }} мин</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="analysis-card">
+                                <div class="analysis-icon">🔄</div>
+                                <div class="analysis-title">Повторения</div>
+                                <div class="analysis-value">{{ study_plan.material_analysis.estimated_study_time.review_time }} мин</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="analysis-card">
+                                <div class="analysis-icon">📚</div>
+                                <div class="analysis-title">Чтение</div>
+                                <div class="analysis-value">{{ study_plan.material_analysis.estimated_study_time.reading_time }} мин</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Learning Path Visualization -->
+                <div class="learning-path mb-4">
+                    <h5 class="mb-3"><i class="fas fa-route me-2"></i>Путь обучения</h5>
+                    <div class="path-timeline">
+                        {% for session in study_plan.sessions %}
+                        <div class="timeline-item" data-session="{{ session.session_number }}">
+                            <div class="timeline-marker">
+                                <div class="timeline-number">{{ session.session_number }}</div>
+                            </div>
+                            <div class="timeline-content">
+                                <div class="timeline-phase">{{ session.phase_name }}</div>
+                                <div class="timeline-date">{{ session.date }} ({{ session.day_of_week }})</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Study Sessions -->
+                <div class="row">
+                    <div class="col-lg-8">
+                        <div class="sessions-container">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Учебные сессии</h5>
+                                <div class="session-controls">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="toggleSessionView()">
+                                        <i class="fas fa-list me-1"></i>Компактный вид
+                                    </button>
+                                </div>
+                            </div>
+
+                            {% for session in study_plan.sessions %}
+                            <div class="session-card enhanced" data-session="{{ session.session_number }}">
+                                <div class="session-header">
+                                    <div class="session-info">
+                                        <div class="session-title">
+                                            <span class="session-phase phase-{{ session.phase }}">{{ session.phase_name }}</span>
+                                            <h6 class="mb-1">Сессия {{ session.session_number }}: {{ session.main_topic.title }}</h6>
+                                        </div>
+                                        <div class="session-meta">
+                                            <span class="session-date">
+                                                <i class="fas fa-calendar me-1"></i>{{ session.date }}
+                                            </span>
+                                            <span class="session-duration">
+                                                <i class="fas fa-clock me-1"></i>{{ session.duration_minutes }} мин
+                                            </span>
+                                            <span class="session-difficulty difficulty-{{ session.estimated_difficulty }}">
+                                                <i class="fas fa-signal me-1"></i>{{ session.estimated_difficulty }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="session-actions">
+                                        <button class="btn btn-primary btn-sm" onclick="startSession({{ session.session_number }})">
+                                            <i class="fas fa-play me-1"></i>Начать
+                                        </button>
+                                        <button class="btn btn-outline-secondary btn-sm session-toggle-btn" data-session="{{ session.session_number }}" title="Развернуть">
+                                            <i class="fas fa-chevron-down me-1"></i>Развернуть
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="session-details" id="sessionDetails{{ session.session_number }}" style="display: none;">
+                                    <div class="session-focus mb-3">
+                                        <h6><i class="fas fa-bullseye me-2"></i>Фокус сессии</h6>
+                                        <p class="text-muted">{{ session.focus }}</p>
+                                    </div>
+
+                                    {% if session.activities %}
+                                    <div class="session-activities mb-3">
+                                        <h6><i class="fas fa-tasks me-2"></i>Активности</h6>
+                                        <div class="activities-timeline">
+                                            {% for activity in session.activities %}
+                                            <div class="activity-item">
+                                                <div class="activity-icon">{{ activity.icon }}</div>
+                                                <div class="activity-content">
+                                                    <div class="activity-name">{{ activity.name }}</div>
+                                                    <div class="activity-duration">{{ activity.duration }} мин</div>
+                                                    <div class="activity-description">{{ activity.description }}</div>
+                                                </div>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    {% endif %}
+
+                                    {% if session.learning_objectives %}
+                                    <div class="session-objectives mb-3">
+                                        <h6><i class="fas fa-target me-2"></i>Цели обучения</h6>
+                                        <ul class="objectives-list">
+                                            {% for objective in session.learning_objectives %}
+                                            <li>{{ objective }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                    {% endif %}
+
+                                    {% if session.exercises %}
+                                    <div class="session-exercises mb-3">
+                                        <h6><i class="fas fa-dumbbell me-2"></i>Упражнения</h6>
+                                        <div class="exercises-grid">
+                                            {% for exercise in session.exercises %}
+                                            <div class="exercise-card">
+                                                <i class="fas fa-check-circle exercise-check"></i>
+                                                <span>{{ exercise }}</span>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    {% endif %}
+
+                                    {% if session.success_criteria %}
+                                    <div class="session-success">
+                                        <h6><i class="fas fa-trophy me-2"></i>Критерии успеха</h6>
+                                        <div class="success-criteria">
+                                            {% for criterion in session.success_criteria %}
+                                            <div class="criterion-item">
+                                                <i class="fas fa-medal me-2"></i>{{ criterion }}
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Sidebar with Milestones and Progress -->
+                    <div class="col-lg-4">
+                        <div class="study-sidebar">
+                            <!-- Milestones -->
+                            <div class="milestones-card mb-4">
+                                <h5 class="card-title">
+                                    <i class="fas fa-flag-checkered me-2"></i>Контрольные точки
+                                </h5>
+                                {% for milestone in study_plan.milestones %}
+                                <div class="milestone-item">
+                                    <div class="milestone-progress">
+                                        <div class="progress-circle">
+                                            <span>{{ milestone.progress_percent }}%</span>
+                                        </div>
+                                    </div>
+                                    <div class="milestone-content">
+                                        <h6>{{ milestone.title }}</h6>
+                                        <p class="text-muted">{{ milestone.description }}</p>
+                                        <small class="text-info">Сессия {{ milestone.session }}</small>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+
+                            <!-- Success Metrics -->
+                            {% if study_plan.success_metrics %}
+                            <div class="success-metrics-card mb-4">
+                                <h5 class="card-title">
+                                    <i class="fas fa-chart-line me-2"></i>Целевые показатели
+                                </h5>
+                                <div class="metrics-list">
+                                    <div class="metric-item">
+                                        <span class="metric-label">Удержание знаний</span>
+                                        <span class="metric-value">{{ study_plan.success_metrics.target_retention }}%</span>
+                                    </div>
+                                    <div class="metric-item">
+                                        <span class="metric-label">Завершение курса</span>
+                                        <span class="metric-value">{{ study_plan.success_metrics.target_completion }}%</span>
+                                    </div>
+                                    <div class="metric-item">
+                                        <span class="metric-label">Удовлетворенность</span>
+                                        <span class="metric-value">{{ study_plan.success_metrics.target_satisfaction }}/10</span>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Spaced Repetition Schedule -->
+                            <div class="repetition-schedule-card mb-4">
+                                <h5 class="card-title">
+                                    <i class="fas fa-redo me-2"></i>График повторений
+                                </h5>
+                                <p class="text-muted mb-3">Интервальные повторения по кривой Эббингауза</p>
+                                <div class="repetition-intervals">
+                                    {% for interval in study_plan.review_schedule %}
+                                    <span class="interval-badge">{{ interval }} дн.</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <!-- Completion Info -->
+                            <div class="completion-card">
+                                <h5 class="card-title">
+                                    <i class="fas fa-calendar-check me-2"></i>Завершение
+                                </h5>
+                                <div class="completion-date">
+                                    <i class="fas fa-flag-checkered me-2"></i>
+                                    {{ study_plan.completion_date }}
+                                </div>
+                                {% if study_plan.adaptive_features %}
+                                <div class="adaptive-features mt-3">
+                                    <h6>Адаптивные функции:</h6>
+                                    <ul class="feature-list">
+                                        {% if study_plan.adaptive_features.difficulty_adjustment %}
+                                        <li><i class="fas fa-adjust me-1"></i>Корректировка сложности</li>
+                                        {% endif %}
+                                        {% if study_plan.adaptive_features.personalized_pace %}
+                                        <li><i class="fas fa-tachometer-alt me-1"></i>Персональный темп</li>
+                                        {% endif %}
+                                        {% if study_plan.adaptive_features.progress_tracking %}
+                                        <li><i class="fas fa-chart-bar me-1"></i>Отслеживание прогресса</li>
+                                        {% endif %}
+                                    </ul>
+                                </div>
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -576,118 +2361,1027 @@
             document.getElementById('progressContainer').innerHTML = progressHtml;
         });
 
-    // Filter flashcards
+    // Enhanced Flashcard Functions
+    let flashcardProgress = {};
+    let currentStudySession = null;
+    
     function filterCards(type) {
         const cards = document.querySelectorAll('.flashcard-advanced');
+        let visibleCount = 0;
+        
         cards.forEach(card => {
             if (type === 'all' || card.dataset.type === type) {
                 card.style.display = 'block';
+                visibleCount++;
             } else {
                 card.style.display = 'none';
             }
         });
         
         // Update active button
-        document.querySelectorAll('.btn-outline-secondary, .btn-outline-success, .btn-outline-info, .btn-outline-warning, .btn-outline-danger, .btn-outline-primary').forEach(btn => {
+        document.querySelectorAll('[data-filter]').forEach(btn => {
             btn.classList.remove('active');
         });
-        event.target.classList.add('active');
+        document.querySelector(`[data-filter="${type}"]`).classList.add('active');
+        
+        // Show/hide no cards message
+        document.getElementById('noCardsMessage').style.display = visibleCount === 0 ? 'block' : 'none';
+        
+        updateFlashcardStats();
     }
 
-    // Mark card as reviewed
-    function markCardReviewed(resultId, cardId, correct) {
+    function searchFlashcards() {
+        const searchTerm = document.getElementById('flashcardSearch').value.toLowerCase();
+        const cards = document.querySelectorAll('.flashcard-advanced');
+        let visibleCount = 0;
+        
+        cards.forEach(card => {
+            const question = card.querySelector('.flashcard-question').textContent.toLowerCase();
+            const answer = card.querySelector('.answer-content').textContent.toLowerCase();
+            
+            if (question.includes(searchTerm) || answer.includes(searchTerm)) {
+                card.style.display = 'block';
+                visibleCount++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+        
+        document.getElementById('noCardsMessage').style.display = visibleCount === 0 ? 'block' : 'none';
+    }
+
+    function sortCards(criteria) {
+        const container = document.getElementById('flashcardsAccordion');
+        const cards = Array.from(container.querySelectorAll('.flashcard-advanced'));
+        
+        cards.sort((a, b) => {
+            switch(criteria) {
+                case 'difficulty':
+                    return parseInt(a.dataset.difficulty) - parseInt(b.dataset.difficulty);
+                case 'type':
+                    return a.dataset.type.localeCompare(b.dataset.type);
+                case 'progress':
+                    const progressA = flashcardProgress[a.dataset.cardId] || 0;
+                    const progressB = flashcardProgress[b.dataset.cardId] || 0;
+                    return progressB - progressA;
+                default:
+                    return 0;
+            }
+        });
+        
+        // Re-append sorted cards
+        cards.forEach(card => container.appendChild(card));
+        
+        // Show toast notification
+        showToast(`Карты отсортированы по ${criteria === 'difficulty' ? 'сложности' : criteria === 'type' ? 'типу' : 'прогрессу'}`, 'info');
+    }
+
+    function startInteractiveStudy() {
+        const modal = new bootstrap.Modal(document.getElementById('interactiveStudyModal'));
+        const modalBody = document.getElementById('studyModalBody');
+        
+        // Get cards that need review
+        const cards = Array.from(document.querySelectorAll('.flashcard-advanced')).filter(card => 
+            card.style.display !== 'none'
+        );
+        
+        if (cards.length === 0) {
+            showToast('Нет доступных карт для изучения', 'warning');
+            return;
+        }
+        
+        currentStudySession = {
+            cards: cards,
+            currentIndex: 0,
+            correct: 0,
+            total: cards.length
+        };
+        
+        modalBody.innerHTML = `
+            <div class="study-session-container">
+                <div class="progress mb-3">
+                    <div class="progress-bar" role="progressbar" style="width: 0%" id="studyProgress"></div>
+                </div>
+                <div class="text-center mb-3">
+                    <span class="badge bg-primary">Карта 1 из ${cards.length}</span>
+                </div>
+                <div class="study-card" id="studyCard">
+                    <!-- Study card content will be loaded here -->
+                </div>
+                <div class="study-controls mt-4 text-center">
+                    <button class="btn btn-outline-secondary" onclick="showStudyAnswer()" id="showAnswerBtn">
+                        <i class="fas fa-eye me-1"></i>Показать ответ
+                    </button>
+                    <div id="studyAnswerControls" style="display: none;">
+                        <button class="btn btn-danger me-2" onclick="studyCardResult(false)">
+                            <i class="fas fa-times me-1"></i>Не знаю
+                        </button>
+                        <button class="btn btn-success" onclick="studyCardResult(true)">
+                            <i class="fas fa-check me-1"></i>Знаю
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        loadStudyCard();
+        modal.show();
+    }
+
+    function loadStudyCard() {
+        if (!currentStudySession) return;
+        
+        const card = currentStudySession.cards[currentStudySession.currentIndex];
+        const question = card.querySelector('.flashcard-question').textContent;
+        const cardNumber = currentStudySession.currentIndex + 1;
+        const total = currentStudySession.total;
+        
+        document.getElementById('studyCard').innerHTML = `
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title mb-3">
+                        <i class="fas fa-question-circle text-primary me-2"></i>
+                        ${question}
+                    </h5>
+                    <div id="studyAnswer" style="display: none;">
+                        <hr>
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle me-2"></i>
+                            ${card.querySelector('.answer-content').textContent}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Update progress
+        const progress = (cardNumber / total) * 100;
+        document.getElementById('studyProgress').style.width = progress + '%';
+        document.querySelector('.badge.bg-primary').textContent = `Карта ${cardNumber} из ${total}`;
+        
+        // Reset controls
+        document.getElementById('showAnswerBtn').style.display = 'block';
+        document.getElementById('studyAnswerControls').style.display = 'none';
+    }
+
+    function showStudyAnswer() {
+        document.getElementById('studyAnswer').style.display = 'block';
+        document.getElementById('showAnswerBtn').style.display = 'none';
+        document.getElementById('studyAnswerControls').style.display = 'block';
+    }
+
+    function studyCardResult(correct) {
+        if (!currentStudySession) return;
+        
+        if (correct) {
+            currentStudySession.correct++;
+        }
+        
+        currentStudySession.currentIndex++;
+        
+        if (currentStudySession.currentIndex >= currentStudySession.total) {
+            // Session complete
+            const accuracy = Math.round((currentStudySession.correct / currentStudySession.total) * 100);
+            document.getElementById('studyModalBody').innerHTML = `
+                <div class="text-center">
+                    <i class="fas fa-trophy text-warning" style="font-size: 4rem;"></i>
+                    <h4 class="mt-3">Сессия завершена!</h4>
+                    <p class="lead">Правильных ответов: ${currentStudySession.correct} из ${currentStudySession.total}</p>
+                    <div class="progress mb-3">
+                        <div class="progress-bar bg-${accuracy >= 80 ? 'success' : accuracy >= 60 ? 'warning' : 'danger'}" 
+                             style="width: ${accuracy}%">${accuracy}%</div>
+                    </div>
+                    <button class="btn btn-primary" onclick="startInteractiveStudy()">
+                        <i class="fas fa-redo me-1"></i>Повторить сессию
+                    </button>
+                </div>
+            `;
+            currentStudySession = null;
+        } else {
+            loadStudyCard();
+        }
+    }
+
+    function startQuizMode() {
+        showToast('Режим теста будет добавлен в следующей версии', 'info');
+    }
+
+    function showCreateCardModal() {
+        const modal = new bootstrap.Modal(document.getElementById('createCardModal'));
+        modal.show();
+    }
+
+    function createNewCard() {
+        const question = document.getElementById('newCardQuestion').value;
+        const answer = document.getElementById('newCardAnswer').value;
+        const type = document.getElementById('newCardType').value;
+        const difficulty = document.getElementById('newCardDifficulty').value;
+        const hint = document.getElementById('newCardHint').value;
+        
+        if (!question || !answer) {
+            showToast('Заполните вопрос и ответ', 'warning');
+            return;
+        }
+        
+        // Here you would typically send this to the server
+        // For now, just show success message
+        showToast('Флеш-карта создана успешно!', 'success');
+        
+        // Close modal and reset form
+        bootstrap.Modal.getInstance(document.getElementById('createCardModal')).hide();
+        document.getElementById('createCardForm').reset();
+    }
+
+    function addToFavorites(cardId) {
+        showToast('Карта добавлена в избранное', 'success');
+        // Here you would save to favorites
+    }
+
+    function shareCard(cardId) {
+        if (navigator.share) {
+            navigator.share({
+                title: 'Флеш-карта',
+                text: 'Изучаем вместе!',
+                url: window.location.href
+            });
+        } else {
+            // Fallback - copy to clipboard
+            navigator.clipboard.writeText(window.location.href);
+            showToast('Ссылка скопирована в буфер обмена', 'info');
+        }
+    }
+
+    function updateFlashcardStats() {
+        // This would typically fetch real progress data
+        const totalCards = document.querySelectorAll('.flashcard-advanced').length;
+        const masteredCards = Object.values(flashcardProgress).filter(p => p >= 3).length;
+        const reviewCards = Object.values(flashcardProgress).filter(p => p > 0 && p < 3).length;
+        const newCards = totalCards - masteredCards - reviewCards;
+        const progressPercent = totalCards > 0 ? Math.round((masteredCards / totalCards) * 100) : 0;
+        
+        document.getElementById('masteredCount').textContent = masteredCards;
+        document.getElementById('reviewCount').textContent = reviewCards;
+        document.getElementById('newCount').textContent = newCards;
+        document.getElementById('progressPercent').textContent = progressPercent + '%';
+    }
+
+    function showToast(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `alert alert-${type} position-fixed`;
+        toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        toast.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close ms-2" onclick="this.parentElement.remove()"></button>
+        `;
+        document.body.appendChild(toast);
+        
+        setTimeout(() => toast.remove(), 4000);
+    }
+
+    // Enhanced mark card as reviewed with confidence levels
+    function markCardReviewed(resultId, cardId, correct, confidence = 2) {
         fetch('/api/flashcard_progress', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
                 result_id: resultId,
                 flashcard_id: cardId,
-                correct: correct
+                correct: correct,
+                confidence: confidence
             })
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                const btn = event.target;
-                btn.disabled = true;
-                btn.innerHTML = correct ? 
-                    '<i class="fas fa-check me-1"></i>Повторить через ' + data.next_review_days + ' дн.' :
-                    '<i class="fas fa-redo me-1"></i>Повторить завтра';
+                // Update progress indicator
+                const progressIndicator = document.querySelector(`[data-card="${cardId}"]`);
+                if (progressIndicator) {
+                    const icon = progressIndicator.querySelector('i');
+                    if (correct && confidence >= 3) {
+                        icon.className = 'fas fa-check-circle text-success';
+                        icon.title = 'Изучено';
+                    } else if (correct && confidence >= 2) {
+                        icon.className = 'fas fa-clock text-warning';
+                        icon.title = 'На повторение';
+                    } else {
+                        icon.className = 'fas fa-times-circle text-danger';
+                        icon.title = 'Требует изучения';
+                    }
+                }
                 
-                // Refresh progress
-                loadProgress();
+                // Update buttons
+                const buttons = event.target.parentElement.querySelectorAll('button');
+                buttons.forEach(btn => {
+                    btn.disabled = true;
+                    btn.classList.remove('btn-outline-danger', 'btn-outline-warning', 'btn-outline-success');
+                    btn.classList.add('btn-secondary');
+                });
+                
+                // Update progress in memory
+                flashcardProgress[cardId] = confidence;
+                
+                // Show feedback
+                let message = '';
+                let nextReview = '';
+                
+                if (correct && confidence >= 3) {
+                    message = 'Отлично! Карта помечена как изученная.';
+                    nextReview = data.next_review_days ? `Повторение через ${data.next_review_days} дней` : '';
+                } else if (correct && confidence >= 2) {
+                    message = 'Хорошо! Карта добавлена на повторение.';
+                    nextReview = 'Повторение завтра';
+                } else {
+                    message = 'Карта будет показана снова для изучения.';
+                    nextReview = 'Повторение сегодня';
+                }
+                
+                showToast(message + (nextReview ? ' ' + nextReview : ''), 'success');
+                
+                // Update statistics
+                updateFlashcardStats();
+            }
+        })
+        .catch(error => {
+            console.error('Error updating flashcard progress:', error);
+            showToast('Ошибка при сохранении прогресса', 'danger');
+        });
+    }
+
+    // Modern Mind Map Implementation
+    let mindMapData = null;
+    let currentLayout = 'radial';
+    let mindMapNodes = [];
+    let mindMapLinks = [];
+
+    function initMindMap() {
+        // Show loading
+        document.getElementById('mindMapLoading').style.display = 'block';
+        
+        fetch(`/api/mind_map/{{ result_id }}`)
+            .then(response => response.json())
+            .then(data => {
+                mindMapData = data;
+                document.getElementById('mindMapLoading').style.display = 'none';
+                drawModernMindMap();
+            })
+            .catch(error => {
+                console.error('Error loading mind map:', error);
+                document.getElementById('mindMapLoading').innerHTML = 
+                    '<div class="text-danger"><i class="fas fa-exclamation-triangle"></i> Ошибка загрузки</div>';
+            });
+    }
+
+    function drawModernMindMap() {
+        if (!mindMapData || !mindMapData.branches) return;
+
+        const svg = d3.select('#mindMapSvg');
+        svg.selectAll('*').remove(); // Clear previous content
+        
+        const width = document.getElementById('mindMapSvg').clientWidth;
+        const height = 500;
+
+        // Prepare data
+        prepareGraphData();
+        
+        // Update statistics
+        updateMindMapStats();
+
+        // Create main group with zoom capability
+        const g = svg.append('g').attr('class', 'mind-map-group');
+
+        // Add zoom behavior
+        const zoom = d3.zoom()
+            .scaleExtent([0.3, 3])
+            .on('zoom', (event) => {
+                g.attr('transform', event.transform);
+            });
+
+        svg.call(zoom);
+
+        // Draw based on layout
+        if (currentLayout === 'radial') {
+            drawRadialLayout(g, width, height);
+        } else if (currentLayout === 'tree') {
+            drawTreeLayout(g, width, height);
+        } else {
+            drawForceLayout(g, width, height);
+        }
+    }
+
+    function prepareGraphData() {
+        mindMapNodes = [];
+        mindMapLinks = [];
+
+        // Central node
+        mindMapNodes.push({
+            id: 'central',
+            name: mindMapData.central_topic || 'Основная тема',
+            type: 'central',
+            level: 0,
+            color: '#667eea',
+            size: 35,
+            details: {
+                title: mindMapData.central_topic || 'Основная тема',
+                description: 'Центральная тема документа',
+                type: 'Основная тема'
+            }
+        });
+
+        // Branch nodes and their children
+        mindMapData.branches.forEach((branch, branchIndex) => {
+            const branchId = `branch-${branchIndex}`;
+            
+            mindMapNodes.push({
+                id: branchId,
+                name: branch.name,
+                type: 'branch',
+                level: 1,
+                color: branch.color || '#4ECDC4',
+                size: 25,
+                details: {
+                    title: branch.name,
+                    description: `Важность: ${Math.round((branch.importance || 0.5) * 100)}%`,
+                    type: 'Основная ветка',
+                    children: branch.children ? branch.children.length : 0
+                }
+            });
+
+            // Link from central to branch
+            mindMapLinks.push({
+                source: 'central',
+                target: branchId,
+                type: 'main'
+            });
+
+            // Child nodes
+            if (branch.children) {
+                branch.children.forEach((child, childIndex) => {
+                    const childId = `child-${branchIndex}-${childIndex}`;
+                    
+                    mindMapNodes.push({
+                        id: childId,
+                        name: child.name,
+                        type: 'child',
+                        level: 2,
+                        color: child.color || branch.color || '#96CEB4',
+                        size: 18,
+                        parent: branchId,
+                        details: {
+                            title: child.name,
+                            description: `Подтема раздела "${branch.name}"`,
+                            type: 'Подтема',
+                            parent: branch.name
+                        }
+                    });
+
+                    // Link from branch to child
+                    mindMapLinks.push({
+                        source: branchId,
+                        target: childId,
+                        type: 'sub'
+                    });
+                });
             }
         });
     }
 
-    // Draw mind map
-    function drawMindMap() {
-        fetch(`/api/mind_map/{{ result_id }}`)
-            .then(response => response.json())
-            .then(data => {
-                const canvas = document.getElementById('mindMapCanvas');
-                const ctx = canvas.getContext('2d');
+    function drawRadialLayout(g, width, height) {
+        const centerX = width / 2;
+        const centerY = height / 2;
+
+        // Position nodes
+        const branches = mindMapNodes.filter(n => n.type === 'branch');
+        const angleStep = (2 * Math.PI) / Math.max(branches.length, 1);
+
+        // Position central node
+        const centralNode = mindMapNodes.find(n => n.type === 'central');
+        centralNode.x = centerX;
+        centralNode.y = centerY;
+
+        // Position branch nodes in circle
+        branches.forEach((branch, index) => {
+            const angle = index * angleStep - Math.PI / 2; // Start from top
+            branch.x = centerX + Math.cos(angle) * 120;
+            branch.y = centerY + Math.sin(angle) * 120;
+        });
+
+        // Position child nodes around their parents
+        mindMapNodes.filter(n => n.type === 'child').forEach(child => {
+            const parent = mindMapNodes.find(n => n.id === child.parent);
+            if (parent) {
+                const siblings = mindMapNodes.filter(n => n.parent === child.parent);
+                const childIndex = siblings.indexOf(child);
+                const totalSiblings = siblings.length;
                 
-                // Clear canvas
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                const angleOffset = (childIndex - (totalSiblings - 1) / 2) * (Math.PI / 6);
+                const distance = 70;
                 
-                // Draw central topic
-                const centerX = canvas.width / 2;
-                const centerY = canvas.height / 2;
+                // Calculate angle from center to parent
+                const parentAngle = Math.atan2(parent.y - centerY, parent.x - centerX);
+                const childAngle = parentAngle + angleOffset;
                 
-                ctx.font = 'bold 16px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillStyle = '#667eea';
-                ctx.fillText(data.central_topic, centerX, centerY);
-                
-                // Draw branches
-                const angleStep = (2 * Math.PI) / data.branches.length;
-                data.branches.forEach((branch, index) => {
-                    const angle = index * angleStep;
-                    const branchX = centerX + Math.cos(angle) * 150;
-                    const branchY = centerY + Math.sin(angle) * 150;
-                    
-                    // Draw line
-                    ctx.beginPath();
-                    ctx.moveTo(centerX, centerY);
-                    ctx.lineTo(branchX, branchY);
-                    ctx.strokeStyle = branch.color;
-                    ctx.lineWidth = 3;
-                    ctx.stroke();
-                    
-                    // Draw branch text
-                    ctx.font = '14px Arial';
-                    ctx.fillStyle = branch.color;
-                    ctx.fillText(branch.name, branchX, branchY);
-                    
-                    // Draw children
-                    branch.children.forEach((child, childIndex) => {
-                        const childAngle = angle + (childIndex - 1) * 0.3;
-                        const childX = branchX + Math.cos(childAngle) * 80;
-                        const childY = branchY + Math.sin(childAngle) * 80;
-                        
-                        ctx.beginPath();
-                        ctx.moveTo(branchX, branchY);
-                        ctx.lineTo(childX, childY);
-                        ctx.strokeStyle = '#dee2e6';
-                        ctx.lineWidth = 1;
-                        ctx.stroke();
-                        
-                        ctx.font = '12px Arial';
-                        ctx.fillStyle = '#6c757d';
-                        ctx.fillText(child.name, childX, childY);
-                    });
-                });
+                child.x = parent.x + Math.cos(childAngle) * distance;
+                child.y = parent.y + Math.sin(childAngle) * distance;
+            }
+        });
+
+        drawStaticNodes(g);
+    }
+
+    function drawTreeLayout(g, width, height) {
+        // Simple tree layout
+        const levels = [
+            mindMapNodes.filter(n => n.level === 0),
+            mindMapNodes.filter(n => n.level === 1),
+            mindMapNodes.filter(n => n.level === 2)
+        ];
+
+        const levelHeight = height / (levels.length + 1);
+
+        levels.forEach((levelNodes, levelIndex) => {
+            const y = levelHeight * (levelIndex + 1);
+            const spacing = width / (levelNodes.length + 1);
+            
+            levelNodes.forEach((node, nodeIndex) => {
+                node.x = spacing * (nodeIndex + 1);
+                node.y = y;
+            });
+        });
+
+        drawStaticNodes(g);
+    }
+
+    function drawForceLayout(g, width, height) {
+        // Force-directed layout
+        const simulation = d3.forceSimulation(mindMapNodes)
+            .force('link', d3.forceLink(mindMapLinks).id(d => d.id).distance(80))
+            .force('charge', d3.forceManyBody().strength(-200))
+            .force('center', d3.forceCenter(width / 2, height / 2))
+            .force('collision', d3.forceCollide().radius(d => d.size + 5));
+
+        drawDynamicNodes(g, simulation);
+    }
+
+    function drawStaticNodes(g) {
+        // Draw links
+        const links = g.selectAll('.mind-link')
+            .data(mindMapLinks)
+            .enter()
+            .append('line')
+            .attr('class', 'mind-link')
+            .attr('x1', d => {
+                const source = mindMapNodes.find(n => n.id === d.source);
+                return source ? source.x : 0;
+            })
+            .attr('y1', d => {
+                const source = mindMapNodes.find(n => n.id === d.source);
+                return source ? source.y : 0;
+            })
+            .attr('x2', d => {
+                const target = mindMapNodes.find(n => n.id === d.target);
+                return target ? target.x : 0;
+            })
+            .attr('y2', d => {
+                const target = mindMapNodes.find(n => n.id === d.target);
+                return target ? target.y : 0;
+            })
+            .attr('stroke', d => d.type === 'main' ? '#667eea' : '#dee2e6')
+            .attr('stroke-width', d => d.type === 'main' ? 3 : 2)
+            .attr('opacity', 0.7);
+
+        // Draw nodes
+        const nodeGroups = g.selectAll('.mind-node')
+            .data(mindMapNodes)
+            .enter()
+            .append('g')
+            .attr('class', 'mind-node')
+            .attr('transform', d => `translate(${d.x}, ${d.y})`)
+            .style('cursor', 'pointer')
+            .on('click', (event, d) => showNodeDetails(d))
+            .on('mouseover', function(event, d) {
+                d3.select(this).select('circle')
+                    .transition().duration(200)
+                    .attr('r', d.size * 1.3)
+                    .attr('stroke-width', 4);
+            })
+            .on('mouseout', function(event, d) {
+                d3.select(this).select('circle')
+                    .transition().duration(200)
+                    .attr('r', d.size)
+                    .attr('stroke-width', 2);
+            });
+
+        // Node circles with gradient
+        const defs = g.append('defs');
+        mindMapNodes.forEach(node => {
+            const gradient = defs.append('radialGradient')
+                .attr('id', `gradient-${node.id}`)
+                .attr('cx', '30%')
+                .attr('cy', '30%');
+            
+            gradient.append('stop')
+                .attr('offset', '0%')
+                .attr('stop-color', d3.color(node.color).brighter(0.5));
+            
+            gradient.append('stop')
+                .attr('offset', '100%')
+                .attr('stop-color', node.color);
+        });
+
+        nodeGroups.append('circle')
+            .attr('r', d => d.size)
+            .attr('fill', d => `url(#gradient-${d.id})`)
+            .attr('stroke', '#fff')
+            .attr('stroke-width', 2)
+            .style('filter', 'drop-shadow(0 3px 6px rgba(0,0,0,0.2))');
+
+        // Node labels with better positioning
+        nodeGroups.append('text')
+            .attr('text-anchor', 'middle')
+            .attr('dy', d => d.size + 18)
+            .attr('font-size', d => d.type === 'central' ? '13px' : d.type === 'branch' ? '11px' : '9px')
+            .attr('font-weight', d => d.type === 'central' ? 'bold' : 'normal')
+            .attr('fill', '#333')
+            .style('text-shadow', '1px 1px 2px rgba(255,255,255,0.8)')
+            .text(d => {
+                const maxLength = d.type === 'central' ? 25 : d.type === 'branch' ? 20 : 15;
+                return d.name.length > maxLength ? d.name.substring(0, maxLength) + '...' : d.name;
             });
     }
 
-    // Download mind map as image
+    function drawDynamicNodes(g, simulation) {
+        // Similar to drawStaticNodes but with simulation updates
+        const links = g.selectAll('.mind-link')
+            .data(mindMapLinks)
+            .enter()
+            .append('line')
+            .attr('class', 'mind-link')
+            .attr('stroke', d => d.type === 'main' ? '#667eea' : '#dee2e6')
+            .attr('stroke-width', d => d.type === 'main' ? 3 : 2)
+            .attr('opacity', 0.7);
+
+        const nodeGroups = g.selectAll('.mind-node')
+            .data(mindMapNodes)
+            .enter()
+            .append('g')
+            .attr('class', 'mind-node')
+            .style('cursor', 'pointer')
+            .on('click', (event, d) => showNodeDetails(d))
+            .call(d3.drag()
+                .on('start', (event, d) => {
+                    if (!event.active) simulation.alphaTarget(0.3).restart();
+                    d.fx = d.x;
+                    d.fy = d.y;
+                })
+                .on('drag', (event, d) => {
+                    d.fx = event.x;
+                    d.fy = event.y;
+                })
+                .on('end', (event, d) => {
+                    if (!event.active) simulation.alphaTarget(0);
+                    d.fx = null;
+                    d.fy = null;
+                }));
+
+        nodeGroups.append('circle')
+            .attr('r', d => d.size)
+            .attr('fill', d => d.color)
+            .attr('stroke', '#fff')
+            .attr('stroke-width', 2);
+
+        nodeGroups.append('text')
+            .attr('text-anchor', 'middle')
+            .attr('dy', d => d.size + 15)
+            .attr('font-size', '10px')
+            .attr('fill', '#333')
+            .text(d => d.name.length > 15 ? d.name.substring(0, 15) + '...' : d.name);
+
+        simulation.on('tick', () => {
+            links
+                .attr('x1', d => d.source.x)
+                .attr('y1', d => d.source.y)
+                .attr('x2', d => d.target.x)
+                .attr('y2', d => d.target.y);
+
+            nodeGroups
+                .attr('transform', d => `translate(${d.x}, ${d.y})`);
+        });
+    }
+
+    function showNodeDetails(d) {
+        const panel = document.getElementById('nodeDetailsPanel');
+        const title = document.getElementById('nodeTitle');
+        const content = document.getElementById('nodeContent');
+
+        title.innerHTML = `<i class="fas fa-info-circle me-2"></i>${d.details.title}`;
+        
+        let detailsHtml = `
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fas fa-tag me-2 text-primary"></i>
+                        <strong>Тип:</strong>
+                        <span class="badge ms-2" style="background-color: ${d.color}; color: white;">
+                            ${d.type === 'central' ? 'Центральная тема' : d.type === 'branch' ? 'Основная ветка' : 'Подтема'}
+                        </span>
+                    </div>
+                    <div class="mb-2">
+                        <i class="fas fa-align-left me-2 text-info"></i>
+                        <strong>Описание:</strong>
+                        <p class="mt-1 text-muted">${d.details.description}</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+        `;
+
+        if (d.details.children !== undefined) {
+            detailsHtml += `
+                <div class="mb-2">
+                    <i class="fas fa-sitemap me-2 text-success"></i>
+                    <strong>Подтем:</strong> 
+                    <span class="badge bg-success ms-1">${d.details.children}</span>
+                </div>`;
+        }
+        if (d.details.parent) {
+            detailsHtml += `
+                <div class="mb-2">
+                    <i class="fas fa-level-up-alt me-2 text-warning"></i>
+                    <strong>Родитель:</strong> 
+                    <span class="text-primary">${d.details.parent}</span>
+                </div>`;
+        }
+
+        // Add connection info
+        const connections = mindMapLinks.filter(link => 
+            link.source === d.id || link.target === d.id
+        ).length;
+        
+        detailsHtml += `
+                <div class="mb-2">
+                    <i class="fas fa-link me-2 text-secondary"></i>
+                    <strong>Связей:</strong> 
+                    <span class="badge bg-secondary ms-1">${connections}</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="border-top pt-3">
+            <h6 class="mb-2"><i class="fas fa-bolt me-2"></i>Быстрые действия</h6>
+            <div class="d-flex gap-2 flex-wrap">
+                <button class="btn btn-sm btn-outline-primary" onclick="focusOnNode('${d.id}')">
+                    <i class="fas fa-crosshairs me-1"></i>Фокус
+                </button>
+                <button class="btn btn-sm btn-outline-success" onclick="highlightConnections('${d.id}')">
+                    <i class="fas fa-project-diagram me-1"></i>Связи
+                </button>
+                <button class="btn btn-sm btn-outline-info" onclick="createFlashcardFromNode('${d.id}')">
+                    <i class="fas fa-layer-group me-1"></i>Флеш-карта
+                </button>
+                <button class="btn btn-sm btn-outline-warning" onclick="addToStudyPlan('${d.id}')">
+                    <i class="fas fa-calendar-plus me-1"></i>В план
+                </button>
+            </div>
+        </div>
+        `;
+
+        content.innerHTML = detailsHtml;
+        panel.style.display = 'block';
+        panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        
+        // Store current selected node
+        window.selectedNode = d;
+    }
+
+    function hideNodeDetails() {
+        document.getElementById('nodeDetailsPanel').style.display = 'none';
+    }
+
+    function setMindMapLayout(layout) {
+        currentLayout = layout;
+        
+        // Update active button
+        document.querySelectorAll('.mind-map-controls .btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        event.target.classList.add('active');
+        
+        drawModernMindMap();
+    }
+
+    function resetMindMapView() {
+        const svg = d3.select('#mindMapSvg');
+        svg.transition().duration(750).call(
+            d3.zoom().transform,
+            d3.zoomIdentity
+        );
+    }
+
     function downloadMindMap() {
-        const canvas = document.getElementById('mindMapCanvas');
-        const link = document.createElement('a');
-        link.download = 'mind_map.png';
-        link.href = canvas.toDataURL();
-        link.click();
+        const svgElement = document.getElementById('mindMapSvg');
+        const svgData = new XMLSerializer().serializeToString(svgElement);
+        
+        // Create canvas for export
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = svgElement.clientWidth;
+        canvas.height = 500;
+        
+        // Create image from SVG
+        const img = new Image();
+        img.onload = function() {
+            // White background
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0);
+            
+            // Download
+            const link = document.createElement('a');
+            link.download = 'mind_map.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        };
+        
+        const blob = new Blob([svgData], {type: 'image/svg+xml;charset=utf-8'});
+        img.src = URL.createObjectURL(blob);
+    }
+
+    // New Enhanced Mind Map Functions
+    function searchMindMapNodes() {
+        const searchTerm = document.getElementById('mindMapSearch').value.toLowerCase();
+        if (!searchTerm) {
+            // Reset all nodes
+            d3.selectAll('.mind-node').style('opacity', 1);
+            return;
+        }
+        
+        d3.selectAll('.mind-node').style('opacity', function(d) {
+            return d.name.toLowerCase().includes(searchTerm) ? 1 : 0.3;
+        });
+    }
+
+    function filterNodes(type) {
+        // Update active button
+        document.querySelectorAll('[data-filter]').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.querySelector(`[data-filter="${type}"]`).classList.add('active');
+        
+        if (type === 'all') {
+            d3.selectAll('.mind-node').style('opacity', 1);
+            d3.selectAll('.mind-link').style('opacity', 0.6);
+        } else {
+            d3.selectAll('.mind-node').style('opacity', function(d) {
+                return d.type === type ? 1 : 0.3;
+            });
+            d3.selectAll('.mind-link').style('opacity', function(d) {
+                const sourceNode = mindMapNodes.find(n => n.id === d.source);
+                const targetNode = mindMapNodes.find(n => n.id === d.target);
+                return (sourceNode && sourceNode.type === type) || (targetNode && targetNode.type === type) ? 0.6 : 0.1;
+            });
+        }
+    }
+
+    function adjustMindMapSize(size) {
+        // Update active button
+        document.querySelectorAll('.mind-map-controls .btn-group:last-child .btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        event.target.classList.add('active');
+        
+        const svg = d3.select('#mindMapSvg');
+        let scale;
+        
+        switch(size) {
+            case 'small': scale = 0.7; break;
+            case 'large': scale = 1.3; break;
+            default: scale = 1; break;
+        }
+        
+        svg.transition().duration(500).call(
+            d3.zoom().transform,
+            d3.zoomIdentity.scale(scale)
+        );
+    }
+
+    function focusOnNode(nodeId) {
+        const node = mindMapNodes.find(n => n.id === nodeId);
+        if (!node) return;
+        
+        const svg = d3.select('#mindMapSvg');
+        const width = document.getElementById('mindMapSvg').clientWidth;
+        const height = 500;
+        
+        const scale = 1.5;
+        const x = width / 2 - node.x * scale;
+        const y = height / 2 - node.y * scale;
+        
+        svg.transition().duration(750).call(
+            d3.zoom().transform,
+            d3.zoomIdentity.translate(x, y).scale(scale)
+        );
+        
+        // Highlight the node
+        d3.selectAll('.mind-node').style('opacity', 0.3);
+        d3.select(`[data-node-id="${nodeId}"]`).style('opacity', 1);
+        
+        setTimeout(() => {
+            d3.selectAll('.mind-node').style('opacity', 1);
+        }, 2000);
+    }
+
+    function highlightConnections(nodeId) {
+        const connectedLinks = mindMapLinks.filter(link => 
+            link.source === nodeId || link.target === nodeId
+        );
+        
+        const connectedNodeIds = new Set();
+        connectedLinks.forEach(link => {
+            connectedNodeIds.add(link.source);
+            connectedNodeIds.add(link.target);
+        });
+        
+        // Highlight connected nodes and links
+        d3.selectAll('.mind-node').style('opacity', function(d) {
+            return connectedNodeIds.has(d.id) ? 1 : 0.3;
+        });
+        
+        d3.selectAll('.mind-link').style('opacity', function(d) {
+            return connectedLinks.includes(d) ? 1 : 0.1;
+        }).style('stroke-width', function(d) {
+            return connectedLinks.includes(d) ? 3 : 1;
+        });
+        
+        // Reset after 3 seconds
+        setTimeout(() => {
+            d3.selectAll('.mind-node').style('opacity', 1);
+            d3.selectAll('.mind-link').style('opacity', 0.6).style('stroke-width', 1);
+        }, 3000);
+    }
+
+    function createFlashcardFromNode(nodeId) {
+        const node = window.selectedNode || mindMapNodes.find(n => n.id === nodeId);
+        if (!node) return;
+        
+        // Create a simple flashcard modal or redirect to flashcards tab
+        const flashcardData = {
+            question: `Что такое "${node.name}"?`,
+            answer: node.details.description,
+            difficulty: node.type === 'central' ? 3 : node.type === 'branch' ? 2 : 1
+        };
+        
+        // Show success message
+        const toast = document.createElement('div');
+        toast.className = 'alert alert-success position-fixed';
+        toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        toast.innerHTML = `
+            <i class="fas fa-check-circle me-2"></i>
+            Флеш-карта создана для "${node.name}"
+            <button type="button" class="btn-close ms-2" onclick="this.parentElement.remove()"></button>
+        `;
+        document.body.appendChild(toast);
+        
+        setTimeout(() => toast.remove(), 3000);
+    }
+
+    function addToStudyPlan(nodeId) {
+        const node = window.selectedNode || mindMapNodes.find(n => n.id === nodeId);
+        if (!node) return;
+        
+        // Show success message
+        const toast = document.createElement('div');
+        toast.className = 'alert alert-info position-fixed';
+        toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        toast.innerHTML = `
+            <i class="fas fa-calendar-plus me-2"></i>
+            "${node.name}" добавлено в план обучения
+            <button type="button" class="btn-close ms-2" onclick="this.parentElement.remove()"></button>
+        `;
+        document.body.appendChild(toast);
+        
+        setTimeout(() => toast.remove(), 3000);
+    }
+
+    function fitToScreen() {
+        const svg = d3.select('#mindMapSvg');
+        svg.transition().duration(750).call(
+            d3.zoom().transform,
+            d3.zoomIdentity.scale(0.8)
+        );
+    }
+
+    function centerView() {
+        const svg = d3.select('#mindMapSvg');
+        svg.transition().duration(750).call(
+            d3.zoom().transform,
+            d3.zoomIdentity
+        );
+    }
+
+    function updateMindMapStats() {
+        document.getElementById('nodeCount').textContent = mindMapNodes.length;
+        document.getElementById('linkCount').textContent = mindMapLinks.length;
     }
 
     // Start study session
@@ -740,7 +3434,7 @@
 
     // Initialize on tab change
     document.getElementById('mindmap-tab').addEventListener('shown.bs.tab', function() {
-        drawMindMap();
+        initMindMap();
     });
 
     // Expand/collapse all flashcards
@@ -755,5 +3449,1203 @@
             new bootstrap.Collapse(el, { hide: true });
         });
     }
+
+    // Enhanced Summary Functionality
+    let isCompactView = false;
+    let summaryText = `{{ summary|replace('\n', '\\n')|replace('"', '\\"')|safe }}`;
+
+    function initSummary() {
+        processSummaryContent();
+        calculateSummaryStats();
+        initReadingProgress();
+    }
+
+    function processSummaryContent() {
+        const summaryContainer = document.getElementById('summaryContent');
+        if (!summaryContainer || !summaryText) return;
+
+        // Process the summary text to create structured HTML
+        let processedContent = summaryText;
+
+        // Convert emoji headers to structured sections
+        processedContent = processedContent.replace(/## 🎯 ([^:]+):/g, '<div class="emoji-section"><h2><span class="me-2">🎯</span>$1</h2>');
+        processedContent = processedContent.replace(/## 📊 ([^:]+):/g, '</div><div class="emoji-section"><h2><span class="me-2">📊</span>$1</h2>');
+        processedContent = processedContent.replace(/## 🔗 ([^:]+):/g, '</div><div class="emoji-section"><h2><span class="me-2">🔗</span>$1</h2>');
+        processedContent = processedContent.replace(/## 💡 ([^:]+):/g, '</div><div class="emoji-section"><h2><span class="me-2">💡</span>$1</h2>');
+        processedContent = processedContent.replace(/## ⚡ ([^:]+):/g, '</div><div class="emoji-section"><h2><span class="me-2">⚡</span>$1</h2>');
+
+        // Convert bullet points to enhanced list items
+        processedContent = processedContent.replace(/• \*\*([^*]+)\*\*: ([^\n]+)/g, '<div class="key-point"><strong>$1:</strong> $2</div>');
+        processedContent = processedContent.replace(/• ([^\n]+)/g, '<li>$1</li>');
+
+        // Convert bold text
+        processedContent = processedContent.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+
+        // Convert line breaks to paragraphs
+        processedContent = processedContent.replace(/\n\n/g, '</p><p>');
+        processedContent = processedContent.replace(/\n/g, '<br>');
+
+        // Wrap in paragraphs and close sections
+        processedContent = '<p>' + processedContent + '</p></div>';
+
+        // Clean up empty paragraphs
+        processedContent = processedContent.replace(/<p><\/p>/g, '');
+        processedContent = processedContent.replace(/<p><br><\/p>/g, '');
+
+        summaryContainer.innerHTML = processedContent;
+    }
+
+    function calculateSummaryStats() {
+        const wordCount = summaryText.split(/\s+/).length;
+        const readingTime = Math.ceil(wordCount / 200); // Average reading speed
+        const sectionCount = (summaryText.match(/##/g) || []).length;
+        const keyPoints = (summaryText.match(/•/g) || []).length;
+
+        document.getElementById('wordCount').textContent = wordCount;
+        document.getElementById('readingTime').textContent = readingTime;
+        document.getElementById('sectionCount').textContent = sectionCount;
+        document.getElementById('keyPoints').textContent = keyPoints;
+    }
+
+    function initReadingProgress() {
+        const summaryContainer = document.getElementById('summaryContent');
+        if (!summaryContainer) return;
+
+        // Simulate reading progress based on scroll
+        summaryContainer.addEventListener('scroll', function() {
+            const scrollTop = this.scrollTop;
+            const scrollHeight = this.scrollHeight - this.clientHeight;
+            const progress = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
+            
+            document.getElementById('progressBar').style.width = progress + '%';
+            document.getElementById('readingProgress').textContent = Math.round(progress) + '%';
+        });
+
+        // Auto-progress simulation for demonstration
+        let autoProgress = 0;
+        const progressInterval = setInterval(() => {
+            if (autoProgress < 100) {
+                autoProgress += 2;
+                document.getElementById('progressBar').style.width = autoProgress + '%';
+                document.getElementById('readingProgress').textContent = autoProgress + '%';
+            } else {
+                clearInterval(progressInterval);
+            }
+        }, 100);
+    }
+
+    function toggleSummaryView() {
+        const summaryContainer = document.querySelector('.summary-modern');
+        const toggleText = document.getElementById('viewToggleText');
+        
+        isCompactView = !isCompactView;
+        
+        if (isCompactView) {
+            summaryContainer.classList.add('summary-compact');
+            toggleText.textContent = 'Полный вид';
+        } else {
+            summaryContainer.classList.remove('summary-compact');
+            toggleText.textContent = 'Компактный вид';
+        }
+    }
+
+    function copySummary() {
+        const textToCopy = summaryText.replace(/\*\*/g, '').replace(/##/g, '').replace(/•/g, '-');
+        
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                showNotification('Резюме скопировано в буфер обмена!', 'success');
+            }).catch(() => {
+                fallbackCopyText(textToCopy);
+            });
+        } else {
+            fallbackCopyText(textToCopy);
+        }
+    }
+
+    function fallbackCopyText(text) {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+            document.execCommand('copy');
+            showNotification('Резюме скопировано в буфер обмена!', 'success');
+        } catch (err) {
+            showNotification('Не удалось скопировать текст', 'error');
+        }
+        
+        document.body.removeChild(textArea);
+    }
+
+    function printSummary() {
+        const printContent = document.getElementById('summaryContent').innerHTML;
+        const printWindow = window.open('', '_blank');
+        
+        printWindow.document.write(`
+            <html>
+                <head>
+                    <title>Резюме - AI-конспект</title>
+                    <style>
+                        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; margin: 40px; }
+                        h2 { color: #667eea; border-bottom: 2px solid #667eea; padding-bottom: 10px; }
+                        .emoji-section { margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px; }
+                        .key-point { background: #fff5f5; border: 1px solid #fed7d7; border-radius: 5px; padding: 10px; margin: 8px 0; }
+                        strong { color: #2d3748; }
+                        @media print { body { margin: 20px; } }
+                    </style>
+                </head>
+                <body>
+                    <h1>📄 Структурированное резюме</h1>
+                    <div>${printContent}</div>
+                    <div style="margin-top: 40px; text-align: center; color: #666; font-size: 12px;">
+                        Создано с помощью AI-конспект Pro
+                    </div>
+                </body>
+            </html>
+        `);
+        
+        printWindow.document.close();
+        printWindow.focus();
+        
+        setTimeout(() => {
+            printWindow.print();
+            printWindow.close();
+        }, 250);
+    }
+
+    function showNotification(message, type = 'info') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
+        notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        notification.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Auto remove after 3 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 3000);
+    }
+
+    // Initialize summary when tab is shown
+    document.getElementById('summary-tab').addEventListener('shown.bs.tab', function() {
+        setTimeout(initSummary, 100); // Small delay to ensure content is rendered
+    });
+
+    // Initialize if summary tab is already active
+    if (document.getElementById('summary-tab').classList.contains('active')) {
+        setTimeout(initSummary, 100);
+    }
+
+    // Enhanced Study Plan Functionality
+    let isCompactSessionView = false;
+
+    function initStudyPlan() {
+        // Initialize progress circles for milestones
+        initMilestoneProgress();
+        
+        // Set up session interactions
+        setupSessionInteractions();
+        
+        // Initialize timeline interactions
+        initTimelineInteractions();
+    }
+
+    function initMilestoneProgress() {
+        const progressCircles = document.querySelectorAll('.progress-circle');
+        progressCircles.forEach(circle => {
+            const progressText = circle.textContent.trim();
+            const progressValue = parseInt(progressText.replace('%', ''));
+            circle.style.setProperty('--progress', progressValue);
+        });
+    }
+
+    function setupSessionInteractions() {
+        console.log('Session interactions will be handled by event delegation');
+        // Event delegation is handled globally, no need for individual listeners
+    }
+
+    function initTimelineInteractions() {
+        const timelineItems = document.querySelectorAll('.timeline-item');
+        timelineItems.forEach(item => {
+            item.addEventListener('click', function() {
+                const sessionNumber = this.dataset.session;
+                scrollToSession(sessionNumber);
+                highlightSession(sessionNumber);
+            });
+        });
+    }
+
+    function toggleSessionDetails(sessionNumber) {
+        console.log('Toggling session details for session:', sessionNumber);
+        const detailsElement = document.getElementById(`sessionDetails${sessionNumber}`);
+        const toggleButton = document.querySelector(`.session-toggle-btn[data-session="${sessionNumber}"]`);
+        const sessionCard = detailsElement ? detailsElement.closest('.session-card') : null;
+        
+        if (!detailsElement || !toggleButton) {
+            console.error('Elements not found:', { detailsElement, toggleButton });
+            return;
+        }
+        
+        console.log('Details element found:', detailsElement);
+        console.log('Toggle button found:', toggleButton);
+        console.log('Current display:', detailsElement.style.display);
+        
+        const isHidden = detailsElement.style.display === 'none' || 
+                        getComputedStyle(detailsElement).display === 'none';
+        
+        if (isHidden) {
+            console.log('Showing details...');
+            // Show details
+            detailsElement.style.display = 'block';
+            detailsElement.style.maxHeight = '0';
+            detailsElement.style.opacity = '0';
+            detailsElement.style.overflow = 'hidden';
+            detailsElement.style.transition = 'all 0.4s ease-out';
+            
+            // Force reflow
+            detailsElement.offsetHeight;
+            
+            // Animate in
+            detailsElement.style.maxHeight = '2000px';
+            detailsElement.style.opacity = '1';
+            
+            // Update button
+            toggleButton.innerHTML = '<i class="fas fa-chevron-up me-1"></i>Свернуть';
+            toggleButton.setAttribute('title', 'Свернуть');
+            
+            // Add expanded class for styling
+            if (sessionCard) {
+                sessionCard.classList.add('expanded');
+            }
+            
+            // Clean up after animation
+            setTimeout(() => {
+                detailsElement.style.maxHeight = '';
+                detailsElement.style.overflow = 'visible';
+                detailsElement.style.transition = '';
+            }, 400);
+            
+        } else {
+            console.log('Hiding details...');
+            // Hide details
+            detailsElement.style.maxHeight = detailsElement.scrollHeight + 'px';
+            detailsElement.style.overflow = 'hidden';
+            detailsElement.style.transition = 'all 0.4s ease-out';
+            
+            // Force reflow
+            detailsElement.offsetHeight;
+            
+            // Animate out
+            detailsElement.style.maxHeight = '0';
+            detailsElement.style.opacity = '0';
+            
+            // Update button
+            toggleButton.innerHTML = '<i class="fas fa-chevron-down me-1"></i>Развернуть';
+            toggleButton.setAttribute('title', 'Развернуть');
+            
+            setTimeout(() => {
+                detailsElement.style.display = 'none';
+                detailsElement.style.maxHeight = '';
+                detailsElement.style.opacity = '';
+                detailsElement.style.transition = '';
+                if (sessionCard) {
+                    sessionCard.classList.remove('expanded');
+                }
+            }, 400);
+        }
+    }
+
+    function toggleSessionView() {
+        const sessionsContainer = document.querySelector('.sessions-container');
+        const toggleButton = document.querySelector('[onclick="toggleSessionView()"]');
+        
+        isCompactSessionView = !isCompactSessionView;
+        
+        if (isCompactSessionView) {
+            sessionsContainer.classList.add('compact-view');
+            toggleButton.innerHTML = '<i class="fas fa-expand me-1"></i>Полный вид';
+            
+            // Hide all expanded details
+            document.querySelectorAll('.session-details').forEach(details => {
+                details.style.display = 'none';
+            });
+        } else {
+            sessionsContainer.classList.remove('compact-view');
+            toggleButton.innerHTML = '<i class="fas fa-list me-1"></i>Компактный вид';
+        }
+    }
+
+    function startSession(sessionNumber) {
+        // Create session modal or redirect to session page
+        showSessionModal(sessionNumber);
+    }
+
+    function showSessionModal(sessionNumber) {
+        // Find session data
+        const sessionCard = document.querySelector(`[data-session="${sessionNumber}"]`);
+        if (!sessionCard) return;
+        
+        const sessionTitle = sessionCard.querySelector('.session-title h6').textContent;
+        const sessionPhase = sessionCard.querySelector('.session-phase').textContent;
+        const sessionDuration = sessionCard.querySelector('.session-duration').textContent;
+        
+        // Create modal content
+        const modalContent = `
+            <div class="modal fade" id="sessionModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title">
+                                <i class="fas fa-play-circle me-2"></i>
+                                Начать ${sessionTitle}
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="session-start-info">
+                                <div class="row mb-4">
+                                    <div class="col-md-4">
+                                        <div class="info-card">
+                                            <div class="info-icon">📚</div>
+                                            <div class="info-label">Фаза</div>
+                                            <div class="info-value">${sessionPhase}</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="info-card">
+                                            <div class="info-icon">⏱️</div>
+                                            <div class="info-label">Длительность</div>
+                                            <div class="info-value">${sessionDuration}</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="info-card">
+                                            <div class="info-icon">🎯</div>
+                                            <div class="info-label">Сессия</div>
+                                            <div class="info-value">#${sessionNumber}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="session-checklist">
+                                    <h6><i class="fas fa-clipboard-check me-2"></i>Подготовка к сессии</h6>
+                                    <div class="checklist-items">
+                                        <label class="checklist-item">
+                                            <input type="checkbox" class="form-check-input me-2">
+                                            Подготовить рабочее место и материалы
+                                        </label>
+                                        <label class="checklist-item">
+                                            <input type="checkbox" class="form-check-input me-2">
+                                            Убрать отвлекающие факторы (телефон, уведомления)
+                                        </label>
+                                        <label class="checklist-item">
+                                            <input type="checkbox" class="form-check-input me-2">
+                                            Настроить таймер на ${sessionDuration}
+                                        </label>
+                                        <label class="checklist-item">
+                                            <input type="checkbox" class="form-check-input me-2">
+                                            Подготовить воду и перекус
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                <i class="fas fa-times me-1"></i>Отмена
+                            </button>
+                            <button type="button" class="btn btn-success" onclick="beginSession(${sessionNumber})">
+                                <i class="fas fa-rocket me-1"></i>Начать изучение!
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Remove existing modal
+        const existingModal = document.getElementById('sessionModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+        
+        // Add modal to page
+        document.body.insertAdjacentHTML('beforeend', modalContent);
+        
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('sessionModal'));
+        modal.show();
+        
+        // Add styles for modal content
+        const modalStyles = `
+            <style>
+                .session-start-info .info-card {
+                    text-align: center;
+                    padding: 15px;
+                    background: #f8f9fa;
+                    border-radius: 10px;
+                    margin-bottom: 15px;
+                }
+                .session-start-info .info-icon {
+                    font-size: 2rem;
+                    margin-bottom: 8px;
+                }
+                .session-start-info .info-label {
+                    font-size: 0.9rem;
+                    color: #6c757d;
+                    margin-bottom: 4px;
+                }
+                .session-start-info .info-value {
+                    font-weight: 600;
+                    color: #495057;
+                }
+                .session-checklist {
+                    background: #f8f9fa;
+                    padding: 20px;
+                    border-radius: 10px;
+                    margin-top: 20px;
+                }
+                .checklist-items {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 12px;
+                    margin-top: 15px;
+                }
+                .checklist-item {
+                    display: flex;
+                    align-items: center;
+                    padding: 8px 12px;
+                    background: white;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    transition: background-color 0.2s;
+                }
+                .checklist-item:hover {
+                    background: #e9ecef;
+                }
+            </style>
+        `;
+        
+        if (!document.getElementById('sessionModalStyles')) {
+            document.head.insertAdjacentHTML('beforeend', modalStyles.replace('<style>', '<style id="sessionModalStyles">'));
+        }
+    }
+
+    function beginSession(sessionNumber) {
+        // Close modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('sessionModal'));
+        modal.hide();
+        
+        // Mark session as started
+        const sessionCard = document.querySelector(`[data-session="${sessionNumber}"]`);
+        if (sessionCard) {
+            sessionCard.classList.add('session-started');
+            
+            // Update button
+            const startButton = sessionCard.querySelector('[onclick*="startSession"]');
+            if (startButton) {
+                startButton.innerHTML = '<i class="fas fa-check me-1"></i>В процессе';
+                startButton.classList.remove('btn-primary');
+                startButton.classList.add('btn-success');
+            }
+        }
+        
+        // Show success notification
+        showNotification('Сессия начата! Удачного изучения! 🚀', 'success');
+        
+        // Optional: Start timer or redirect to study interface
+        startSessionTimer(sessionNumber);
+    }
+
+    function startSessionTimer(sessionNumber) {
+        // This could integrate with a Pomodoro timer or study tracker
+        console.log(`Starting timer for session ${sessionNumber}`);
+        
+        // Example: Show a floating timer
+        const timerHtml = `
+            <div id="studyTimer" class="study-timer">
+                <div class="timer-content">
+                    <div class="timer-icon">⏱️</div>
+                    <div class="timer-text">
+                        <div class="timer-session">Сессия ${sessionNumber}</div>
+                        <div class="timer-time" id="timerDisplay">45:00</div>
+                    </div>
+                    <button class="timer-close" onclick="closeTimer()">×</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.insertAdjacentHTML('beforeend', timerHtml);
+        
+        // Add timer styles
+        const timerStyles = `
+            <style id="timerStyles">
+                .study-timer {
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    z-index: 1050;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    padding: 15px 20px;
+                    border-radius: 15px;
+                    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+                    animation: slideInRight 0.3s ease-out;
+                }
+                .timer-content {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                }
+                .timer-icon {
+                    font-size: 1.5rem;
+                }
+                .timer-session {
+                    font-size: 0.8rem;
+                    opacity: 0.9;
+                }
+                .timer-time {
+                    font-size: 1.2rem;
+                    font-weight: bold;
+                }
+                .timer-close {
+                    background: none;
+                    border: none;
+                    color: white;
+                    font-size: 1.2rem;
+                    cursor: pointer;
+                    opacity: 0.7;
+                    margin-left: 10px;
+                }
+                .timer-close:hover {
+                    opacity: 1;
+                }
+                @keyframes slideInRight {
+                    from { transform: translateX(100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+            </style>
+        `;
+        
+        if (!document.getElementById('timerStyles')) {
+            document.head.insertAdjacentHTML('beforeend', timerStyles);
+        }
+    }
+
+    function closeTimer() {
+        const timer = document.getElementById('studyTimer');
+        if (timer) {
+            timer.style.animation = 'slideOutRight 0.3s ease-out';
+            setTimeout(() => timer.remove(), 300);
+        }
+    }
+
+    function scrollToSession(sessionNumber) {
+        const sessionCard = document.querySelector(`[data-session="${sessionNumber}"]`);
+        if (sessionCard) {
+            sessionCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+
+    function highlightSession(sessionNumber) {
+        // Remove previous highlights
+        document.querySelectorAll('.session-card.highlighted').forEach(card => {
+            card.classList.remove('highlighted');
+        });
+        
+        // Add highlight to selected session
+        const sessionCard = document.querySelector(`[data-session="${sessionNumber}"]`);
+        if (sessionCard) {
+            sessionCard.classList.add('highlighted');
+            setTimeout(() => {
+                sessionCard.classList.remove('highlighted');
+            }, 2000);
+        }
+    }
+
+    // Initialize study plan when tab is shown
+    document.getElementById('studyplan-tab').addEventListener('shown.bs.tab', function() {
+        setTimeout(initStudyPlan, 100);
+    });
+
+    // Add CSS animations for session interactions
+    const studyPlanStyles = `
+        <style id="studyPlanInteractionStyles">
+            @keyframes slideDown {
+                from { opacity: 0; max-height: 0; }
+                to { opacity: 1; max-height: 1000px; }
+            }
+            @keyframes slideUp {
+                from { opacity: 1; max-height: 1000px; }
+                to { opacity: 0; max-height: 0; }
+            }
+            @keyframes slideOutRight {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+            .session-card.highlighted {
+                transform: scale(1.02);
+                box-shadow: 0 12px 40px rgba(102, 126, 234, 0.3) !important;
+                border: 2px solid #667eea;
+                transition: all 0.3s ease;
+            }
+            .session-card.session-started {
+                border-left: 5px solid #28a745;
+            }
+            .sessions-container.compact-view .session-details {
+                display: none !important;
+            }
+            .sessions-container.compact-view .session-card {
+                margin-bottom: 10px;
+            }
+            .sessions-container.compact-view .session-header {
+                padding: 15px;
+            }
+        </style>
+    `;
+    
+    if (!document.getElementById('studyPlanInteractionStyles')) {
+        document.head.insertAdjacentHTML('beforeend', studyPlanStyles);
+    }
+    
+    // Simple direct event delegation for session toggle buttons
+    let isToggling = false;
+    
+    document.addEventListener('click', function(e) {
+        // Check if clicked element is a session toggle button
+        if (e.target.closest('.session-toggle-btn')) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Prevent double clicks
+            if (isToggling) {
+                console.log('Toggle already in progress, ignoring click');
+                return;
+            }
+            
+            const button = e.target.closest('.session-toggle-btn');
+            const sessionNumber = button.getAttribute('data-session');
+            
+            console.log('Session toggle clicked for session:', sessionNumber);
+            isToggling = true;
+            
+            toggleSessionDetails(sessionNumber);
+            
+            // Reset flag after animation
+            setTimeout(() => {
+                isToggling = false;
+            }, 500);
+        }
+    });
+    
+    // Initialize study plan functionality when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM loaded, initializing study plan...');
+        initStudyPlan();
+        initMathSupport();
+    });
+    
+    // Beautiful Math Support - Enhanced Visual Display
+    function initMathSupport() {
+        console.log('Initializing beautiful math support...');
+        
+        // Process math immediately
+        setTimeout(() => {
+            processBeautifulMath();
+        }, 500);
+        
+        // Also process when tabs are switched
+        document.querySelectorAll('[data-bs-toggle="tab"]').forEach(tab => {
+            tab.addEventListener('shown.bs.tab', function() {
+                setTimeout(() => {
+                    processBeautifulMath();
+                }, 200);
+            });
+        });
+    }
+    
+    function processBeautifulMath() {
+        console.log('Processing math with beautiful formatting...');
+        
+        // Find all text content that might contain math formulas
+        const contentElements = document.querySelectorAll(
+            '.summary-content-enhanced, .flashcard-question, .answer-content, .accordion-body, .topic-card'
+        );
+        
+        contentElements.forEach(element => {
+            if (element.textContent && !element.classList.contains('math-processed')) {
+                let content = element.innerHTML;
+                
+                // Process both LaTeX formulas AND auto-detect math expressions
+                content = createBeautifulMathFormulas(content);
+                content = autoDetectMathExpressions(content);
+                
+                element.innerHTML = content;
+                element.classList.add('math-processed');
+            }
+        });
+    }
+    
+    function autoDetectMathExpressions(content) {
+        console.log('Auto-detecting math in content:', content.substring(0, 200));
+        
+        // ULTRA SIMPLE - just look for ANY text with Greek letters or math functions
+        // This will catch your example: a(x) = sign(Σyiλi exp(-||xi - x||^2 / 2σ^2))
+        
+        // Replace ANY text containing Greek letters or math functions
+        content = content.replace(/([^<>\n]*(?:[ΣσλπφμωαβγδθΦΠΩΛΔΓΒΑ]|sign|exp|cos|sin|log|sqrt)[^<>\n]*)/gi, (match) => {
+            // Skip if already processed or contains HTML
+            if (match.includes('<') || match.includes('class=') || match.trim().length < 5) {
+                return match;
+            }
+            
+            // Skip if it's just a single Greek letter
+            if (match.trim().length < 8) {
+                return match;
+            }
+            
+            console.log('Found math expression:', match.trim());
+            return `<div class="math-formula">${beautifyAutoDetectedFormula(match.trim())}</div>`;
+        });
+        
+        return content;
+    }
+    
+    function containsMathSymbols(text) {
+        // Check if text contains mathematical symbols
+        const mathIndicators = [
+            /[Σσλπφμωαβγδθ]/,  // Greek letters
+            /\^[0-9]/,           // Powers like ^2
+            /[a-zA-Z]_[a-zA-Z0-9]/, // Subscripts like x_i
+            /exp\(/,             // Functions like exp(
+            /sin\(|cos\(|tan\(/, // Trig functions
+            /\|\|/,              // Norms like ||x||
+            /sqrt\(/,            // Square root
+            /log\(|ln\(/,        // Logarithms
+            /sign\(/             // Sign function
+        ];
+        
+        return mathIndicators.some(pattern => pattern.test(text));
+    }
+    
+    function beautifyAutoDetectedFormula(formula) {
+        let processed = formula;
+        
+        // Replace Greek letters
+        processed = processed.replace(/Σ/g, '<span class="math-symbol">Σ</span>');
+        processed = processed.replace(/σ/g, '<span class="math-symbol">σ</span>');
+        processed = processed.replace(/λ/g, '<span class="math-symbol">λ</span>');
+        processed = processed.replace(/π/g, '<span class="math-symbol">π</span>');
+        processed = processed.replace(/φ/g, '<span class="math-symbol">φ</span>');
+        processed = processed.replace(/μ/g, '<span class="math-symbol">μ</span>');
+        processed = processed.replace(/ω/g, '<span class="math-symbol">ω</span>');
+        processed = processed.replace(/α/g, '<span class="math-symbol">α</span>');
+        processed = processed.replace(/β/g, '<span class="math-symbol">β</span>');
+        processed = processed.replace(/γ/g, '<span class="math-symbol">γ</span>');
+        processed = processed.replace(/δ/g, '<span class="math-symbol">δ</span>');
+        processed = processed.replace(/θ/g, '<span class="math-symbol">θ</span>');
+        
+        // Replace mathematical functions
+        processed = processed.replace(/\b(sin|cos|tan|log|ln|exp|sign)\(/g, '<span class="math-func">$1</span>(');
+        
+        // Replace powers
+        processed = processed.replace(/\^([0-9]+)/g, '<span class="math-sup">$1</span>');
+        processed = processed.replace(/\^2/g, '<span class="math-sup">2</span>');
+        processed = processed.replace(/\^3/g, '<span class="math-sup">3</span>');
+        
+        // Replace subscripts
+        processed = processed.replace(/([a-zA-Z])_([a-zA-Z0-9]+)/g, '$1<span class="math-sub">$2</span>');
+        processed = processed.replace(/([a-zA-Z])i/g, '$1<span class="math-sub">i</span>');
+        
+        // Replace norms and absolute values
+        processed = processed.replace(/\|\|([^|]+)\|\|/g, '<span class="math-symbol">||</span>$1<span class="math-symbol">||</span>');
+        
+        // Replace fractions (simple pattern like a/b)
+        processed = processed.replace(/([^/\s]+)\s*\/\s*([^/\s]+)/g, (match, num, den) => {
+            // Only if it looks like a mathematical fraction
+            if (/^[0-9a-zA-Z^_σλπφμωαβγδθΣ\s]+$/.test(num + den)) {
+                return `<span class="math-frac"><span class="numerator">${num.trim()}</span><span class="denominator">${den.trim()}</span></span>`;
+            }
+            return match;
+        });
+        
+        // Style parentheses
+        processed = processed.replace(/\(/g, '<span class="math-paren">(</span>');
+        processed = processed.replace(/\)/g, '<span class="math-paren">)</span>');
+        
+        return processed;
+    }
+    
+    function createBeautifulMathFormulas(content) {
+        // Handle display formulas ($$...$$) with beautiful formatting
+        content = content.replace(/\$\$([^$]+)\$\$/g, (match, formula) => {
+            console.log('Processing formula:', formula);
+            return `<div class="math-formula">${beautifyFormula(formula)}</div>`;
+        });
+        
+        // Handle inline formulas ($...$)
+        content = content.replace(/\$([^$]+)\$/g, (match, formula) => {
+            return `<span class="math-inline">${beautifyFormula(formula, true)}</span>`;
+        });
+        
+        return content;
+    }
+    
+    function beautifyFormula(formula, isInline = false) {
+        let processed = formula;
+        
+        // Handle fractions with beautiful styling
+        processed = processed.replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, (match, num, den) => {
+            if (isInline) {
+                return `<span class="math-fraction"><sup>${beautifyContent(num)}</sup>⁄<sub>${beautifyContent(den)}</sub></span>`;
+            } else {
+                return `<span class="math-frac"><span class="numerator">${beautifyContent(num)}</span><span class="denominator">${beautifyContent(den)}</span></span>`;
+            }
+        });
+        
+        // Handle parentheses with styling
+        processed = processed.replace(/\\left\(/g, '<span class="math-paren">(</span>');
+        processed = processed.replace(/\\right\)/g, '<span class="math-paren">)</span>');
+        processed = processed.replace(/\\left\[/g, '<span class="math-paren">[</span>');
+        processed = processed.replace(/\\right\]/g, '<span class="math-paren">]</span>');
+        processed = processed.replace(/\\left\{/g, '<span class="math-paren">{</span>');
+        processed = processed.replace(/\\right\}/g, '<span class="math-paren">}</span>');
+        
+        // Handle mathematical functions
+        processed = processed.replace(/\\?(sin|cos|tan|log|ln|exp|sign)\b/g, '<span class="math-func">$1</span>');
+        
+        // Handle Greek letters with beautiful styling
+        const greekReplacements = [
+            ['\\\\sum', '<span class="math-symbol">Σ</span>'],
+            ['\\\\Sigma', '<span class="math-symbol">Σ</span>'],
+            ['\\\\lambda', '<span class="math-symbol">λ</span>'],
+            ['\\\\sigma', '<span class="math-symbol">σ</span>'],
+            ['\\\\pi', '<span class="math-symbol">π</span>'],
+            ['\\\\alpha', '<span class="math-symbol">α</span>'],
+            ['\\\\beta', '<span class="math-symbol">β</span>'],
+            ['\\\\gamma', '<span class="math-symbol">γ</span>'],
+            ['\\\\delta', '<span class="math-symbol">δ</span>'],
+            ['\\\\phi', '<span class="math-symbol">φ</span>'],
+            ['\\\\Phi', '<span class="math-symbol">Φ</span>'],
+            ['\\\\mu', '<span class="math-symbol">μ</span>'],
+            ['\\\\omega', '<span class="math-symbol">ω</span>'],
+            ['\\\\theta', '<span class="math-symbol">θ</span>']
+        ];
+        
+        greekReplacements.forEach(([pattern, replacement]) => {
+            processed = processed.replace(new RegExp(pattern, 'g'), replacement);
+        });
+        
+        // Handle superscripts and subscripts with beautiful styling
+        processed = processed.replace(/([a-zA-Z0-9]+)\^([a-zA-Z0-9]+)/g, '$1<span class="math-sup">$2</span>');
+        processed = processed.replace(/([a-zA-Z0-9]+)_([a-zA-Z0-9]+)/g, '$1<span class="math-sub">$2</span>');
+        
+        // Handle special cases
+        processed = processed.replace(/\^2/g, '<span class="math-sup">2</span>');
+        processed = processed.replace(/\^3/g, '<span class="math-sup">3</span>');
+        processed = processed.replace(/_i/g, '<span class="math-sub">i</span>');
+        processed = processed.replace(/_j/g, '<span class="math-sub">j</span>');
+        
+        // Handle mathematical operators
+        processed = processed.replace(/\|\|/g, '<span class="math-symbol">||</span>');
+        processed = processed.replace(/\*/g, '<span class="math-symbol">·</span>');
+        
+        return processed;
+    }
+    
+    function beautifyContent(content) {
+        // Process content inside fractions, superscripts, etc.
+        let processed = content;
+        
+        // Greek letters (simple replacements)
+        const simpleGreek = [
+            ['\\sum', 'Σ'], ['\\lambda', 'λ'], ['\\sigma', 'σ'], ['\\pi', 'π'],
+            ['\\alpha', 'α'], ['\\beta', 'β'], ['\\gamma', 'γ'], ['\\delta', 'δ'],
+            ['\\phi', 'φ'], ['\\Phi', 'Φ'], ['\\mu', 'μ'], ['\\omega', 'ω']
+        ];
+        
+        simpleGreek.forEach(([latex, symbol]) => {
+            processed = processed.replace(new RegExp(latex, 'g'), symbol);
+        });
+        
+        // Subscripts and superscripts
+        processed = processed.replace(/([a-zA-Z0-9]+)_([a-zA-Z0-9]+)/g, '$1<sub>$2</sub>');
+        processed = processed.replace(/([a-zA-Z0-9]+)\^([a-zA-Z0-9]+)/g, '$1<sup>$2</sup>');
+        processed = processed.replace(/\^2/g, '²');
+        processed = processed.replace(/\^3/g, '³');
+        processed = processed.replace(/_i/g, 'ᵢ');
+        processed = processed.replace(/_j/g, 'ⱼ');
+        
+        return processed;
+        
+        // Wait for KaTeX to be ready
+        if (window.katex && window.renderMathInElement) {
+            processMathFormulas();
+        } else {
+            // Wait for KaTeX to load
+            setTimeout(() => {
+                if (window.katex && window.renderMathInElement) {
+                    processMathFormulas();
+                } else {
+                    console.log('KaTeX not available, trying again...');
+                    setTimeout(initMathSupport, 1000);
+                }
+            }, 1000);
+        }
+    }
+    
+    function processMathFormulas() {
+        console.log('Processing math formulas with advanced recognition...');
+        
+        // Find all text content that might contain math formulas
+        const contentElements = document.querySelectorAll(
+            '.summary-content-enhanced, .flashcard-question, .answer-content, .accordion-body, .topic-card'
+        );
+        
+        contentElements.forEach(element => {
+            if (element.textContent && !element.classList.contains('math-processed')) {
+                element.classList.add('math-processing');
+                
+                let content = element.innerHTML;
+                
+                // Advanced Wolfram-style pattern matching
+                content = enhanceMathContentAdvanced(content);
+                
+                element.innerHTML = content;
+                element.classList.remove('math-processing');
+                element.classList.add('math-processed');
+            }
+        });
+        
+        // Render math with KaTeX
+        renderMathWithKaTeX();
+    }
+    
+    function enhanceMathContentAdvanced(content) {
+        // Protect existing math expressions
+        const mathExpressions = [];
+        content = content.replace(/\$\$([^$]+)\$\$/g, (match) => {
+            mathExpressions.push(match);
+            return `__MATH_DISPLAY_${mathExpressions.length - 1}__`;
+        });
+        content = content.replace(/\$([^$]+)\$/g, (match) => {
+            mathExpressions.push(match);
+            return `__MATH_INLINE_${mathExpressions.length - 1}__`;
+        });
+        
+        // Advanced mathematical pattern recognition (Wolfram-style)
+        const advancedPatterns = [
+            // Complex functions like φ(x) = (1/√n)(cos(w1^{T} x), ..., cos(wn^{T} x), sin(w1^{T} x), ..., sin(wn^{T} x))
+            {
+                pattern: /([φϕΦ])\s*\(\s*([^)]+)\)\s*=\s*\(([^)]+)\)\s*\\\s*\(([^)]+)\)/g,
+                replacement: '$$\\$1($2) = \\left(\\frac{1}{\\sqrt{n}}\\right)\\left(\\cos(w_1^T x), \\ldots, \\cos(w_n^T x), \\sin(w_1^T x), \\ldots, \\sin(w_n^T x)\\right)$$'
+            },
+            // Functions with equals like K(x, z) = ...
+            {
+                pattern: /([A-Za-zφϕΦ]+)\s*\(\s*([^)]+)\)\s*=\s*([^.]+\.[^.]*)/g,
+                replacement: (match, func, args, expr) => {
+                    // Clean up the expression
+                    let cleanExpr = expr.replace(/\.$/, ''); // Remove trailing dot
+                    cleanExpr = processComplexExpression(cleanExpr);
+                    return `$$${func}(${args}) = ${cleanExpr}$$`;
+                }
+            },
+            // Fractions with square root like 1/√n
+            {
+                pattern: /(\d+)\/√([a-zA-Z]+)/g,
+                replacement: '\\frac{$1}{\\sqrt{$2}}'
+            },
+            // Regular fractions
+            {
+                pattern: /(\d+)\/([a-zA-Z]+)/g,
+                replacement: '\\frac{$1}{$2}'
+            },
+            // Powers with braces like w1^{T}
+            {
+                pattern: /([a-zA-Z0-9]+)\^\{([^}]+)\}/g,
+                replacement: '$1^{$2}'
+            },
+            // Simple powers like w1^T
+            {
+                pattern: /([a-zA-Z0-9]+)\^([A-Za-z])/g,
+                replacement: '$1^{$2}'
+            },
+            // Subscripts like w_j
+            {
+                pattern: /([a-zA-Z]+)_([a-zA-Z0-9]+)/g,
+                replacement: '$1_{$2}'
+            },
+            // Greek letters
+            {
+                pattern: /\bphi\b/g,
+                replacement: '\\phi'
+            },
+            {
+                pattern: /\bPhi\b/g,
+                replacement: '\\Phi'
+            },
+            {
+                pattern: /\bSigma\b/g,
+                replacement: '\\Sigma'
+            },
+            {
+                pattern: /\bsum\b/g,
+                replacement: '\\sum'
+            },
+            // Trigonometric functions
+            {
+                pattern: /\\cos\(/g,
+                replacement: '\\cos('
+            },
+            {
+                pattern: /\\sin\(/g,
+                replacement: '\\sin('
+            },
+            {
+                pattern: /\bcos\(/g,
+                replacement: '\\cos('
+            },
+            {
+                pattern: /\bsin\(/g,
+                replacement: '\\sin('
+            },
+            // Mathematical operators
+            {
+                pattern: /\*\s*/g,
+                replacement: ' \\cdot '
+            },
+            {
+                pattern: /\+\/-/g,
+                replacement: '\\pm'
+            },
+            {
+                pattern: /<=/g,
+                replacement: '\\leq'
+            },
+            {
+                pattern: />=/g,
+                replacement: '\\geq'
+            },
+            {
+                pattern: /!=/g,
+                replacement: '\\neq'
+            },
+            // Ellipsis
+            {
+                pattern: /\.\.\./g,
+                replacement: '\\ldots'
+            },
+            {
+                pattern: /,\s*\.\.\.\s*,/g,
+                replacement: ', \\ldots, '
+            }
+        ];
+        
+        // Apply advanced patterns
+        advancedPatterns.forEach(({ pattern, replacement }) => {
+            if (typeof replacement === 'function') {
+                content = content.replace(pattern, replacement);
+            } else {
+                content = content.replace(pattern, replacement);
+            }
+        });
+        
+        // Restore protected math expressions
+        mathExpressions.forEach((expr, index) => {
+            content = content.replace(`__MATH_DISPLAY_${index}__`, expr);
+            content = content.replace(`__MATH_INLINE_${index}__`, expr);
+        });
+        
+        return content;
+    }
+    
+    function processComplexExpression(expr) {
+        // Process complex mathematical expressions
+        let processed = expr;
+        
+        // Handle parentheses with fractions
+        processed = processed.replace(/\(([^)]+)\/([^)]+)\)/g, '\\left(\\frac{$1}{$2}\\right)');
+        
+        // Handle Σ summation
+        processed = processed.replace(/Σ/g, '\\sum');
+        
+        // Handle multiplication
+        processed = processed.replace(/\s*\*\s*/g, ' \\cdot ');
+        
+        // Handle trigonometric functions
+        processed = processed.replace(/cos\(/g, '\\cos(');
+        processed = processed.replace(/sin\(/g, '\\sin(');
+        
+        // Handle subscripts and superscripts
+        processed = processed.replace(/([a-zA-Z]+)_([a-zA-Z0-9]+)/g, '$1_{$2}');
+        processed = processed.replace(/([a-zA-Z0-9]+)\^([A-Za-z])/g, '$1^{$2}');
+        
+        // Handle square root
+        processed = processed.replace(/√([a-zA-Z]+)/g, '\\sqrt{$1}');
+        
+        return processed;
+    }
+    
+    function renderMathWithKaTeX() {
+        if (window.renderMathInElement) {
+            try {
+                // Render math in all processed elements
+                document.querySelectorAll('.math-processed').forEach(element => {
+                    window.renderMathInElement(element, {
+                        delimiters: [
+                            {left: '$$', right: '$$', display: true},
+                            {left: '$', right: '$', display: false},
+                            {left: '\\[', right: '\\]', display: true},
+                            {left: '\\(', right: '\\)', display: false}
+                        ],
+                        throwOnError: false,
+                        errorColor: '#cc0000',
+                        strict: false
+                    });
+                });
+                
+                console.log('Math formulas rendered successfully with KaTeX');
+                addMathInteractivity();
+            } catch (error) {
+                console.error('KaTeX rendering error:', error);
+            }
+        }
+    }
+    
+    function addMathInteractivity() {
+        // Add click handlers to math expressions for copying
+        document.querySelectorAll('.katex').forEach(mathElement => {
+            mathElement.style.cursor = 'pointer';
+            mathElement.title = 'Нажмите, чтобы скопировать формулу';
+            
+            mathElement.addEventListener('click', function() {
+                const mathText = this.textContent || this.innerText;
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(mathText);
+                    showToast('Формула скопирована в буфер обмена', 'success');
+                }
+            });
+        });
+        
+        // Add special styling to inline math
+        document.querySelectorAll('.katex:not(.katex-display)').forEach(inlineMath => {
+            inlineMath.classList.add('katex-inline');
+        });
+    }
+
 </script>
 {% endblock %}

@@ -5,6 +5,8 @@ python-dotenv
 
 # PDF Processing
 pdfminer.six
+PyPDF2
+pdfplumber
 
 # Audio/Video Processing
 openai-whisper
@@ -32,6 +34,8 @@ tqdm
 
 # File handling
 python-multipart
+python-magic
+filetype
 
 # Optional: Performance & Monitoring
 psutil
