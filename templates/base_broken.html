@@ -67,7 +67,7 @@
             margin: 40px 0;
         }
         
-        /* Beautiful MathJax Styles */
+        /* Enhanced MathJax Math Styles */
         mjx-container[jax="CHTML"][display="true"] {
             margin: 1.5em 0 !important;
             padding: 25px 30px !important;
@@ -228,7 +228,7 @@
         {% block content %}{% endblock %}
     </div>
 
-    <!-- MathJax Configuration -->
+    <!-- MathJax for beautiful math rendering -->
     <script>
     window.MathJax = {
         tex: {
@@ -254,6 +254,7 @@
             ready: () => {
                 MathJax.startup.defaultReady();
                 console.log('MathJax is loaded and ready!');
+                // Trigger custom event when MathJax is ready
                 document.dispatchEvent(new CustomEvent('mathjax-ready'));
             }
         }
