@@ -120,6 +120,52 @@
                     <i class="fas fa-file-check fa-3x text-success mb-3"></i>
                     <h4 id="file-name"></h4>
                     <p class="text-muted" id="file-size"></p>
+                    
+                    <!-- Page Selection Section -->
+                    <div id="page-selection" style="display: none;" class="mt-4 mb-4">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <i class="fas fa-file-alt me-2"></i>Выбор страниц для анализа
+                                </h5>
+                                <p class="text-muted small mb-3">
+                                    Укажите диапазон страниц для обработки. Это поможет сосредоточиться на нужных разделах и ускорить анализ.
+                                </p>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label for="page-range" class="form-label">Диапазон страниц:</label>
+                                        <input type="text" class="form-control" id="page-range" name="page_range" 
+                                               placeholder="1-20, 50-100" value="1-20">
+                                        <div class="form-text">
+                                            Примеры: "1-10", "5-25", "1-10,15-20", "все"
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Быстрый выбор:</label>
+                                        <div class="d-flex flex-wrap gap-2">
+                                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="setPageRange('1-10')">
+                                                Первые 10
+                                            </button>
+                                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="setPageRange('1-20')">
+                                                Первые 20
+                                            </button>
+                                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="setPageRange('все')">
+                                                Все страницы
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="alert alert-info mt-3 mb-0">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    <strong>Рекомендация:</strong> Для оптимального качества анализа рекомендуется обрабатывать не более 20-30 страниц за раз.
+                                    Большие документы лучше разбивать на логические части.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <button type="submit" class="btn btn-success btn-lg mt-3">
                         <i class="fas fa-rocket me-2"></i>Начать глубокий анализ
                     </button>
@@ -238,15 +284,87 @@
             const file = fileInput.files[0];
             const fileName = file.name;
             const fileSize = (file.size / (1024 * 1024)).toFixed(2);
+            const fileExtension = fileName.split('.').pop().toLowerCase();
             
             // Show file info
             document.getElementById('file-name').textContent = fileName;
             document.getElementById('file-size').textContent = `Размер: ${fileSize} МБ`;
             
+            // Show page selection only for PDF files
+            const pageSelection = document.getElementById('page-selection');
+            if (fileExtension === 'pdf') {
+                pageSelection.style.display = 'block';
+                
+                // Set smart default based on file size (примерно 1 МБ = 20-30 страниц)
+                const estimatedPages = Math.ceil(fileSize * 25); // Примерная оценка
+                let defaultRange;
+                
+                if (estimatedPages <= 20) {
+                    defaultRange = 'все';
+                } else if (estimatedPages <= 50) {
+                    defaultRange = '1-20';
+                } else {
+                    defaultRange = '1-20';
+                }
+                
+                document.getElementById('page-range').value = defaultRange;
+                
+                // Update info text
+                const infoText = document.querySelector('#page-selection .alert-info');
+                if (estimatedPages > 30) {
+                    infoText.innerHTML = `
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Рекомендация:</strong> Документ содержит примерно ${estimatedPages} страниц. 
+                        Для оптимального качества анализа рекомендуется обрабатывать не более 20-30 страниц за раз.
+                        Большие документы лучше разбивать на логические части.
+                    `;
+                } else {
+                    infoText.innerHTML = `
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Информация:</strong> Документ содержит примерно ${estimatedPages} страниц. 
+                        Вы можете обработать весь документ или выбрать конкретные разделы.
+                    `;
+                }
+            } else {
+                pageSelection.style.display = 'none';
+            }
+            
             // Hide upload area and show file selected
             uploadArea.style.display = 'none';
             fileSelectedDiv.style.display = 'block';
         }
+    }
+
+    function setPageRange(range) {
+        document.getElementById('page-range').value = range;
+        
+        // Visual feedback
+        const buttons = document.querySelectorAll('#page-selection .btn-outline-primary, #page-selection .btn-outline-secondary');
+        buttons.forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.textContent.includes(range) || (range === 'все' && btn.textContent.includes('Все'))) {
+                btn.classList.add('active');
+            }
+        });
+    }
+
+    function validatePageRange() {
+        const pageRange = document.getElementById('page-range').value.trim();
+        if (!pageRange) return true; // Empty is OK for video files
+        
+        // Allow "все" or "all"
+        if (pageRange.toLowerCase() === 'все' || pageRange.toLowerCase() === 'all') {
+            return true;
+        }
+        
+        // Validate format: numbers, ranges, and commas
+        const pattern = /^(\d+(-\d+)?)(\s*,\s*\d+(-\d+)?)*$/;
+        if (!pattern.test(pageRange)) {
+            alert('Неверный формат диапазона страниц. Используйте формат: "1-10", "5-25", "1-10,15-20" или "все"');
+            return false;
+        }
+        
+        return true;
     }
 
     function resetUpload() {
@@ -260,6 +378,12 @@
         if (fileInput.files.length === 0) {
             e.preventDefault();
             alert('Пожалуйста, выберите файл');
+            return false;
+        }
+        
+        // Validate page range for PDF files
+        if (!validatePageRange()) {
+            e.preventDefault();
             return false;
         }
         

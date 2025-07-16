@@ -72,10 +72,14 @@ def init_db():
     conn.commit()
     conn.close()
 
-def save_result(filename, file_type, analysis_result):
+def save_result(filename, file_type, analysis_result, page_info=None):
     """Сохранение результата в БД"""
     conn = sqlite3.connect('ai_study.db')
     c = conn.cursor()
+    
+    # Добавляем информацию о страницах в результат
+    if page_info:
+        analysis_result['page_info'] = page_info
     
     # Сериализовываем данные
     topics_json = json.dumps(analysis_result['topics_data'], ensure_ascii=False)
@@ -121,7 +125,7 @@ def get_result(result_id):
     conn.close()
     
     if row:
-        return {
+        result_data = {
             'filename': row[0],
             'file_type': row[1],
             'topics_data': json.loads(row[2]),
@@ -134,6 +138,13 @@ def get_result(result_id):
             'key_moments': json.loads(row[9]),
             'created_at': row[10]
         }
+        
+        # Извлекаем информацию о страницах из mind_map (если она там сохранена)
+        mind_map_data = result_data['mind_map']
+        if isinstance(mind_map_data, dict) and 'page_info' in mind_map_data:
+            result_data['page_info'] = mind_map_data['page_info']
+        
+        return result_data
     return None
 
 @app.route('/')
@@ -171,14 +182,30 @@ def upload_file():
         
         logger.info(f"File uploaded: {filename}")
         
+        # Получение диапазона страниц (только для PDF)
+        page_range = None
+        file_type = Path(filename).suffix.lower()
+        if file_type == '.pdf':
+            page_range = request.form.get('page_range', '').strip()
+            if not page_range:
+                page_range = '1-20'  # По умолчанию
+            logger.info(f"Page range specified: {page_range}")
+        
         # Обработка файла
         try:
             from ml import process_file
-            analysis_result = process_file(filepath, filename)
+            analysis_result = process_file(filepath, filename, page_range=page_range)
+            
+            # Подготовка информации о страницах
+            page_info = None
+            if file_type == '.pdf' and page_range:
+                page_info = {
+                    'page_range': page_range,
+                    'processed_at': datetime.now().isoformat()
+                }
             
             # Сохранение результата в БД
-            file_type = Path(filename).suffix.lower()
-            result_id = save_result(filename, file_type, analysis_result)
+            result_id = save_result(filename, file_type, analysis_result, page_info)
             
             # Удаление файла
             os.remove(filepath)
@@ -210,14 +237,73 @@ def result(result_id):
     
     return render_template('result.html', **data, result_id=result_id)
 
+@app.route('/api/create_flashcard', methods=['POST'])
+def create_flashcard():
+    """Создание новой флеш-карты"""
+    try:
+        data = request.json
+        if not data:
+            return jsonify({"success": False, "error": "No data provided"}), 400
+            
+        result_id = data.get('result_id')
+        card_data = data.get('card')
+        
+        if not result_id or not card_data:
+            return jsonify({"success": False, "error": "Missing required parameters"}), 400
+            
+        # Проверяем, что результат существует
+        result = get_result(result_id)
+        if not result:
+            return jsonify({"success": False, "error": "Result not found"}), 404
+            
+        # Добавляем новую карту к существующим
+        existing_flashcards = result['flashcards']
+        new_card_id = len(existing_flashcards)
+        
+        # Добавляем ID к новой карте
+        card_data['id'] = new_card_id
+        existing_flashcards.append(card_data)
+        
+        # Обновляем результат в базе данных
+        conn = sqlite3.connect('ai_study.db')
+        c = conn.cursor()
+        
+        flashcards_json = json.dumps(existing_flashcards, ensure_ascii=False)
+        
+        c.execute('''
+            UPDATE result 
+            SET flashcards_json = ?
+            WHERE id = ?
+        ''', (flashcards_json, result_id))
+        
+        conn.commit()
+        conn.close()
+        
+        logger.info(f"New flashcard created for result {result_id}, card ID: {new_card_id}")
+        return jsonify({"success": True, "card_id": new_card_id})
+        
+    except Exception as e:
+        logger.error(f"Error creating flashcard: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
 @app.route('/api/flashcard_progress', methods=['POST'])
 def update_flashcard_progress():
     """Обновление прогресса изучения флеш-карт"""
     try:
         data = request.json
+        if not data:
+            return jsonify({"success": False, "error": "No data provided"}), 400
+            
         result_id = data.get('result_id')
         flashcard_id = data.get('flashcard_id')
         correct = data.get('correct', False)
+        confidence = data.get('confidence', 2)
+        
+        # Валидация входных данных
+        if not result_id or flashcard_id is None:
+            return jsonify({"success": False, "error": "Missing required parameters"}), 400
+            
+        logger.info(f"Updating flashcard progress: result_id={result_id}, flashcard_id={flashcard_id}, correct={correct}, confidence={confidence}")
         
         conn = sqlite3.connect('ai_study.db')
         c = conn.cursor()
@@ -236,10 +322,11 @@ def update_flashcard_progress():
             prog_id, ease_factor, consecutive = progress
             
             if correct:
-                # Повышение сложности при правильном ответе
-                new_ease = min(2.5, ease_factor + 0.1)
+                # Повышение сложности при правильном ответе с учетом уверенности
+                confidence_multiplier = confidence / 2.0  # 1=0.5, 2=1.0, 3=1.5
+                new_ease = min(2.5, ease_factor + (0.1 * confidence_multiplier))
                 new_consecutive = consecutive + 1
-                interval_days = int(new_consecutive * new_ease)
+                interval_days = max(1, int(new_consecutive * new_ease * confidence_multiplier))
             else:
                 # Понижение сложности при неправильном ответе
                 new_ease = max(1.3, ease_factor - 0.2)
@@ -256,16 +343,23 @@ def update_flashcard_progress():
             ''', (interval_days, new_ease, new_consecutive, prog_id))
         else:
             # Создание новой истории прогресса
-            interval_days = 1 if not correct else 3
+            if correct:
+                interval_days = max(1, confidence)  # 1-3 дня в зависимости от уверенности
+                consecutive = 1
+            else:
+                interval_days = 1
+                consecutive = 0
+                
             c.execute('''
                 INSERT INTO user_progress 
                 (result_id, flashcard_id, last_review, next_review, ease_factor, consecutive_correct)
                 VALUES (?, ?, CURRENT_TIMESTAMP, datetime('now', '+' || ? || ' days'), 2.5, ?)
-            ''', (result_id, flashcard_id, interval_days, 1 if correct else 0))
+            ''', (result_id, flashcard_id, interval_days, consecutive))
         
         conn.commit()
         conn.close()
         
+        logger.info(f"Flashcard progress updated successfully. Next review in {interval_days} days")
         return jsonify({"success": True, "next_review_days": interval_days})
         
     except Exception as e:

@@ -82,6 +82,111 @@ def extract_text_from_pdf(filepath: str) -> str:
         logger.error(f"Error extracting text from PDF: {str(e)}")
         raise
 
+def parse_page_range(page_range: str, max_pages: int = None) -> List[int]:
+    """Парсинг диапазона страниц"""
+    if not page_range or page_range.lower() in ['все', 'all']:
+        if max_pages:
+            return list(range(1, min(max_pages + 1, 21)))  # Максимум 20 страниц по умолчанию
+        return []
+    
+    pages = set()
+    
+    # Разбиваем по запятым
+    ranges = [r.strip() for r in page_range.split(',')]
+    
+    for range_str in ranges:
+        if '-' in range_str:
+            # Диапазон страниц
+            try:
+                start, end = map(int, range_str.split('-'))
+                if start > end:
+                    start, end = end, start
+                pages.update(range(start, end + 1))
+            except ValueError:
+                logger.warning(f"Invalid page range: {range_str}")
+                continue
+        else:
+            # Одна страница
+            try:
+                page = int(range_str)
+                pages.add(page)
+            except ValueError:
+                logger.warning(f"Invalid page number: {range_str}")
+                continue
+    
+    # Ограничиваем максимальным количеством страниц
+    if max_pages:
+        pages = {p for p in pages if 1 <= p <= max_pages}
+    
+    return sorted(list(pages))
+
+def extract_text_from_pdf_with_pages(filepath: str, page_range: str = None) -> str:
+    """Извлечение текста из PDF с выбором страниц"""
+    try:
+        from pdfminer.high_level import extract_text_to_fp
+        from pdfminer.layout import LAParams
+        from pdfminer.pdfpage import PDFPage
+        from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
+        from pdfminer.converter import TextConverter
+        import io
+        
+        if not page_range:
+            # Если диапазон не указан, извлекаем весь текст (с ограничением)
+            text = extract_text(filepath)
+            # Ограничиваем размер текста (примерно 20 страниц)
+            max_chars = 128000
+            if len(text) > max_chars:
+                text = text[:max_chars] + "\n\n[Текст обрезан для оптимизации обработки]"
+                logger.info(f"Text truncated to {max_chars} characters")
+            return text.strip()
+        
+        # Получаем общее количество страниц
+        with open(filepath, 'rb') as file:
+            pages_count = len(list(PDFPage.get_pages(file)))
+        
+        logger.info(f"PDF has {pages_count} pages")
+        
+        # Парсим диапазон страниц
+        pages_to_extract = parse_page_range(page_range, pages_count)
+        
+        if not pages_to_extract:
+            # Если диапазон пустой, берем первые 20 страниц
+            pages_to_extract = list(range(1, min(pages_count + 1, 21)))
+        
+        logger.info(f"Extracting pages: {pages_to_extract}")
+        
+        # Извлекаем текст только с выбранных страниц
+        output_string = io.StringIO()
+        with open(filepath, 'rb') as file:
+            rsrcmgr = PDFResourceManager()
+            device = TextConverter(rsrcmgr, output_string, laparams=LAParams())
+            interpreter = PDFPageInterpreter(rsrcmgr, device)
+            
+            # Конвертируем номера страниц в 0-based индексы
+            page_indices = {p - 1 for p in pages_to_extract}
+            
+            for page_num, page in enumerate(PDFPage.get_pages(file)):
+                if page_num in page_indices:
+                    interpreter.process_page(page)
+            
+            device.close()
+        
+        text = output_string.getvalue()
+        output_string.close()
+        
+        if not text.strip():
+            logger.warning("No text extracted from specified pages, falling back to full extraction")
+            return extract_text(filepath).strip()
+        
+        logger.info(f"Extracted {len(text)} characters from {len(pages_to_extract)} pages")
+        return text.strip()
+        
+    except Exception as e:
+        logger.error(f"Error extracting text from PDF pages: {str(e)}")
+        # Fallback к обычному извлечению
+        logger.info("Falling back to full PDF extraction")
+        return extract_text(filepath).strip()
+
 def transcribe_video_with_timestamps(filepath: str) -> Dict[str, Any]:
     """Транскрипция видео/аудио"""
     try:
@@ -150,7 +255,7 @@ def extract_topics_with_gpt(text: str) -> Dict[str, Any]:
             load_models()
         
         # Лимит текста для API
-        max_chars = 50000
+        max_chars = 128000
         if len(text) > max_chars:
             text = text[:max_chars] + "..."
         
@@ -617,7 +722,7 @@ def generate_summary(text: str) -> str:
         if not openai_client:
             load_models()
         
-        max_chars = 50000
+        max_chars = 128000
         if len(text) > max_chars:
             text = text[:max_chars] + "..."
         
@@ -694,7 +799,7 @@ def generate_flashcards(text: str) -> List[Dict]:
         if not openai_client:
             load_models()
         
-        max_chars = 50000
+        max_chars = 128000
         if len(text) > max_chars:
             text = text[:max_chars] + "..."
         
@@ -1441,16 +1546,18 @@ def assess_content_quality(text: str, topics: List[Dict], summary: str, flashcar
             "suggestions": ["Не удалось оценить качество"]
         }
 
-def process_file(filepath: str, filename: str) -> Dict[str, Any]:
-    """Обработка файла"""
+def process_file(filepath: str, filename: str, page_range: str = None) -> Dict[str, Any]:
+    """Обработка файла с возможностью выбора страниц"""
     try:
         logger.info(f"Starting processing for: {filename}")
+        if page_range:
+            logger.info(f"Page range specified: {page_range}")
         
         # Извлекаем текст в зависимости от типа файла
         file_ext = Path(filename).suffix.lower()
         
         if file_ext == '.pdf':
-            text = extract_text_from_pdf(filepath)
+            text = extract_text_from_pdf_with_pages(filepath, page_range)
             video_data = None
         elif file_ext in ['.mp4', '.mov', '.mkv']:
             video_data = transcribe_video_with_timestamps(filepath)

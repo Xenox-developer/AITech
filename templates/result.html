@@ -1528,6 +1528,11 @@
                 <span class="badge bg-info ms-2">Видео</span>
                 {% else %}
                 <span class="badge bg-danger ms-2">PDF</span>
+                {% if page_info and page_info.page_range %}
+                    <span class="badge bg-primary ms-1">
+                        <i class="fas fa-file-alt me-1"></i>Страницы: {{ page_info.page_range }}
+                    </span>
+                {% endif %}
                 {% endif %}
             </p>
         </div>
@@ -1902,8 +1907,10 @@
                 <div class="accordion" id="flashcardsAccordion">
                     {% for card in flashcards %}
                     <div class="accordion-item flashcard-advanced difficulty-{{ card.difficulty }}"
+                        id="flashcard-{{ loop.index0 }}"
                         data-type="{{ card.type }}" data-difficulty="{{ card.difficulty }}"
-                        data-card-id="{{ loop.index0 }}">
+                        data-card-id="{{ loop.index0 }}"
+                        data-card="{{ loop.index0 }}">
                         <div class="flashcard-header">
                             <div class="d-flex align-items-center flex-grow-1">
                                 <button class="accordion-button collapsed p-0 bg-transparent border-0 text-start"
@@ -2827,24 +2834,383 @@
     }
 
     function createNewCard() {
-        const question = document.getElementById('newCardQuestion').value;
-        const answer = document.getElementById('newCardAnswer').value;
+        const question = document.getElementById('newCardQuestion').value.trim();
+        const answer = document.getElementById('newCardAnswer').value.trim();
         const type = document.getElementById('newCardType').value;
-        const difficulty = document.getElementById('newCardDifficulty').value;
-        const hint = document.getElementById('newCardHint').value;
+        const difficulty = parseInt(document.getElementById('newCardDifficulty').value);
+        const hint = document.getElementById('newCardHint').value.trim();
 
         if (!question || !answer) {
             showToast('Заполните вопрос и ответ', 'warning');
             return;
         }
 
-        // Here you would typically send this to the server
-        // For now, just show success message
-        showToast('Флеш-карта создана успешно!', 'success');
+        // Создаем новую карту
+        const newCard = {
+            q: question,
+            a: answer,
+            type: type,
+            difficulty: difficulty,
+            hint: hint || 'Подсказка не указана',
+            related_topics: [],
+            memory_hook: '',
+            common_mistakes: '',
+            text_reference: 'Создано пользователем',
+            next_review: new Date().toISOString(),
+            ease_factor: 2.5
+        };
 
-        // Close modal and reset form
-        bootstrap.Modal.getInstance(document.getElementById('createCardModal')).hide();
-        document.getElementById('createCardForm').reset();
+        console.log('Creating new card:', newCard);
+
+        // Отправляем на сервер
+        fetch('/api/create_flashcard', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                result_id: {{ result_id }},
+                card: newCard
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // Добавляем карту в DOM
+                addCardToDOM(newCard, data.card_id);
+                
+                showToast('Флеш-карта создана и сохранена!', 'success');
+                
+                // Обновляем статистику
+                updateFlashcardStats();
+                
+                // Закрываем модальное окно и сбрасываем форму
+                bootstrap.Modal.getInstance(document.getElementById('createCardModal')).hide();
+                document.getElementById('createCardForm').reset();
+            } else {
+                throw new Error(data.error || 'Ошибка создания карты');
+            }
+        })
+        .catch(error => {
+            console.error('Error creating flashcard:', error);
+            showToast('Ошибка при создании карты: ' + error.message, 'danger');
+        });
+    }
+
+    function addCardToDOM(card, cardId) {
+        const flashcardsContainer = document.getElementById('flashcardsAccordion');
+        if (!flashcardsContainer) {
+            console.error('Flashcards container not found');
+            return;
+        }
+
+        const cardIndex = flashcardsContainer.children.length;
+        const difficultyClass = `difficulty-${card.difficulty}`;
+        const difficultyText = card.difficulty === 1 ? 'Легкая' : card.difficulty === 2 ? 'Средняя' : 'Сложная';
+        const typeText = {
+            'definition': 'Определение',
+            'concept': 'Концепция', 
+            'application': 'Применение',
+            'comparison': 'Сравнение',
+            'problem': 'Задача'
+        }[card.type] || card.type;
+
+        const cardHtml = `
+            <div class="accordion-item flashcard-advanced ${difficultyClass}">
+                <h2 class="accordion-header" id="heading${cardIndex}">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#collapse${cardIndex}" aria-expanded="false" aria-controls="collapse${cardIndex}">
+                        <div class="flashcard-header w-100">
+                            <div class="d-flex justify-content-between align-items-center w-100 me-3">
+                                <div class="flashcard-question">
+                                    <strong>${card.q}</strong>
+                                </div>
+                                <div class="flashcard-meta">
+                                    <span class="badge bg-secondary me-2">${typeText}</span>
+                                    <span class="badge bg-info">${difficultyText}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </button>
+                </h2>
+                <div id="collapse${cardIndex}" class="accordion-collapse collapse" aria-labelledby="heading${cardIndex}"
+                    data-bs-parent="#flashcardsAccordion">
+                    <div class="accordion-body">
+                        <div class="answer-content mb-3">
+                            <h6><i class="fas fa-lightbulb me-2"></i>Ответ:</h6>
+                            <p>${card.a}</p>
+                        </div>
+                        ${card.hint && card.hint !== 'Подсказка не указана' ? `
+                        <div class="hint-content mb-3">
+                            <h6><i class="fas fa-question-circle me-2"></i>Подсказка:</h6>
+                            <p class="text-muted">${card.hint}</p>
+                        </div>
+                        ` : ''}
+                        <div class="card-actions d-flex justify-content-between align-items-center">
+                            <div class="review-buttons">
+                                <small class="text-muted me-2">Насколько хорошо знаете?</small>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <button class="btn btn-outline-danger"
+                                        onclick="markCardReviewed('{{ result_id }}', '${cardIndex}', false, 1)">
+                                        <i class="fas fa-times me-1"></i>Не знаю
+                                    </button>
+                                    <button class="btn btn-outline-warning"
+                                        onclick="markCardReviewed('{{ result_id }}', '${cardIndex}', true, 2)">
+                                        <i class="fas fa-question me-1"></i>Частично
+                                    </button>
+                                    <button class="btn btn-outline-success"
+                                        onclick="markCardReviewed('{{ result_id }}', '${cardIndex}', true, 3)">
+                                        <i class="fas fa-check me-1"></i>Хорошо знаю
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-tools">
+                                <button class="btn btn-sm btn-outline-primary"
+                                    onclick="addToFavorites('${cardIndex}')" title="В избранное">
+                                    <i class="fas fa-star"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-info"
+                                    onclick="shareCard('${cardIndex}')" title="Поделиться">
+                                    <i class="fas fa-share"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        flashcardsContainer.insertAdjacentHTML('beforeend', cardHtml);
+        
+        // Скрыть сообщение "карты не найдены" если оно есть
+        const noCardsMessage = document.getElementById('noCardsMessage');
+        if (noCardsMessage) {
+            noCardsMessage.style.display = 'none';
+        }
+    }
+
+    function updateFlashcardStats() {
+        const totalCards = document.querySelectorAll('#flashcardsAccordion .accordion-item').length;
+        
+        // Считаем статистику по иконкам прогресса
+        let masteredCards = 0;
+        let reviewCards = 0;
+        let newCards = 0;
+        
+        document.querySelectorAll('[data-card]').forEach(indicator => {
+            const icon = indicator.querySelector('i');
+            if (icon) {
+                if (icon.classList.contains('fa-check-circle')) {
+                    masteredCards++;
+                } else if (icon.classList.contains('fa-clock')) {
+                    reviewCards++;
+                } else {
+                    newCards++;
+                }
+            }
+        });
+        
+        // Обновляем статистику в карточках
+        const masteredElement = document.getElementById('masteredCount');
+        const reviewElement = document.getElementById('reviewCount');
+        const newElement = document.getElementById('newCount');
+        const progressElement = document.getElementById('progressPercent');
+        
+        if (masteredElement) masteredElement.textContent = masteredCards;
+        if (reviewElement) reviewElement.textContent = reviewCards;
+        if (newElement) newElement.textContent = newCards;
+        
+        // Вычисляем процент прогресса
+        const progressPercent = totalCards > 0 ? Math.round((masteredCards / totalCards) * 100) : 0;
+        if (progressElement) progressElement.textContent = progressPercent + '%';
+        
+        // Обновляем счетчик в заголовке вкладки
+        const flashcardsTab = document.querySelector('[href="#flashcards"]');
+        if (flashcardsTab) {
+            const badge = flashcardsTab.querySelector('.badge');
+            if (badge) {
+                badge.textContent = totalCards;
+            }
+        }
+        
+        // Обновляем статистику в заголовке секции
+        const flashcardsHeader = document.querySelector('#flashcards h4');
+        if (flashcardsHeader) {
+            const countSpan = flashcardsHeader.querySelector('.text-muted');
+            if (countSpan) {
+                countSpan.textContent = `(${totalCards} карт)`;
+            }
+        }
+        
+        console.log(`Updated flashcard stats: ${totalCards} total, ${masteredCards} mastered, ${reviewCards} review, ${newCards} new`);
+    }
+
+    function showToast(message, type = 'info') {
+        // Создаем toast уведомление
+        const toastId = 'toast-' + Date.now();
+        const bgClass = {
+            'success': 'bg-success',
+            'danger': 'bg-danger', 
+            'warning': 'bg-warning',
+            'info': 'bg-info'
+        }[type] || 'bg-info';
+        
+        const toastHtml = `
+            <div id="${toastId}" class="toast align-items-center text-white ${bgClass} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
+        `;
+        
+        // Создаем контейнер для toast если его нет
+        let toastContainer = document.getElementById('toastContainer');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.id = 'toastContainer';
+            toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+            toastContainer.style.zIndex = '9999';
+            document.body.appendChild(toastContainer);
+        }
+        
+        // Добавляем toast
+        toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+        
+        // Показываем toast
+        const toastElement = document.getElementById(toastId);
+        const toast = new bootstrap.Toast(toastElement, {
+            autohide: true,
+            delay: 3000
+        });
+        toast.show();
+        
+        // Удаляем элемент после скрытия
+        toastElement.addEventListener('hidden.bs.toast', function() {
+            this.remove();
+        });
+    }
+
+    function addCardToDOM(card, cardId) {
+        const accordion = document.getElementById('flashcardsAccordion');
+        const cardIndex = accordion.children.length;
+        
+        const cardHtml = `
+            <div class="accordion-item flashcard-advanced difficulty-${card.difficulty}"
+                 id="flashcard-${cardId}"
+                 data-type="${card.type}" 
+                 data-difficulty="${card.difficulty}"
+                 data-card-id="${cardId}"
+                 data-card="${cardId}">
+                <div class="flashcard-header">
+                    <div class="d-flex align-items-center flex-grow-1">
+                        <button class="accordion-button collapsed p-0 bg-transparent border-0 text-start"
+                                type="button" data-bs-toggle="collapse" data-bs-target="#card${cardIndex + 1}">
+                            <div class="flashcard-question-container">
+                                <div class="d-flex align-items-center mb-1">
+                                    <i class="fas fa-question-circle text-primary me-2"></i>
+                                    <span class="card-number text-muted me-2">#${cardIndex + 1}</span>
+                                    <span class="flashcard-question">${card.q}</span>
+                                </div>
+                                <div class="flashcard-meta">
+                                    <span class="badge bg-${getTypeColor(card.type)} me-1">${getTypeLabel(card.type)}</span>
+                                    <span class="badge bg-${getDifficultyColor(card.difficulty)} me-1">
+                                        ${'★'.repeat(card.difficulty)}
+                                    </span>
+                                    <span class="badge bg-success">Новая</span>
+                                </div>
+                            </div>
+                        </button>
+                        <div class="flashcard-actions ms-2">
+                            <i class="fas fa-circle text-muted" data-card="${cardId}" title="Не изучена"></i>
+                        </div>
+                    </div>
+                </div>
+                <div id="card${cardIndex + 1}" class="accordion-collapse collapse" data-bs-parent="#flashcardsAccordion">
+                    <div class="accordion-body">
+                        <div class="answer-content">
+                            <h6><i class="fas fa-lightbulb text-warning me-2"></i>Ответ:</h6>
+                            <div class="answer-text">${card.a}</div>
+                        </div>
+                        ${card.hint ? `
+                        <div class="hint-content mt-3">
+                            <h6><i class="fas fa-info-circle text-info me-2"></i>Подсказка:</h6>
+                            <div class="hint-text">${card.hint}</div>
+                        </div>
+                        ` : ''}
+                        <div class="card-actions mt-4">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <h6 class="mb-2">Насколько хорошо знаете?</h6>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <button class="btn btn-outline-danger"
+                                                onclick="markCardReviewed('{{ result_id }}', '${cardId}', false, 1)">
+                                            <i class="fas fa-times me-1"></i>Не знаю
+                                        </button>
+                                        <button class="btn btn-outline-warning"
+                                                onclick="markCardReviewed('{{ result_id }}', '${cardId}', true, 2)">
+                                            <i class="fas fa-question me-1"></i>Частично
+                                        </button>
+                                        <button class="btn btn-outline-success"
+                                                onclick="markCardReviewed('{{ result_id }}', '${cardId}', true, 3)">
+                                            <i class="fas fa-check me-1"></i>Хорошо знаю
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-outline-secondary" onclick="addToFavorites('${cardId}')" title="В избранное">
+                                            <i class="fas fa-heart"></i>
+                                        </button>
+                                        <button class="btn btn-outline-secondary" onclick="shareCard('${cardId}')" title="Поделиться">
+                                            <i class="fas fa-share"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        accordion.insertAdjacentHTML('beforeend', cardHtml);
+    }
+
+    function getTypeColor(type) {
+        const colors = {
+            'definition': 'success',
+            'concept': 'info', 
+            'application': 'warning',
+            'comparison': 'danger',
+            'problem': 'primary'
+        };
+        return colors[type] || 'secondary';
+    }
+
+    function getTypeLabel(type) {
+        const labels = {
+            'definition': 'Определение',
+            'concept': 'Концепция',
+            'application': 'Применение', 
+            'comparison': 'Сравнение',
+            'problem': 'Задача'
+        };
+        return labels[type] || 'Другое';
+    }
+
+    function getDifficultyColor(difficulty) {
+        const colors = {
+            1: 'success',
+            2: 'warning', 
+            3: 'danger'
+        };
+        return colors[difficulty] || 'secondary';
     }
 
     function addToFavorites(cardId) {
@@ -2866,75 +3232,65 @@
         }
     }
 
-    function updateFlashcardStats() {
-        // This would typically fetch real progress data
-        const totalCards = document.querySelectorAll('.flashcard-advanced').length;
-        const masteredCards = Object.values(flashcardProgress).filter(p => p >= 3).length;
-        const reviewCards = Object.values(flashcardProgress).filter(p => p > 0 && p < 3).length;
-        const newCards = totalCards - masteredCards - reviewCards;
-        const progressPercent = totalCards > 0 ? Math.round((masteredCards / totalCards) * 100) : 0;
 
-        document.getElementById('masteredCount').textContent = masteredCards;
-        document.getElementById('reviewCount').textContent = reviewCards;
-        document.getElementById('newCount').textContent = newCards;
-        document.getElementById('progressPercent').textContent = progressPercent + '%';
-    }
-
-    function showToast(message, type = 'info') {
-        const toast = document.createElement('div');
-        toast.className = `alert alert-${type} position-fixed`;
-        toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-        toast.innerHTML = `
-            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>
-            ${message}
-            <button type="button" class="btn-close ms-2" onclick="this.parentElement.remove()"></button>
-        `;
-        document.body.appendChild(toast);
-
-        setTimeout(() => toast.remove(), 4000);
-    }
 
     // Enhanced mark card as reviewed with confidence levels
     function markCardReviewed(resultId, cardId, correct, confidence = 2) {
+        console.log('Marking card as reviewed:', { resultId, cardId, correct, confidence });
+        
         fetch('/api/flashcard_progress', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                result_id: resultId,
-                flashcard_id: cardId,
+                result_id: parseInt(resultId),
+                flashcard_id: parseInt(cardId),
                 correct: correct,
                 confidence: confidence
             })
         })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
+                console.log('Progress update response:', data);
+                
                 if (data.success) {
                     // Update progress indicator
-                    const progressIndicator = document.querySelector(`[data-card="${cardId}"]`);
+                    const progressIndicator = document.querySelector(`.flashcard-progress-indicator[data-card="${cardId}"]`);
                     if (progressIndicator) {
                         const icon = progressIndicator.querySelector('i');
-                        if (correct && confidence >= 3) {
-                            icon.className = 'fas fa-check-circle text-success';
-                            icon.title = 'Изучено';
-                        } else if (correct && confidence >= 2) {
-                            icon.className = 'fas fa-clock text-warning';
-                            icon.title = 'На повторение';
-                        } else {
-                            icon.className = 'fas fa-times-circle text-danger';
-                            icon.title = 'Требует изучения';
+                        if (icon) {
+                            if (correct && confidence >= 3) {
+                                icon.className = 'fas fa-check-circle text-success';
+                                icon.title = 'Изучено';
+                            } else if (correct && confidence >= 2) {
+                                icon.className = 'fas fa-clock text-warning';
+                                icon.title = 'На повторение';
+                            } else {
+                                icon.className = 'fas fa-times-circle text-danger';
+                                icon.title = 'Требует изучения';
+                            }
                         }
                     }
 
-                    // Update buttons
-                    const buttons = event.target.parentElement.querySelectorAll('button');
-                    buttons.forEach(btn => {
-                        btn.disabled = true;
-                        btn.classList.remove('btn-outline-danger', 'btn-outline-warning', 'btn-outline-success');
-                        btn.classList.add('btn-secondary');
-                    });
+                    // Find and update buttons for this specific card
+                    const cardElement = document.querySelector(`#flashcard-${cardId}`);
+                    if (cardElement) {
+                        const buttons = cardElement.querySelectorAll('.btn-group button');
+                        buttons.forEach(btn => {
+                            btn.disabled = true;
+                            btn.classList.remove('btn-outline-danger', 'btn-outline-warning', 'btn-outline-success');
+                            btn.classList.add('btn-secondary');
+                        });
+                    }
 
                     // Update progress in memory
-                    flashcardProgress[cardId] = confidence;
+                    if (typeof flashcardProgress !== 'undefined') {
+                        flashcardProgress[cardId] = confidence;
+                    }
 
                     // Show feedback
                     let message = '';
@@ -2955,11 +3311,14 @@
 
                     // Update statistics
                     updateFlashcardStats();
+                } else {
+                    console.error('Server returned error:', data);
+                    showToast(data.error || 'Ошибка при сохранении прогресса', 'danger');
                 }
             })
             .catch(error => {
                 console.error('Error updating flashcard progress:', error);
-                showToast('Ошибка при сохранении прогресса', 'danger');
+                showToast('Ошибка при сохранении прогресса. Проверьте подключение к интернету.', 'danger');
             });
     }
 
@@ -5354,6 +5713,82 @@
             });
         });
     }
+
+    // Additional utility functions that might be called from HTML
+    function expandAll() {
+        document.querySelectorAll('.accordion-collapse').forEach(el => {
+            new bootstrap.Collapse(el, { show: true });
+        });
+    }
+
+    function collapseAll() {
+        document.querySelectorAll('.accordion-collapse').forEach(el => {
+            new bootstrap.Collapse(el, { hide: true });
+        });
+    }
+
+    function filterCards(type) {
+        const cards = document.querySelectorAll('.flashcard-advanced');
+        cards.forEach(card => {
+            if (type === 'all' || card.dataset.type === type) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
+
+    function searchCards() {
+        const searchTerm = document.getElementById('cardSearch')?.value.toLowerCase() || '';
+        const cards = document.querySelectorAll('.flashcard-advanced');
+        
+        cards.forEach(card => {
+            const question = card.querySelector('.flashcard-question')?.textContent.toLowerCase() || '';
+            const answer = card.querySelector('.answer-text')?.textContent.toLowerCase() || '';
+            
+            if (question.includes(searchTerm) || answer.includes(searchTerm)) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
+
+    function startStudySession() {
+        showToast('Интерактивный режим изучения будет добавлен в следующей версии', 'info');
+    }
+
+    function startSession(sessionNumber) {
+        showToast(`Начинаем сессию ${sessionNumber}`, 'info');
+    }
+
+    function seekToTime(seconds) {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = Math.floor(seconds % 60);
+        showToast(`Переход к ${minutes}:${remainingSeconds.toString().padStart(2, '0')}`, 'info');
+    }
+
+    // Initialize everything when DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM loaded, initializing application...');
+        
+        // Initialize math support
+        if (typeof initMathSupport === 'function') {
+            initMathSupport();
+        }
+        
+        // Initialize study plan if on that tab
+        if (typeof initStudyPlan === 'function') {
+            initStudyPlan();
+        }
+        
+        // Load progress data
+        if (typeof loadProgress === 'function') {
+            loadProgress();
+        }
+        
+        console.log('Application initialized successfully');
+    });
 
 </script>
 {% endblock %}
