@@ -33,6 +33,11 @@ try:
 except LookupError:
     nltk.download('punkt')
 
+try:
+    nltk.data.find('tokenizers/punkt_tab')
+except LookupError:
+    nltk.download('punkt_tab')
+
 # Логгирование
 logger = logging.getLogger(__name__)
 
@@ -54,9 +59,17 @@ def load_models():
     # Sentence transformer
     sentence_model = SentenceTransformer("intfloat/e5-large-v2", device=device)
     
-    # Whisper для обработки аудио
+    # Whisper для обработки аудио - используем более быструю модель
     try:
-        whisper_model = whisperx.load_model("large-v3", device, compute_type=compute_type)
+        # Выбираем модель в зависимости от устройства для оптимального баланса скорость/качество
+        if device == "cuda":
+            # На GPU используем medium для хорошего баланса
+            whisper_model = whisperx.load_model("medium", device, compute_type=compute_type)
+            logger.info("Loaded Whisper MEDIUM model for GPU (faster)")
+        else:
+            # На CPU используем base для максимальной скорости
+            whisper_model = whisperx.load_model("base", device, compute_type=compute_type)
+            logger.info("Loaded Whisper BASE model for CPU (fastest)")
     except Exception as e:
         logger.warning(f"Whisper model not loaded: {str(e)}")
     
@@ -227,11 +240,26 @@ def transcribe_video_with_timestamps(filepath: str) -> Dict[str, Any]:
         # Загрузка аудио из временной копии
         logger.info("Loading audio from temporary copy...")
         audio = whisperx.load_audio(temp_copy_path)
-        logger.info(f"Audio loaded, duration: {len(audio)/16000:.2f} seconds")
+        video_duration = len(audio) / 16000
+        logger.info(f"Audio loaded, duration: {video_duration:.2f} seconds ({video_duration/60:.1f} minutes)")
+        
+        # Оптимизируем параметры в зависимости от длительности видео
+        if video_duration > 7200:  # Более 2 часов
+            batch_size = 16 if device == "cuda" else 4
+            logger.info(f"🐌 Very long video (>2h): using conservative batch_size={batch_size}")
+        elif video_duration > 3600:  # Более 1 часа
+            batch_size = 24 if device == "cuda" else 6
+            logger.info(f"📚 Long video (>1h): using moderate batch_size={batch_size}")
+        elif video_duration > 1800:  # Более 30 минут
+            batch_size = 32 if device == "cuda" else 8
+            logger.info(f"📖 Medium video (>30min): using standard batch_size={batch_size}")
+        else:  # Короткие видео
+            batch_size = 48 if device == "cuda" else 12
+            logger.info(f"🚀 Short video (<30min): using fast batch_size={batch_size}")
         
         # Транскрипция с временными отметками
         logger.info("Starting transcription...")
-        result = whisper_model.transcribe(audio, batch_size=16)
+        result = whisper_model.transcribe(audio, batch_size=batch_size)
         logger.info(f"Transcription completed, detected language: {result.get('language', 'unknown')}")
         
         # Проверяем, есть ли сегменты в результате
@@ -241,18 +269,22 @@ def transcribe_video_with_timestamps(filepath: str) -> Dict[str, Any]:
         
         logger.info(f"Found {len(result['segments'])} segments")
         
-        # Попытка выравнивания для более точных временных меток
-        try:
-            logger.info("Attempting alignment for better timestamps...")
-            model_a, metadata = whisperx.load_align_model(
-                language_code=result["language"], 
-                device=device
-            )
-            result = whisperx.align(result["segments"], model_a, metadata, audio, device, return_char_alignments=False)
-            logger.info("Alignment completed successfully")
-        except Exception as align_error:
-            logger.warning(f"Alignment failed, using original timestamps: {align_error}")
-            # Продолжаем с оригинальными временными метками
+        # Попытка выравнивания для более точных временных меток - только для коротких видео
+        video_duration = len(audio) / 16000
+        if video_duration <= 1800:  # Только для видео до 30 минут
+            try:
+                logger.info("Attempting alignment for better timestamps...")
+                model_a, metadata = whisperx.load_align_model(
+                    language_code=result["language"], 
+                    device=device
+                )
+                result = whisperx.align(result["segments"], model_a, metadata, audio, device, return_char_alignments=False)
+                logger.info("Alignment completed successfully")
+            except Exception as align_error:
+                logger.warning(f"Alignment failed, using original timestamps: {align_error}")
+                # Продолжаем с оригинальными временными метками
+        else:
+            logger.info(f"Skipping alignment for long video ({video_duration/60:.1f} min) to speed up processing")
         
         # Обработка сегментов
         segments = []
@@ -329,6 +361,65 @@ def transcribe_video_with_timestamps(filepath: str) -> Dict[str, Any]:
                 logger.info(f"Temporary copy removed: {temp_copy_path}")
             except Exception as cleanup_error:
                 logger.warning(f"Failed to remove temporary copy: {cleanup_error}")
+
+def optimize_transcribed_text(text: str) -> str:
+    """Оптимизация транскрибированного текста для лучшей обработки"""
+    try:
+        logger.info(f"📝 Optimizing transcribed text: {len(text)} characters")
+        
+        # 1. Удаляем повторяющиеся фразы и слова-паразиты
+        # Слова-паразиты в транскрипции
+        filler_words = [
+            r'\b(?:эм+|ээ+|мм+|хм+|ну|так|вот|это|значит|короче|типа|как бы|в общем|в принципе)\b',
+            r'\b(?:да|нет|ага|угу|ок|окей)\s*[,.]?\s*',
+            r'\[.*?\]',  # Убираем технические пометки
+            r'\(.*?\)',  # Убираем скобки с пометками
+        ]
+        
+        optimized_text = text
+        for pattern in filler_words:
+            optimized_text = re.sub(pattern, ' ', optimized_text, flags=re.IGNORECASE)
+        
+        # 2. Убираем избыточные пробелы и переносы
+        optimized_text = re.sub(r'\s+', ' ', optimized_text)
+        optimized_text = re.sub(r'\n+', '\n', optimized_text)
+        
+        # 3. Убираем повторяющиеся предложения (часто в транскрипции)
+        sentences = sent_tokenize(optimized_text)
+        unique_sentences = []
+        seen_sentences = set()
+        
+        for sentence in sentences:
+            # Нормализуем предложение для сравнения
+            normalized = re.sub(r'[^\w\s]', '', sentence.lower().strip())
+            if len(normalized) > 10 and normalized not in seen_sentences:
+                seen_sentences.add(normalized)
+                unique_sentences.append(sentence.strip())
+        
+        # 4. Объединяем предложения обратно
+        optimized_text = ' '.join(unique_sentences)
+        
+        # 5. Ограничиваем размер для стабильной обработки (как у PDF)
+        max_chars = 128000  # Такой же лимит как у PDF
+        if len(optimized_text) > max_chars:
+            logger.info(f"📝 Text too long ({len(optimized_text)} chars), truncating to {max_chars}")
+            # Умное обрезание - берем начало и конец
+            start_part = optimized_text[:max_chars//2]
+            end_part = optimized_text[-(max_chars//2):]
+            optimized_text = start_part + "\n\n[...средняя часть пропущена для оптимизации...]\n\n" + end_part
+        
+        logger.info(f"✨ Text optimized: {len(text)} → {len(optimized_text)} characters")
+        logger.info(f"📊 Removed {len(text) - len(optimized_text)} characters of redundancy")
+        
+        return optimized_text.strip()
+        
+    except Exception as e:
+        logger.warning(f"⚠️ Text optimization failed: {e}, using original text")
+        # Если оптимизация не удалась, просто ограничиваем размер
+        max_chars = 128000
+        if len(text) > max_chars:
+            return text[:max_chars] + "\n\n[Текст обрезан для стабильной обработки]"
+        return text
 
 def transcribe_video_simple(filepath: str) -> str:
     """Транскрипция видео без временных меток"""
@@ -875,10 +966,12 @@ def generate_summary(text: str) -> str:
 • Ключевой факт 3 (условие успешного применения)
 • Ключевой факт 4 (связь с другими темами)
 
-🧮 ФОРМУЛЫ И АЛГОРИТМЫ (если есть):
-• Основная формула: что вычисляет, когда применять
-• Алгоритм: пошаговое описание, входные/выходные данные
-• Параметры: что означают, как выбирать
+🔧 МЕТОДЫ И ИНСТРУМЕНТЫ (если применимо):
+• Для технических тем: формулы, алгоритмы, расчеты
+• Для гуманитарных тем: методики, подходы, техники
+• Для бизнес-тем: стратегии, процессы, инструменты
+• Для творческих тем: приемы, техники, способы
+[ВКЛЮЧАЙ ТОЛЬКО ЕСЛИ В ТЕКСТЕ ЕСТЬ КОНКРЕТНЫЕ МЕТОДЫ/ФОРМУЛЫ/ТЕХНИКИ]
 
 📈 РЕЗУЛЬТАТЫ И ВЫВОДЫ:
 • Что мы получаем в итоге изучения этой темы
@@ -1688,7 +1781,24 @@ def process_file(filepath: str, filename: str, page_range: str = None) -> Dict[s
             # Используем ПОЛНУЮ обработку видео без оптимизации для лучшего качества
             logger.info("🎬 Starting FULL video processing for better quality...")
             video_data = transcribe_video_with_timestamps(filepath)
-            text = video_data['full_text']
+            raw_text = video_data['full_text']
+            
+            # Подсчитываем количество слов после транскрипции
+            raw_word_count = len(raw_text.split()) if raw_text else 0
+            logger.info(f"🎤 Transcription completed: {len(raw_text)} characters, {raw_word_count} words")
+            logger.info(f"📊 ТРАНСКРИПЦИЯ ЗАВЕРШЕНА: {raw_word_count} слов, {len(raw_text)} символов")
+            
+            # Оптимизируем транскрибированный текст для лучшей обработки
+            logger.info(f"📝 Optimizing transcribed text: {len(raw_text)} characters")
+            optimization_start = time.time()
+            text = optimize_transcribed_text(raw_text)
+            optimization_time = time.time() - optimization_start
+            
+            # Подсчитываем количество слов после оптимизации
+            optimized_word_count = len(text.split()) if text else 0
+            words_removed = raw_word_count - optimized_word_count
+            logger.info(f"✨ Optimized text: {len(text)} characters, {optimized_word_count} words in {optimization_time:.1f}s")
+            logger.info(f"✨ ОПТИМИЗАЦИЯ ЗАВЕРШЕНА: {optimized_word_count} слов (-{words_removed} слов), {len(text)} символов")
         else:
             raise ValueError(f"Unsupported file type: {file_ext}")
         

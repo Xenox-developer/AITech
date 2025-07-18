@@ -1537,74 +1537,13 @@
             </p>
         </div>
         <div class="text-center">
-            <div
-                class="quality-badge {% if quality_assessment.overall_score >= 0.8 %}quality-excellent{% elif quality_assessment.overall_score >= 0.6 %}quality-good{% else %}quality-fair{% endif %}">
-                <i class="fas fa-star me-2"></i>
-                Качество анализа: {{ (quality_assessment.overall_score * 100)|round }}%
-            </div>
-            <div class="mt-2">
-                <a href="{{ url_for('index') }}" class="btn btn-outline-primary btn-sm">
-                    <i class="fas fa-plus me-2"></i>Новый файл
-                </a>
-            </div>
+            <a href="{{ url_for('index') }}" class="btn btn-outline-primary btn-sm">
+                <i class="fas fa-plus me-2"></i>Новый файл
+            </a>
         </div>
     </div>
 
-    <!-- Quality Metrics -->
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <svg width="60" height="60">
-                        <circle cx="30" cy="30" r="25" stroke="#e9ecef" stroke-width="5" fill="none"></circle>
-                        <circle class="progress-ring" cx="30" cy="30" r="25" stroke="#667eea" stroke-width="5"
-                            fill="none" stroke-dasharray="{{ quality_assessment.depth_score * 157 }} 157"></circle>
-                    </svg>
-                    <h6 class="mt-2 mb-0">Глубина</h6>
-                    <small class="text-muted">{{ (quality_assessment.depth_score * 100)|round }}%</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <svg width="60" height="60">
-                        <circle cx="30" cy="30" r="25" stroke="#e9ecef" stroke-width="5" fill="none"></circle>
-                        <circle class="progress-ring" cx="30" cy="30" r="25" stroke="#4facfe" stroke-width="5"
-                            fill="none" stroke-dasharray="{{ quality_assessment.coverage_score * 157 }} 157"></circle>
-                    </svg>
-                    <h6 class="mt-2 mb-0">Охват</h6>
-                    <small class="text-muted">{{ (quality_assessment.coverage_score * 100)|round }}%</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <svg width="60" height="60">
-                        <circle cx="30" cy="30" r="25" stroke="#e9ecef" stroke-width="5" fill="none"></circle>
-                        <circle class="progress-ring" cx="30" cy="30" r="25" stroke="#fa709a" stroke-width="5"
-                            fill="none" stroke-dasharray="{{ quality_assessment.practical_score * 157 }} 157"></circle>
-                    </svg>
-                    <h6 class="mt-2 mb-0">Практичность</h6>
-                    <small class="text-muted">{{ (quality_assessment.practical_score * 100)|round }}%</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <svg width="60" height="60">
-                        <circle cx="30" cy="30" r="25" stroke="#e9ecef" stroke-width="5" fill="none"></circle>
-                        <circle class="progress-ring" cx="30" cy="30" r="25" stroke="#00f2fe" stroke-width="5"
-                            fill="none" stroke-dasharray="{{ quality_assessment.clarity_score * 157 }} 157"></circle>
-                    </svg>
-                    <h6 class="mt-2 mb-0">Ясность</h6>
-                    <small class="text-muted">{{ (quality_assessment.clarity_score * 100)|round }}%</small>
-                </div>
-            </div>
-        </div>
-    </div>
+
 
     <!-- Navigation Tabs -->
     <ul class="nav nav-pills mb-4" id="resultTabs" role="tablist">
