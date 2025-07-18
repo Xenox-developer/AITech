@@ -1685,10 +1685,10 @@ def process_file(filepath: str, filename: str, page_range: str = None) -> Dict[s
             text = extract_text_from_pdf_with_pages(filepath, page_range)
             video_data = None
         elif file_ext in ['.mp4', '.mov', '.mkv']:
-            # ОПТИМИЗАЦИЯ 1: Используем ЭКСПРЕСС-обработчик видео
-            logger.info("🚀 Starting EXPRESS video processing...")
-            from fast_video_processor import process_video_fast
-            return process_video_fast(filepath, filename)
+            # Используем ПОЛНУЮ обработку видео без оптимизации для лучшего качества
+            logger.info("🎬 Starting FULL video processing for better quality...")
+            video_data = transcribe_video_with_timestamps(filepath)
+            text = video_data['full_text']
         else:
             raise ValueError(f"Unsupported file type: {file_ext}")
         
@@ -1701,45 +1701,37 @@ def process_file(filepath: str, filename: str, page_range: str = None) -> Dict[s
         
         logger.info(f"📝 Extracted {len(text)} characters of text")
         
-        # ОПТИМИЗАЦИЯ 2: Агрессивное сокращение текста для скорости
+        # Используем ПОЛНЫЙ текст без сокращений для лучшего качества анализа
         original_text_length = len(text)
-        if original_text_length > 20000:  # Снижен порог с 50К до 20К
-            logger.info(f"⚡ SPEED MODE: Aggressive text optimization ({original_text_length} chars)")
-            # Берем только первые 15К символов для максимальной скорости
-            text = text[:15000] + "\n\n[Текст сокращен для быстрой обработки]"
-            logger.info(f"✂️ Text optimized to {len(text)} characters for SPEED")
-        elif original_text_length > 10000:
-            logger.info(f"⚡ SPEED MODE: Moderate text optimization ({original_text_length} chars)")
-            text = text[:10000] + "\n\n[Текст сокращен для оптимизации]"
-            logger.info(f"✂️ Text optimized to {len(text)} characters")
+        logger.info(f"📝 Processing FULL text: {original_text_length} characters (no optimization for better quality)")
         
-        # ОПТИМИЗАЦИЯ 3: Параллельная обработка с уменьшенными требованиями
-        logger.info("🧠 Starting FAST content generation...")
+        # Используем ПОЛНЫЕ алгоритмы без оптимизации для лучшего качества
+        logger.info("🧠 Starting FULL content generation for better quality...")
         generation_start = time.time()
         
         try:
-            # Быстрое извлечение тем с сокращенным промптом
-            topics_data = extract_topics_fast(text)
-            logger.info("✅ Fast topics extraction completed")
+            # Полное извлечение тем с GPT
+            topics_data = extract_topics_with_gpt(text)
+            logger.info("✅ Full topics extraction completed")
         except Exception as e:
-            logger.warning(f"⚠️ Fast topics failed: {e}, using ultra-fast fallback")
-            topics_data = extract_topics_ultra_fast(text)
+            logger.warning(f"⚠️ GPT topics failed: {e}, using fallback")
+            topics_data = extract_topics_fallback(text)
         
-        # ОПТИМИЗАЦИЯ 4: Быстрая генерация контента
-        logger.info("📝 Fast summary generation...")
+        # Полная генерация резюме
+        logger.info("📝 Full summary generation...")
         try:
-            summary = generate_summary_fast(text)
-            logger.info("✅ Fast summary completed")
+            summary = generate_summary(text)
+            logger.info("✅ Full summary completed")
         except Exception as e:
-            logger.warning(f"⚠️ Fast summary failed: {e}")
+            logger.warning(f"⚠️ Full summary failed: {e}")
             summary = "## 🎯 Главная идея\nВидео содержит важную информацию для изучения."
         
-        logger.info("🎴 Fast flashcards generation...")
+        logger.info("🎴 Full flashcards generation...")
         try:
-            flashcards = generate_flashcards_fast(text, topics_data.get('main_topics', []))
-            logger.info(f"✅ Generated {len(flashcards)} fast flashcards")
+            flashcards = generate_flashcards(text)
+            logger.info(f"✅ Generated {len(flashcards)} full flashcards")
         except Exception as e:
-            logger.warning(f"⚠️ Fast flashcards failed: {e}")
+            logger.warning(f"⚠️ Full flashcards failed: {e}")
             flashcards = create_fallback_flashcards(topics_data.get('main_topics', []))
         
         logger.info("🗺️ Generating mind map...")
