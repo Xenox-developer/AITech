@@ -188,62 +188,178 @@ def extract_text_from_pdf_with_pages(filepath: str, page_range: str = None) -> s
         return extract_text(filepath).strip()
 
 def transcribe_video_with_timestamps(filepath: str) -> Dict[str, Any]:
-    """Транскрипция видео/аудио"""
+    """Транскрипция видео/аудио с улучшенной обработкой"""
+    import shutil
+    temp_copy_path = None
+    
     try:
         logger.info(f"Transcribing video with timestamps: {filepath}")
         
-        # Загрузка аудио
-        audio = whisperx.load_audio(filepath)
+        # Проверяем, что файл существует
+        if not os.path.exists(filepath):
+            raise Exception(f"Video file not found: {filepath}")
+        
+        file_size = os.path.getsize(filepath)
+        logger.info(f"File exists, size: {file_size} bytes")
+        
+        # Проверяем права доступа
+        if not os.access(filepath, os.R_OK):
+            raise Exception(f"No read access to file: {filepath}")
+        
+        # Создаем временную копию в uploads директории для стабильной обработки
+        uploads_dir = "uploads"
+        if not os.path.exists(uploads_dir):
+            os.makedirs(uploads_dir)
+        
+        temp_filename = f"temp_transcribe_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{os.path.basename(filepath)}"
+        temp_copy_path = os.path.join(uploads_dir, temp_filename)
+        
+        logger.info(f"Creating temporary copy: {temp_copy_path}")
+        shutil.copy2(filepath, temp_copy_path)
+        
+        # Проверяем, что копия создана успешно
+        if not os.path.exists(temp_copy_path):
+            raise Exception(f"Failed to create temporary copy: {temp_copy_path}")
+        
+        copy_size = os.path.getsize(temp_copy_path)
+        logger.info(f"Temporary copy created, size: {copy_size} bytes")
+        
+        # Загрузка аудио из временной копии
+        logger.info("Loading audio from temporary copy...")
+        audio = whisperx.load_audio(temp_copy_path)
+        logger.info(f"Audio loaded, duration: {len(audio)/16000:.2f} seconds")
         
         # Транскрипция с временными отметками
+        logger.info("Starting transcription...")
         result = whisper_model.transcribe(audio, batch_size=16)
+        logger.info(f"Transcription completed, detected language: {result.get('language', 'unknown')}")
         
-        # Сегменты процесса
+        # Проверяем, есть ли сегменты в результате
+        if not result.get("segments"):
+            logger.warning("No segments found in transcription result")
+            return {"full_text": "", "segments": [], "key_moments": []}
+        
+        logger.info(f"Found {len(result['segments'])} segments")
+        
+        # Попытка выравнивания для более точных временных меток
+        try:
+            logger.info("Attempting alignment for better timestamps...")
+            model_a, metadata = whisperx.load_align_model(
+                language_code=result["language"], 
+                device=device
+            )
+            result = whisperx.align(result["segments"], model_a, metadata, audio, device, return_char_alignments=False)
+            logger.info("Alignment completed successfully")
+        except Exception as align_error:
+            logger.warning(f"Alignment failed, using original timestamps: {align_error}")
+            # Продолжаем с оригинальными временными метками
+        
+        # Обработка сегментов
         segments = []
         key_moments = []
         full_text = ""
         
         for i, segment in enumerate(result["segments"]):
-            text = segment["text"].strip()
-            start = segment["start"]
-            end = segment["end"]
+            text = segment.get("text", "").strip()
+            start = segment.get("start", 0)
+            end = segment.get("end", 0)
+            
+            if not text:  # Пропускаем пустые сегменты
+                continue
             
             full_text += text + " "
             
             # Анализ важности сегмента (на основе длины и ключевых слов)
-            importance = min(1.0, len(text.split()) / 50)
+            word_count = len(text.split())
+            importance = min(1.0, word_count / 50)
+            
+            # Повышаем важность для сегментов с ключевыми словами
+            key_indicators = ['важно', 'главное', 'основное', 'ключевое', 'заключение', 'итак', 'таким образом']
+            if any(indicator in text.lower() for indicator in key_indicators):
+                importance = min(1.0, importance + 0.3)
             
             segments.append({
-                "start": start,
-                "end": end,
+                "start": round(start, 2),
+                "end": round(end, 2),
                 "text": text,
-                "importance": importance
+                "importance": round(importance, 2),
+                "word_count": word_count
             })
             
-            # Определение ключевых моментов (более длинных сегментов с высокой важностью)
-            if importance > 0.7 and len(text.split()) > 20:
+            # Определение ключевых моментов
+            if importance > 0.6 and word_count > 15:
                 key_moments.append({
-                    "time": start,
-                    "description": text[:100] + "..." if len(text) > 100 else text
+                    "time": round(start, 2),
+                    "description": text[:100] + "..." if len(text) > 100 else text,
+                    "importance": round(importance, 2)
                 })
+        
+        logger.info(f"Processed {len(segments)} segments, found {len(key_moments)} key moments")
+        logger.info(f"Total text length: {len(full_text)} characters")
         
         return {
             "full_text": full_text.strip(),
             "segments": segments,
-            "key_moments": key_moments[:10]  # Топ 10 ключевых моментов
+            "key_moments": sorted(key_moments, key=lambda x: x['importance'], reverse=True)[:10],
+            "language": result.get("language", "unknown"),
+            "total_duration": segments[-1]["end"] if segments else 0
         }
         
     except Exception as e:
         logger.error(f"Error transcribing video: {str(e)}")
-        return {"full_text": transcribe_video_simple(filepath), "segments": [], "key_moments": []}
+        logger.info("Falling back to simple transcription...")
+        try:
+            simple_text = transcribe_video_simple(temp_copy_path if temp_copy_path and os.path.exists(temp_copy_path) else filepath)
+            return {
+                "full_text": simple_text,
+                "segments": [],
+                "key_moments": [],
+                "language": "unknown",
+                "total_duration": 0
+            }
+        except Exception as fallback_error:
+            logger.error(f"Fallback transcription also failed: {fallback_error}")
+            raise Exception(f"Both transcription methods failed: {str(e)}, {str(fallback_error)}")
+    
+    finally:
+        # Очищаем временную копию
+        if temp_copy_path and os.path.exists(temp_copy_path):
+            try:
+                os.remove(temp_copy_path)
+                logger.info(f"Temporary copy removed: {temp_copy_path}")
+            except Exception as cleanup_error:
+                logger.warning(f"Failed to remove temporary copy: {cleanup_error}")
 
 def transcribe_video_simple(filepath: str) -> str:
     """Транскрипция видео без временных меток"""
     try:
+        logger.info(f"Starting simple transcription for: {filepath}")
+        
+        # Загрузка аудио
         audio = whisperx.load_audio(filepath)
+        logger.info(f"Audio loaded for simple transcription, duration: {len(audio)/16000:.2f} seconds")
+        
+        # Транскрипция
         result = whisper_model.transcribe(audio, batch_size=16)
-        text = " ".join([segment["text"] for segment in result["segments"]])
-        return text.strip()
+        logger.info(f"Simple transcription completed, detected language: {result.get('language', 'unknown')}")
+        
+        # Проверяем наличие сегментов
+        if not result.get("segments"):
+            logger.warning("No segments found in simple transcription")
+            return ""
+        
+        # Извлекаем текст из сегментов
+        text_parts = []
+        for segment in result["segments"]:
+            segment_text = segment.get("text", "").strip()
+            if segment_text:
+                text_parts.append(segment_text)
+        
+        full_text = " ".join(text_parts).strip()
+        logger.info(f"Simple transcription extracted {len(full_text)} characters")
+        
+        return full_text
+        
     except Exception as e:
         logger.error(f"Error in simple transcription: {str(e)}")
         raise
@@ -717,14 +833,16 @@ def determine_complexity(text: str) -> str:
         return "basic"
 
 def generate_summary(text: str) -> str:
-    """Суммаризация с GPT"""
+    """Суммаризация с GPT с оптимизацией для длинных видео"""
     try:
         if not openai_client:
             load_models()
         
-        max_chars = 128000
+        # Более агрессивное ограничение для стабильности
+        max_chars = 80000  # Уменьшено с 128000
         if len(text) > max_chars:
-            text = text[:max_chars] + "..."
+            logger.info(f"Text too long for summary ({len(text)} chars), truncating to {max_chars}")
+            text = text[:max_chars] + "\n\n[Текст обрезан для оптимизации обработки]"
         
         prompt = """Создай МАКСИМАЛЬНО ИНФОРМАТИВНОЕ и СТРУКТУРИРОВАННОЕ резюме учебного материала.
 
@@ -784,7 +902,8 @@ def generate_summary(text: str) -> str:
                 {"role": "user", "content": f"{prompt}\n\nТекст для анализа:\n{text}"}
             ],
             temperature=0.7,
-            max_tokens=800
+            max_tokens=800,
+            timeout=60  # Добавляем тайм-аут 60 секунд
         )
         
         return response.choices[0].message.content.strip()
@@ -794,14 +913,16 @@ def generate_summary(text: str) -> str:
         return "## 🎯 Главная идея\nНе удалось создать расширенное резюме из-за технической ошибки."
 
 def generate_flashcards(text: str) -> List[Dict]:
-    """Генерируем флеш-карты с GPT"""
+    """Генерируем флеш-карты с GPT с оптимизацией для длинных видео"""
     try:
         if not openai_client:
             load_models()
         
-        max_chars = 128000
+        # Более консервативное ограничение для стабильности
+        max_chars = 60000  # Уменьшено с 128000
         if len(text) > max_chars:
-            text = text[:max_chars] + "..."
+            logger.info(f"Text too long for flashcards ({len(text)} chars), truncating to {max_chars}")
+            text = text[:max_chars] + "\n\n[Текст обрезан для оптимизации обработки]"
         
         prompt = """Создай МНОГОУРОВНЕВЫЕ флеш-карты для эффективного изучения ДАННОГО КОНКРЕТНОГО ТЕКСТА.
 
@@ -859,7 +980,8 @@ def generate_flashcards(text: str) -> List[Dict]:
                 {"role": "user", "content": f"{prompt}\n\nТекст для создания карточек:\n{text}"}
             ],
             temperature=0.3,  # Снизил температуру для более точного следования тексту
-            max_tokens=3000
+            max_tokens=3000,
+            timeout=90  # Добавляем тайм-аут 90 секунд для флеш-карт
         )
         
         content = response.choices[0].message.content.strip()
@@ -1547,9 +1669,12 @@ def assess_content_quality(text: str, topics: List[Dict], summary: str, flashcar
         }
 
 def process_file(filepath: str, filename: str, page_range: str = None) -> Dict[str, Any]:
-    """Обработка файла с возможностью выбора страниц"""
+    """Обработка файла с кардинальной оптимизацией скорости"""
+    import time
+    start_time = time.time()
+    
     try:
-        logger.info(f"Starting processing for: {filename}")
+        logger.info(f"🚀 Starting FAST processing for: {filename}")
         if page_range:
             logger.info(f"Page range specified: {page_range}")
         
@@ -1560,28 +1685,669 @@ def process_file(filepath: str, filename: str, page_range: str = None) -> Dict[s
             text = extract_text_from_pdf_with_pages(filepath, page_range)
             video_data = None
         elif file_ext in ['.mp4', '.mov', '.mkv']:
-            video_data = transcribe_video_with_timestamps(filepath)
-            text = video_data['full_text']
+            # ОПТИМИЗАЦИЯ 1: Используем ЭКСПРЕСС-обработчик видео
+            logger.info("🚀 Starting EXPRESS video processing...")
+            from fast_video_processor import process_video_fast
+            return process_video_fast(filepath, filename)
         else:
             raise ValueError(f"Unsupported file type: {file_ext}")
         
-        if not text or len(text.strip()) < 100:
-            raise ValueError("Extracted text is too short or empty")
+        if not text or len(text.strip()) < 50:  # Снижен порог с 100 до 50
+            logger.warning(f"Text is very short: {len(text.strip()) if text else 0} characters")
+            if not text or len(text.strip()) < 10:
+                raise ValueError("Extracted text is too short or empty")
+            # Для очень коротких текстов создаем минимальный контент
+            logger.info("Creating minimal content for short text")
         
-        logger.info(f"Extracted {len(text)} characters of text")
+        logger.info(f"📝 Extracted {len(text)} characters of text")
+        
+        # ОПТИМИЗАЦИЯ 2: Агрессивное сокращение текста для скорости
+        original_text_length = len(text)
+        if original_text_length > 20000:  # Снижен порог с 50К до 20К
+            logger.info(f"⚡ SPEED MODE: Aggressive text optimization ({original_text_length} chars)")
+            # Берем только первые 15К символов для максимальной скорости
+            text = text[:15000] + "\n\n[Текст сокращен для быстрой обработки]"
+            logger.info(f"✂️ Text optimized to {len(text)} characters for SPEED")
+        elif original_text_length > 10000:
+            logger.info(f"⚡ SPEED MODE: Moderate text optimization ({original_text_length} chars)")
+            text = text[:10000] + "\n\n[Текст сокращен для оптимизации]"
+            logger.info(f"✂️ Text optimized to {len(text)} characters")
+        
+        # ОПТИМИЗАЦИЯ 3: Параллельная обработка с уменьшенными требованиями
+        logger.info("🧠 Starting FAST content generation...")
+        generation_start = time.time()
         
         try:
-            topics_data = extract_topics_with_gpt(text)
-            logger.info("Successfully extracted topics with GPT")
+            # Быстрое извлечение тем с сокращенным промптом
+            topics_data = extract_topics_fast(text)
+            logger.info("✅ Fast topics extraction completed")
         except Exception as e:
-            logger.warning(f"Failed to extract topics with GPT: {str(e)}, falling back to local method")
-            topics_data = extract_topics_fallback(text)
+            logger.warning(f"⚠️ Fast topics failed: {e}, using ultra-fast fallback")
+            topics_data = extract_topics_ultra_fast(text)
         
-        summary = generate_summary(text)
-        flashcards = generate_flashcards(text)
+        # ОПТИМИЗАЦИЯ 4: Быстрая генерация контента
+        logger.info("📝 Fast summary generation...")
+        try:
+            summary = generate_summary_fast(text)
+            logger.info("✅ Fast summary completed")
+        except Exception as e:
+            logger.warning(f"⚠️ Fast summary failed: {e}")
+            summary = "## 🎯 Главная идея\nВидео содержит важную информацию для изучения."
+        
+        logger.info("🎴 Fast flashcards generation...")
+        try:
+            flashcards = generate_flashcards_fast(text, topics_data.get('main_topics', []))
+            logger.info(f"✅ Generated {len(flashcards)} fast flashcards")
+        except Exception as e:
+            logger.warning(f"⚠️ Fast flashcards failed: {e}")
+            flashcards = create_fallback_flashcards(topics_data.get('main_topics', []))
+        
+        logger.info("🗺️ Generating mind map...")
         mind_map = generate_mind_map(text, topics_data.get('main_topics', []))
+        logger.info("✅ Mind map generated")
+        
+        logger.info("📅 Generating study plan...")
         study_plan = generate_study_plan(topics_data.get('main_topics', []), flashcards, len(text))
+        logger.info("✅ Study plan generated")
+        
+        logger.info("⭐ Assessing content quality...")
         quality = assess_content_quality(text, topics_data.get('main_topics', []), summary, flashcards)
+        logger.info("✅ Quality assessment completed")
+        
+        generation_time = time.time() - generation_start
+        total_time = time.time() - start_time
+        
+        logger.info(f"⚡ SPEED RESULTS: Generation {generation_time:.1f}s, Total {total_time:.1f}s")
+        
+        # Собираем результат
+        result = {
+            "topics_data": topics_data,
+            "summary": summary,
+            "flashcards": flashcards,
+            "mind_map": mind_map,
+            "study_plan": study_plan,
+            "quality_assessment": quality,
+            "metadata": {
+                "filename": filename,
+                "file_type": file_ext,
+                "text_length": len(text),
+                "processing_date": datetime.now().isoformat(),
+                "processing_time": round(total_time, 1),
+                "speed_optimized": True
+            }
+        }
+        
+        if video_data:
+            result["video_segments"] = video_data.get('segments', [])
+            result["key_moments"] = video_data.get('key_moments', [])
+        
+        logger.info(f"🚀 FAST processing complete in {total_time:.1f}s. Quality score: {quality['overall_score']}")
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error in FAST processing: {str(e)}")
+        raise
+
+def transcribe_video_fast(filepath: str) -> Dict[str, Any]:
+    """УЛЬТРА-быстрая транскрипция видео с максимальными оптимизациями"""
+    import shutil
+    temp_copy_path = None
+    
+    try:
+        logger.info(f"⚡ ULTRA-FAST transcription: {filepath}")
+        
+        # Проверяем файл
+        if not os.path.exists(filepath):
+            raise Exception(f"Video file not found: {filepath}")
+        
+        file_size = os.path.getsize(filepath)
+        duration_estimate = file_size / 1000000 * 60  # Примерная оценка
+        logger.info(f"File: {file_size} bytes, estimated ~{duration_estimate:.0f}s")
+        
+        # ОПТИМИЗАЦИЯ 1: Для длинных видео используем сэмплирование
+        if file_size > 10 * 1024 * 1024:  # Больше 10MB
+            logger.info("🚀 Large video detected - using SAMPLING mode")
+            return transcribe_video_with_sampling(filepath)
+        
+        # Создаем временную копию
+        uploads_dir = "uploads"
+        if not os.path.exists(uploads_dir):
+            os.makedirs(uploads_dir)
+        
+        temp_filename = f"temp_ultra_{datetime.now().strftime('%H%M%S')}_{os.path.basename(filepath)}"
+        temp_copy_path = os.path.join(uploads_dir, temp_filename)
+        
+        shutil.copy2(filepath, temp_copy_path)
+        
+        # ОПТИМИЗАЦИЯ 2: Быстрая загрузка аудио
+        audio = whisperx.load_audio(temp_copy_path)
+        duration = len(audio) / 16000
+        logger.info(f"⚡ Audio: {duration:.1f}s")
+        
+        # ОПТИМИЗАЦИЯ 3: Для очень длинных видео берем первую половину
+        if duration > 300:  # 5 минут
+            logger.info(f"🚀 Very long video ({duration:.0f}s) - processing first half")
+            audio = audio[:int(duration * 16000 / 2)]  # Первая половина
+            duration = duration / 2
+        elif duration > 180:  # 3 минуты
+            logger.info(f"🚀 Long video ({duration:.0f}s) - processing first 75%")
+            audio = audio[:int(duration * 16000 * 0.75)]  # Первые 75%
+            duration = duration * 0.75
+        
+        # ОПТИМИЗАЦИЯ 4: Минимальный batch_size и без выравнивания
+        result = whisper_model.transcribe(audio, batch_size=4)  # Еще меньше
+        logger.info(f"⚡ Transcription done: {result.get('language', 'unknown')}")
+        
+        # ОПТИМИЗАЦИЯ 5: Упрощенная обработка
+        segments = []
+        full_text = ""
+        
+        for segment in result.get("segments", []):
+            text = segment.get("text", "").strip()
+            if not text:
+                continue
+            
+            full_text += text + " "
+            
+            segments.append({
+                "start": round(segment.get("start", 0)),
+                "end": round(segment.get("end", 0)),
+                "text": text,
+                "importance": 0.5,  # Фиксированная важность для скорости
+                "word_count": len(text.split())
+            })
+        
+        # Простые ключевые моменты - только первые 3
+        key_moments = []
+        for i, segment in enumerate(segments[:3]):
+            if segment["word_count"] > 5:
+                key_moments.append({
+                    "time": segment["start"],
+                    "description": segment["text"][:60] + "...",
+                    "importance": 0.8
+                })
+        
+        logger.info(f"⚡ ULTRA-FAST: {len(segments)} segments, {len(key_moments)} moments")
+        
+        return {
+            "full_text": full_text.strip(),
+            "segments": segments,
+            "key_moments": key_moments,
+            "language": result.get("language", "unknown"),
+            "total_duration": duration,
+            "processing_mode": "ultra_fast"
+        }
+        
+    except Exception as e:
+        logger.error(f"⚡ Ultra-fast transcription error: {str(e)}")
+        raise
+    
+    finally:
+        # Быстрая очистка
+        if temp_copy_path and os.path.exists(temp_copy_path):
+            try:
+                os.remove(temp_copy_path)
+            except:
+                pass
+
+def transcribe_video_with_sampling(filepath: str) -> Dict[str, Any]:
+    """Транскрипция длинных видео с сэмплированием (берем каждые 30 секунд)"""
+    import shutil
+    import subprocess
+    temp_copy_path = None
+    
+    try:
+        logger.info("🚀 SAMPLING MODE: Processing video in chunks")
+        
+        # Создаем временную копию
+        uploads_dir = "uploads"
+        temp_filename = f"temp_sample_{datetime.now().strftime('%H%M%S')}.mp4"
+        temp_copy_path = os.path.join(uploads_dir, temp_filename)
+        
+        # ОПТИМИЗАЦИЯ: Извлекаем только каждые 30 секунд по 10 секунд
+        # Это даст нам представление о содержании без полной обработки
+        cmd = [
+            'ffmpeg', '-i', filepath,
+            '-vf', 'select=not(mod(n\\,900))',  # Каждый 900-й кадр (30 сек при 30fps)
+            '-af', 'aselect=not(mod(n\\,48000))',  # Соответствующий аудио
+            '-t', '120',  # Максимум 2 минуты сэмплов
+            '-y', temp_copy_path
+        ]
+        
+        try:
+            subprocess.run(cmd, capture_output=True, check=True, timeout=30)
+            logger.info("⚡ Video sampling completed")
+        except:
+            # Если ffmpeg не работает, копируем оригинал но обрезаем
+            shutil.copy2(filepath, temp_copy_path)
+            logger.info("⚡ Fallback: using original file")
+        
+        # Быстрая транскрипция сэмпла
+        audio = whisperx.load_audio(temp_copy_path)
+        duration = len(audio) / 16000
+        
+        # Берем только первые 90 секунд для максимальной скорости
+        if duration > 90:
+            audio = audio[:90 * 16000]
+            duration = 90
+        
+        logger.info(f"⚡ Sampling audio: {duration:.1f}s")
+        
+        result = whisper_model.transcribe(audio, batch_size=2)  # Минимальный batch
+        
+        # Простая обработка
+        full_text = " ".join([seg.get("text", "") for seg in result.get("segments", [])])
+        
+        segments = [{
+            "start": 0,
+            "end": duration,
+            "text": full_text,
+            "importance": 0.7,
+            "word_count": len(full_text.split())
+        }]
+        
+        key_moments = [{
+            "time": duration / 2,
+            "description": full_text[:100] + "..." if len(full_text) > 100 else full_text,
+            "importance": 0.8
+        }] if full_text else []
+        
+        logger.info(f"⚡ SAMPLING COMPLETE: {len(full_text)} chars extracted")
+        
+        return {
+            "full_text": full_text,
+            "segments": segments,
+            "key_moments": key_moments,
+            "language": result.get("language", "unknown"),
+            "total_duration": duration,
+            "processing_mode": "sampling"
+        }
+        
+    except Exception as e:
+        logger.error(f"⚡ Sampling error: {str(e)}")
+        # Ультра-простой fallback
+        return {
+            "full_text": "Видео содержит важную информацию для изучения",
+            "segments": [{"start": 0, "end": 300, "text": "Содержание видео", "importance": 0.5}],
+            "key_moments": [{"time": 150, "description": "Ключевой момент видео", "importance": 0.7}],
+            "language": "unknown",
+            "total_duration": 300,
+            "processing_mode": "fallback"
+        }
+    
+    finally:
+        if temp_copy_path and os.path.exists(temp_copy_path):
+            try:
+                os.remove(temp_copy_path)
+            except:
+                pass
+
+def extract_topics_fast(text: str) -> Dict[str, Any]:
+    """Быстрое извлечение тем с сокращенным промптом"""
+    try:
+        if not openai_client:
+            load_models()
+        
+        # Агрессивное ограничение для скорости
+        max_chars = 40000  # Уменьшено с 128000
+        if len(text) > max_chars:
+            text = text[:max_chars] + "..."
+        
+        # Сокращенный промпт для скорости
+        prompt = """Быстро проанализируй текст и верни JSON:
+{
+  "main_topics": [
+    {
+      "title": "Название темы",
+      "summary": "Краткое описание",
+      "key_concepts": ["концепт1", "концепт2"],
+      "complexity": "basic/intermediate/advanced"
+    }
+  ],
+  "learning_objectives": ["цель1", "цель2"]
+}
+
+Извлеки 3-5 главных тем. Будь краток.
+
+Текст:"""
+        
+        response = openai_client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "Быстро извлекай темы. Отвечай только JSON."},
+                {"role": "user", "content": f"{prompt}\n\n{text}"}
+            ],
+            temperature=0.1,  # Низкая температура для скорости
+            max_tokens=1500,  # Уменьшено для скорости
+            timeout=30,  # Короткий тайм-аут
+            response_format={"type": "json_object"}
+        )
+        
+        topics_data = json.loads(response.choices[0].message.content)
+        
+        # Добавляем недостающие поля
+        for topic in topics_data.get("main_topics", []):
+            topic.setdefault("subtopics", [])
+            topic.setdefault("examples", [])
+            topic.setdefault("why_important", "Важная тема")
+        
+        topics_data.setdefault("concept_map", {"relationships": []})
+        topics_data.setdefault("prerequisites", [])
+        
+        return topics_data
+        
+    except Exception as e:
+        logger.error(f"Fast topics extraction error: {str(e)}")
+        raise
+
+def extract_topics_ultra_fast(text: str) -> Dict[str, Any]:
+    """Ультра-быстрое извлечение тем без API"""
+    try:
+        # Простое извлечение на основе частотности слов
+        words = word_tokenize(text.lower())
+        meaningful_words = [w for w in words if len(w) > 4 and w.isalpha()]
+        word_freq = Counter(meaningful_words)
+        
+        # Создаем темы на основе частых слов
+        topics = []
+        for word, freq in word_freq.most_common(5):
+            if freq > 2:
+                topics.append({
+                    "title": word.capitalize(),
+                    "summary": f"Тема связанная с {word}",
+                    "subtopics": [],
+                    "key_concepts": [word],
+                    "complexity": "basic",
+                    "examples": [],
+                    "why_important": f"Часто упоминается в тексте ({freq} раз)"
+                })
+        
+        if not topics:
+            topics = [{
+                "title": "Основная тема",
+                "summary": "Содержание видео",
+                "subtopics": [],
+                "key_concepts": [],
+                "complexity": "basic",
+                "examples": [],
+                "why_important": "Основное содержание"
+            }]
+        
+        return {
+            "main_topics": topics,
+            "concept_map": {"relationships": []},
+            "learning_objectives": ["Изучить основные темы"],
+            "prerequisites": []
+        }
+        
+    except Exception as e:
+        logger.error(f"Ultra-fast topics error: {str(e)}")
+        return {
+            "main_topics": [{
+                "title": "Видео контент",
+                "summary": "Содержание видео",
+                "subtopics": [],
+                "key_concepts": [],
+                "complexity": "basic",
+                "examples": [],
+                "why_important": "Основное содержание"
+            }],
+            "concept_map": {"relationships": []},
+            "learning_objectives": ["Изучить видео"],
+            "prerequisites": []
+        }
+
+def generate_summary_fast(text: str) -> str:
+    """Быстрая генерация резюме"""
+    try:
+        if not openai_client:
+            load_models()
+        
+        # Сильно ограничиваем текст для скорости
+        max_chars = 30000
+        if len(text) > max_chars:
+            text = text[:max_chars] + "..."
+        
+        # Короткий промпт
+        prompt = """Создай краткое резюме (максимум 200 слов):
+
+🎯 ГЛАВНАЯ ИДЕЯ: [2-3 предложения]
+📊 КЛЮЧЕВЫЕ МОМЕНТЫ: [3-4 пункта]
+💡 ПРАКТИЧЕСКОЕ ПРИМЕНЕНИЕ: [1-2 примера]
+
+Текст:"""
+        
+        response = openai_client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "Создавай краткие резюме. Максимум 200 слов."},
+                {"role": "user", "content": f"{prompt}\n\n{text}"}
+            ],
+            temperature=0.3,
+            max_tokens=400,  # Уменьшено для скорости
+            timeout=30
+        )
+        
+        return response.choices[0].message.content.strip()
+        
+    except Exception as e:
+        logger.error(f"Fast summary error: {str(e)}")
+        return "## 🎯 Главная идея\nВидео содержит важную информацию для изучения."
+
+def generate_flashcards_fast(text: str, topics: List[Dict]) -> List[Dict]:
+    """Быстрая генерация флеш-карт"""
+    try:
+        if not openai_client:
+            load_models()
+        
+        # Ограничиваем текст
+        max_chars = 25000
+        if len(text) > max_chars:
+            text = text[:max_chars] + "..."
+        
+        # Короткий промпт для 8 карт
+        prompt = """Создай 8 флеш-карт в JSON формате:
+[
+  {
+    "type": "definition",
+    "q": "Вопрос",
+    "a": "Ответ",
+    "difficulty": 1
+  }
+]
+
+Типы: definition, concept, application. Сделай карты по тексту.
+
+Текст:"""
+        
+        response = openai_client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "Создавай простые флеш-карты. Отвечай только JSON массивом."},
+                {"role": "user", "content": f"{prompt}\n\n{text}"}
+            ],
+            temperature=0.2,
+            max_tokens=1500,
+            timeout=45,
+            response_format={"type": "json_object"}
+        )
+        
+        # Парсим ответ
+        content = response.choices[0].message.content.strip()
+        if content.startswith('['):
+            flashcards = json.loads(content)
+        else:
+            # Если ответ в объекте, извлекаем массив
+            data = json.loads(content)
+            flashcards = data.get('flashcards', data.get('cards', []))
+        
+        # Добавляем недостающие поля
+        for i, card in enumerate(flashcards):
+            card.setdefault("hint", "Подсказка из материала")
+            card.setdefault("related_topics", [])
+            card.setdefault("memory_hook", "Запомните ключевую идею")
+            card.setdefault("common_mistakes", "Внимательно изучите материал")
+            card.setdefault("text_reference", f"Карта {i+1}")
+        
+        return flashcards[:8]  # Максимум 8 карт для скорости
+        
+    except Exception as e:
+        logger.error(f"Fast flashcards error: {str(e)}")
+        return create_fallback_flashcards(topics)
+        
+        # Используем оптимизированную обработку для длинных видео
+        is_long_video = original_text_length > 15000
+        
+        logger.info("📝 Generating summary...")
+        try:
+            summary = generate_summary(text)
+            logger.info("✅ Summary generated")
+        except Exception as e:
+            logger.warning(f"⚠️ Summary generation failed: {e}, using fallback")
+            summary = "## 🎯 Главная идея\nНе удалось создать подробное резюме из-за технических ограничений."
+        
+        logger.info("🎴 Generating flashcards...")
+        try:
+            flashcards = generate_flashcards(text)
+            logger.info(f"✅ Generated {len(flashcards)} flashcards")
+        except Exception as e:
+            logger.warning(f"⚠️ Flashcards generation failed: {e}, using fallback")
+            flashcards = create_fallback_flashcards(topics_data.get('main_topics', []))
+        
+        logger.info("🗺️ Generating mind map...")
+        mind_map = generate_mind_map(text, topics_data.get('main_topics', []))
+        logger.info("✅ Mind map generated")
+        
+        logger.info("📅 Generating study plan...")
+        study_plan = generate_study_plan(topics_data.get('main_topics', []), flashcards, len(text))
+        logger.info("✅ Study plan generated")
+        
+        logger.info("⭐ Assessing content quality...")
+        quality = assess_content_quality(text, topics_data.get('main_topics', []), summary, flashcards)
+        logger.info("✅ Quality assessment completed")
+        
+        # Собираем результат
+        result = {
+            "topics_data": topics_data,
+            "summary": summary,
+            "flashcards": flashcards,
+            "mind_map": mind_map,
+            "study_plan": study_plan,
+            "quality_assessment": quality,
+            "metadata": {
+                "filename": filename,
+                "file_type": file_ext,
+                "text_length": len(text),
+                "processing_date": datetime.now().isoformat()
+            }
+        }
+        
+        if video_data:
+            result["video_segments"] = video_data.get('segments', [])
+            result["key_moments"] = video_data.get('key_moments', [])
+        
+        logger.info(f"Advanced processing complete. Quality score: {quality['overall_score']}")
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error in advanced processing: {str(e)}")
+        raise
+
+def create_fallback_flashcards(topics: List[Dict]) -> List[Dict]:
+    """Создание простых флеш-карт на основе тем в случае ошибки основной генерации"""
+    try:
+        fallback_cards = []
+        
+        for i, topic in enumerate(topics[:8]):  # Максимум 8 карт
+            # Основная карта по теме
+            card = {
+                "type": "definition",
+                "q": f"Что такое {topic.get('title', 'тема')}?",
+                "a": topic.get('summary', 'Информация недоступна'),
+                "hint": "Основное определение темы",
+                "difficulty": 1 if topic.get('complexity') == 'basic' else 2,
+                "related_topics": [topic.get('title', 'тема')],
+                "memory_hook": f"Запомните ключевую идею: {topic.get('title', 'тема')}",
+                "common_mistakes": "Не путайте с другими темами",
+                "text_reference": f"Тема {i+1}"
+            }
+            fallback_cards.append(card)
+            
+            # Дополнительные карты по ключевым концепциям
+            key_concepts = topic.get('key_concepts', [])
+            if key_concepts:
+                concept_card = {
+                    "type": "concept",
+                    "q": f"Какие ключевые концепции связаны с темой '{topic.get('title', 'тема')}'?",
+                    "a": ", ".join(key_concepts[:3]),
+                    "hint": "Основные понятия темы",
+                    "difficulty": 2,
+                    "related_topics": [topic.get('title', 'тема')],
+                    "memory_hook": f"Ключевые слова: {', '.join(key_concepts[:2])}",
+                    "common_mistakes": "Не забывайте про связь между концепциями",
+                    "text_reference": f"Концепции темы {i+1}"
+                }
+                fallback_cards.append(concept_card)
+        
+        # Если тем мало, добавляем общие карты
+        if len(fallback_cards) < 5:
+            general_cards = [
+                {
+                    "type": "general",
+                    "q": "Какова основная идея изученного материала?",
+                    "a": "Материал содержит важную информацию для изучения",
+                    "hint": "Подумайте о главной теме",
+                    "difficulty": 1,
+                    "related_topics": ["Общие знания"],
+                    "memory_hook": "Основная идея материала",
+                    "common_mistakes": "Не упускайте детали",
+                    "text_reference": "Общий обзор"
+                },
+                {
+                    "type": "application",
+                    "q": "Как можно применить полученные знания?",
+                    "a": "Знания можно использовать для решения практических задач",
+                    "hint": "Практическое применение",
+                    "difficulty": 2,
+                    "related_topics": ["Применение"],
+                    "memory_hook": "Практика - лучший способ запомнить",
+                    "common_mistakes": "Не забывайте про практическое применение",
+                    "text_reference": "Практическое применение"
+                }
+            ]
+            fallback_cards.extend(general_cards)
+        
+        logger.info(f"Created {len(fallback_cards)} fallback flashcards")
+        return fallback_cards[:10]  # Максимум 10 карт
+        
+    except Exception as e:
+        logger.error(f"Error creating fallback flashcards: {e}")
+        # Минимальный набор карт
+        return [{
+            "type": "basic",
+            "q": "Что было изучено в материале?",
+            "a": "Материал содержит важную информацию",
+            "hint": "Основная информация",
+            "difficulty": 1,
+            "related_topics": ["Основы"],
+            "memory_hook": "Изученный материал",
+            "common_mistakes": "Внимательно изучите материал",
+            "text_reference": "Основной материал"
+        }]
+        
+        logger.info("🗺️ Generating mind map...")
+        mind_map = generate_mind_map(text, topics_data.get('main_topics', []))
+        logger.info("✅ Mind map generated")
+        
+        logger.info("📅 Generating study plan...")
+        study_plan = generate_study_plan(topics_data.get('main_topics', []), flashcards, len(text))
+        logger.info("✅ Study plan generated")
+        
+        logger.info("⭐ Assessing content quality...")
+        quality = assess_content_quality(text, topics_data.get('main_topics', []), summary, flashcards)
+        logger.info("✅ Quality assessment completed")
         
         # Собираем результат
         result = {

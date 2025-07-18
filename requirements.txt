@@ -9,11 +9,13 @@ PyPDF2
 pdfplumber
 
 # Audio/Video Processing
+whisperx
 openai-whisper
 ffmpeg-python
 phonemizer
 pyannote.audio
 pydub
+yt-dlp
 
 # Machine Learning & AI
 openai

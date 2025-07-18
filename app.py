@@ -6,6 +6,9 @@ from flask import Flask, render_template, request, redirect, url_for, flash, sen
 from werkzeug.utils import secure_filename
 import logging
 from pathlib import Path
+import yt_dlp
+import tempfile
+import re
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
@@ -31,6 +34,124 @@ ALLOWED_EXTENSIONS = {'pdf', 'mp4', 'mov', 'mkv'}
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def is_valid_video_url(url):
+    """Проверка валидности URL для загрузки видео"""
+    # Поддерживаемые платформы
+    supported_patterns = [
+        r'youtube\.com/watch\?v=',
+        r'youtu\.be/',
+        r'vimeo\.com/',
+        r'rutube\.ru/',
+        r'ok\.ru/',
+        r'vk\.com/',
+        r'dailymotion\.com/',
+        r'twitch\.tv/',
+        r'facebook\.com/',
+        r'instagram\.com/',
+        r'tiktok\.com/'
+    ]
+    
+    for pattern in supported_patterns:
+        if re.search(pattern, url, re.IGNORECASE):
+            return True
+    return False
+
+def download_video_from_url(url, upload_folder):
+    """Загрузка видео по URL с помощью yt-dlp"""
+    try:
+        # Настройки для yt-dlp
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        output_template = os.path.join(upload_folder, f'{timestamp}_%(title)s.%(ext)s')
+        
+        logger.info(f"📁 Output template: {output_template}")
+        
+        # Получаем список файлов до загрузки
+        files_before = set(os.listdir(upload_folder)) if os.path.exists(upload_folder) else set()
+        
+        ydl_opts = {
+            'format': 'best[height<=720]/best',  # Максимум 720p для экономии места
+            'outtmpl': output_template,
+            'restrictfilenames': True,  # Безопасные имена файлов
+            'noplaylist': True,  # Только одно видео
+            'extract_flat': False,
+            'writethumbnail': False,
+            'writeinfojson': False,
+            'ignoreerrors': False,
+            'no_warnings': False,
+            'extractaudio': False,
+            'audioformat': 'mp3',
+            'audioquality': '192',
+            'embed_subs': False,
+            'writesubtitles': False,
+            'writeautomaticsub': False,
+        }
+        
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            # Получаем информацию о видео
+            logger.info("📋 Extracting video info...")
+            info = ydl.extract_info(url, download=False)
+            title = info.get('title', 'video')
+            duration = info.get('duration', 0)
+            
+            logger.info(f"📺 Video info: {title} ({duration}s)")
+            
+            # Проверяем длительность (максимум 2 часа)
+            if duration and duration > 7200:
+                raise Exception(f"Видео слишком длинное ({duration//60} мин). Максимум 120 минут.")
+            
+            # Загружаем видео
+            logger.info("⬇️ Starting download...")
+            ydl.download([url])
+            logger.info("✅ Download completed")
+            
+            # Получаем список файлов после загрузки
+            files_after = set(os.listdir(upload_folder)) if os.path.exists(upload_folder) else set()
+            new_files = files_after - files_before
+            
+            logger.info(f"📁 New files found: {list(new_files)}")
+            
+            # Ищем видеофайл среди новых файлов
+            video_extensions = ['.mp4', '.mkv', '.webm', '.mov', '.avi', '.flv']
+            downloaded_file = None
+            
+            for file in new_files:
+                file_ext = os.path.splitext(file)[1].lower()
+                if file_ext in video_extensions:
+                    downloaded_file = file
+                    break
+            
+            if not downloaded_file:
+                # Fallback: ищем по timestamp
+                logger.warning("🔍 Fallback: searching by timestamp...")
+                for file in os.listdir(upload_folder):
+                    if file.startswith(timestamp):
+                        file_ext = os.path.splitext(file)[1].lower()
+                        if file_ext in video_extensions:
+                            downloaded_file = file
+                            break
+            
+            if not downloaded_file:
+                logger.error(f"❌ Available files: {list(os.listdir(upload_folder))}")
+                raise Exception("Не удалось найти загруженный видеофайл")
+            
+            filepath = os.path.join(upload_folder, downloaded_file)
+            
+            # Проверяем, что файл действительно существует и не пустой
+            if not os.path.exists(filepath):
+                raise Exception(f"Файл не найден: {filepath}")
+            
+            file_size = os.path.getsize(filepath)
+            if file_size == 0:
+                raise Exception(f"Загруженный файл пустой: {downloaded_file}")
+            
+            logger.info(f"✅ Successfully downloaded: {downloaded_file} ({file_size} bytes)")
+            
+            return filepath, downloaded_file, title
+            
+    except Exception as e:
+        logger.error(f"❌ Error downloading video from URL {url}: {str(e)}")
+        raise e
 
 def init_db():
     """Инициализация БД SQLite"""
@@ -225,6 +346,106 @@ def upload_file():
     except Exception as e:
         logger.error(f"Upload error: {str(e)}")
         flash('Ошибка загрузки файла', 'danger')
+        return redirect(url_for('index'))
+
+@app.route('/upload_url', methods=['POST'])
+def upload_video_url():
+    """Загрузка и обработка видео по URL"""
+    try:
+        video_url = request.form.get('video_url', '').strip()
+        
+        if not video_url:
+            flash('Введите ссылку на видео', 'danger')
+            return redirect(url_for('index'))
+        
+        # Проверка валидности URL
+        if not is_valid_video_url(video_url):
+            flash('Неподдерживаемая платформа. Поддерживаются: YouTube, Vimeo, RuTube, VK, OK.ru и другие', 'danger')
+            return redirect(url_for('index'))
+        
+        logger.info(f"🎥 Starting video download from URL: {video_url}")
+        
+        # Загрузка видео
+        try:
+            logger.info("📥 Downloading video...")
+            filepath, filename, original_title = download_video_from_url(video_url, app.config['UPLOAD_FOLDER'])
+            logger.info(f"✅ Video downloaded successfully: {filename} (Title: {original_title})")
+            
+            # Обработка видео
+            try:
+                logger.info("🧠 Starting video processing...")
+                from ml import process_file
+                
+                logger.info("🎤 Beginning transcription and analysis...")
+                
+                # ВАЖНО: НЕ удаляем файл до завершения обработки
+                analysis_result = process_file(filepath, filename)
+                logger.info("✅ Video analysis completed successfully")
+                
+                # Добавляем информацию об источнике
+                video_info = {
+                    'source_url': video_url,
+                    'original_title': original_title,
+                    'downloaded_at': datetime.now().isoformat()
+                }
+                
+                # Сохранение результата в БД
+                logger.info("💾 Saving results to database...")
+                result_id = save_result(filename, '.mp4', analysis_result, video_info)
+                logger.info(f"✅ Results saved with ID: {result_id}")
+                
+                # Теперь можно безопасно удалить файл
+                if os.path.exists(filepath):
+                    os.remove(filepath)
+                    logger.info(f"🗑️ Temporary file {filename} removed")
+                
+                logger.info(f"🎉 Video processing completed successfully for: {filename}")
+                
+                return redirect(url_for('result', result_id=result_id))
+                
+            except Exception as e:
+                logger.error(f"❌ Error processing video {filename}: {str(e)}")
+                logger.exception("Detailed processing error:")
+                
+                # Удаление файла с ошибкой
+                if os.path.exists(filepath):
+                    os.remove(filepath)
+                    logger.info(f"🗑️ Cleaned up failed file: {filename}")
+                
+                # Более детальные сообщения об ошибках
+                if "transcrib" in str(e).lower():
+                    flash('Ошибка транскрипции видео. Возможно, видео не содержит речи или аудио повреждено', 'danger')
+                elif "whisper" in str(e).lower():
+                    flash('Ошибка модели распознавания речи. Попробуйте позже', 'danger')
+                elif "openai" in str(e).lower():
+                    flash('Ошибка анализа содержимого. Проверьте настройки API', 'danger')
+                else:
+                    flash('Ошибка обработки видео. Попробуйте другое видео или повторите позже', 'danger')
+                
+                return redirect(url_for('index'))
+                
+        except Exception as e:
+            logger.error(f"❌ Error downloading video from {video_url}: {str(e)}")
+            logger.exception("Detailed download error:")
+            
+            if "слишком длинное" in str(e):
+                flash(str(e), 'danger')
+            elif "Unsupported URL" in str(e) or "No video formats found" in str(e):
+                flash('Не удалось загрузить видео с этой ссылки. Проверьте URL или попробуйте другое видео', 'danger')
+            elif "HTTP Error 403" in str(e):
+                flash('Доступ к видео ограничен. Попробуйте другое видео', 'danger')
+            elif "HTTP Error 404" in str(e):
+                flash('Видео не найдено. Проверьте ссылку', 'danger')
+            elif "network" in str(e).lower() or "connection" in str(e).lower():
+                flash('Проблемы с сетевым соединением. Попробуйте позже', 'danger')
+            else:
+                flash('Ошибка загрузки видео. Проверьте ссылку и попробуйте ещё раз', 'danger')
+            return redirect(url_for('index'))
+            
+    except Exception as e:
+        logger.error(f"❌ General URL upload error: {str(e)}")
+        logger.exception("Detailed general error:")
+        flash('Общая ошибка загрузки видео по ссылке', 'danger')
         return redirect(url_for('index'))
 
 @app.route('/result/<int:result_id>')

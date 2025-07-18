@@ -96,86 +96,170 @@
         </div>
     </div>
 
-    <!-- Upload Form -->
-    <form id="upload-form" action="{{ url_for('upload_file') }}" method="POST" enctype="multipart/form-data">
-        <input type="file" name="file" id="file-input" accept=".pdf,.mp4,.mov,.mkv" style="display: none;" required>
-        
-        <div class="upload-area" id="upload-area">
-            <i class="fas fa-cloud-upload-alt fa-4x text-primary mb-3"></i>
-            <h3>Перетащите файл сюда или нажмите для выбора</h3>
-            <p class="text-muted mt-3">
-                <i class="fas fa-file-pdf text-danger me-2"></i>PDF (до 30 МБ)
-                <span class="mx-2">|</span>
-                <i class="fas fa-video text-info me-2"></i>MP4, MOV, MKV (до {{ config.MAX_CONTENT_LENGTH // (1024*1024) }} МБ)
-                <span class="badge-new">NEW: временные метки для видео</span>
-            </p>
-            <button type="button" class="btn btn-primary btn-lg mt-3" onclick="document.getElementById('file-input').click()">
-                <i class="fas fa-upload me-2"></i>Выбрать файл
-            </button>
-        </div>
-        
-        <div id="file-selected" style="display: none;" class="text-center mt-4">
+    <!-- Upload Options -->
+    <div class="row mb-4">
+        <div class="col-12">
             <div class="card">
                 <div class="card-body">
-                    <i class="fas fa-file-check fa-3x text-success mb-3"></i>
-                    <h4 id="file-name"></h4>
-                    <p class="text-muted" id="file-size"></p>
+                    <ul class="nav nav-pills nav-justified mb-4" id="upload-tabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="file-tab" data-bs-toggle="pill" data-bs-target="#file-upload" type="button" role="tab">
+                                <i class="fas fa-upload me-2"></i>Загрузить файл
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="url-tab" data-bs-toggle="pill" data-bs-target="#url-upload" type="button" role="tab">
+                                <i class="fas fa-link me-2"></i>Видео по ссылке
+                                <span class="badge bg-success ms-2">NEW</span>
+                            </button>
+                        </li>
+                    </ul>
                     
-                    <!-- Page Selection Section -->
-                    <div id="page-selection" style="display: none;" class="mt-4 mb-4">
-                        <div class="card bg-light">
-                            <div class="card-body">
-                                <h5 class="card-title">
-                                    <i class="fas fa-file-alt me-2"></i>Выбор страниц для анализа
-                                </h5>
-                                <p class="text-muted small mb-3">
-                                    Укажите диапазон страниц для обработки. Это поможет сосредоточиться на нужных разделах и ускорить анализ.
-                                </p>
+                    <div class="tab-content" id="upload-content">
+                        <!-- File Upload Tab -->
+                        <div class="tab-pane fade show active" id="file-upload" role="tabpanel">
+                            <form id="upload-form" action="{{ url_for('upload_file') }}" method="POST" enctype="multipart/form-data">
+                                <input type="file" name="file" id="file-input" accept=".pdf,.mp4,.mov,.mkv" style="display: none;" required>
                                 
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <label for="page-range" class="form-label">Диапазон страниц:</label>
-                                        <input type="text" class="form-control" id="page-range" name="page_range" 
-                                               placeholder="1-20, 50-100" value="1-20">
-                                        <div class="form-text">
-                                            Примеры: "1-10", "5-25", "1-10,15-20", "все"
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Быстрый выбор:</label>
-                                        <div class="d-flex flex-wrap gap-2">
-                                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="setPageRange('1-10')">
-                                                Первые 10
+                                <div class="upload-area" id="upload-area">
+                                    <i class="fas fa-cloud-upload-alt fa-4x text-primary mb-3"></i>
+                                    <h3>Перетащите файл сюда или нажмите для выбора</h3>
+                                    <p class="text-muted mt-3">
+                                        <i class="fas fa-file-pdf text-danger me-2"></i>PDF (до 30 МБ)
+                                        <span class="mx-2">|</span>
+                                        <i class="fas fa-video text-info me-2"></i>MP4, MOV, MKV (до {{ config.MAX_CONTENT_LENGTH // (1024*1024) }} МБ)
+                                    </p>
+                                    <button type="button" class="btn btn-primary btn-lg mt-3" onclick="document.getElementById('file-input').click()">
+                                        <i class="fas fa-upload me-2"></i>Выбрать файл
+                                    </button>
+                                </div>
+                                
+                                <div id="file-selected" style="display: none;" class="text-center mt-4">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <i class="fas fa-file-check fa-3x text-success mb-3"></i>
+                                            <h4 id="file-name"></h4>
+                                            <p class="text-muted" id="file-size"></p>
+                                            
+                                            <!-- Page Selection Section -->
+                                            <div id="page-selection" style="display: none;" class="mt-4 mb-4">
+                                                <div class="card bg-light">
+                                                    <div class="card-body">
+                                                        <h5 class="card-title">
+                                                            <i class="fas fa-file-alt me-2"></i>Выбор страниц для анализа
+                                                        </h5>
+                                                        <p class="text-muted small mb-3">
+                                                            Укажите диапазон страниц для обработки. Это поможет сосредоточиться на нужных разделах и ускорить анализ.
+                                                        </p>
+                                                        
+                                                        <div class="row">
+                                                            <div class="col-md-6">
+                                                                <label for="page-range" class="form-label">Диапазон страниц:</label>
+                                                                <input type="text" class="form-control" id="page-range" name="page_range" 
+                                                                       placeholder="1-20, 50-100" value="1-20">
+                                                                <div class="form-text">
+                                                                    Примеры: "1-10", "5-25", "1-10,15-20", "все"
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <label class="form-label">Быстрый выбор:</label>
+                                                                <div class="d-flex flex-wrap gap-2">
+                                                                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="setPageRange('1-10')">
+                                                                        Первые 10
+                                                                    </button>
+                                                                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="setPageRange('1-20')">
+                                                                        Первые 20
+                                                                    </button>
+                                                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="setPageRange('все')">
+                                                                        Все страницы
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <div class="alert alert-info mt-3 mb-0">
+                                                            <i class="fas fa-info-circle me-2"></i>
+                                                            <strong>Рекомендация:</strong> Для оптимального качества анализа рекомендуется обрабатывать не более 20-30 страниц за раз.
+                                                            Большие документы лучше разбивать на логические части.
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <button type="submit" class="btn btn-success btn-lg mt-3">
+                                                <i class="fas fa-rocket me-2"></i>Начать глубокий анализ
                                             </button>
-                                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="setPageRange('1-20')">
-                                                Первые 20
-                                            </button>
-                                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="setPageRange('все')">
-                                                Все страницы
+                                            <button type="button" class="btn btn-secondary btn-sm mt-2" onclick="resetUpload()">
+                                                Выбрать другой файл
                                             </button>
                                         </div>
                                     </div>
                                 </div>
-                                
-                                <div class="alert alert-info mt-3 mb-0">
-                                    <i class="fas fa-info-circle me-2"></i>
-                                    <strong>Рекомендация:</strong> Для оптимального качества анализа рекомендуется обрабатывать не более 20-30 страниц за раз.
-                                    Большие документы лучше разбивать на логические части.
+                            </form>
+                        </div>
+                        
+                        <!-- URL Upload Tab -->
+                        <div class="tab-pane fade" id="url-upload" role="tabpanel">
+                            <form id="url-form" action="{{ url_for('upload_video_url') }}" method="POST">
+                                <div class="text-center">
+                                    <i class="fas fa-link fa-4x text-success mb-3"></i>
+                                    <h3>Загрузить видео по ссылке</h3>
+                                    <p class="text-muted mt-3 mb-4">
+                                        Поддерживаемые платформы: YouTube, Vimeo, RuTube, VK, OK.ru, Dailymotion и другие
+                                    </p>
+                                    
+                                    <div class="row justify-content-center">
+                                        <div class="col-md-8">
+                                            <div class="input-group input-group-lg mb-3">
+                                                <span class="input-group-text">
+                                                    <i class="fas fa-link"></i>
+                                                </span>
+                                                <input type="url" class="form-control" id="video-url" name="video_url" 
+                                                       placeholder="https://www.youtube.com/watch?v=..." required>
+                                            </div>
+                                            
+                                            <div class="alert alert-info text-start">
+                                                <h6><i class="fas fa-info-circle me-2"></i>Ограничения:</h6>
+                                                <ul class="mb-0">
+                                                    <li>Максимальная длительность: 2 часа</li>
+                                                    <li>Качество загрузки: до 720p</li>
+                                                    <li>Время обработки: 3-7 минут</li>
+                                                </ul>
+                                            </div>
+                                            
+                                            <button type="submit" class="btn btn-success btn-lg">
+                                                <i class="fas fa-download me-2"></i>Загрузить и анализировать
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-4">
+                                        <h6>Примеры поддерживаемых ссылок:</h6>
+                                        <div class="row text-start">
+                                            <div class="col-md-6">
+                                                <small class="text-muted">
+                                                    <i class="fab fa-youtube text-danger me-1"></i> YouTube:<br>
+                                                    youtube.com/watch?v=...<br>
+                                                    youtu.be/...
+                                                </small>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <small class="text-muted">
+                                                    <i class="fab fa-vimeo text-info me-1"></i> Vimeo:<br>
+                                                    vimeo.com/...<br>
+                                                    <i class="fas fa-globe me-1"></i> RuTube, VK, OK.ru
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
+                            </form>
                         </div>
                     </div>
-                    
-                    <button type="submit" class="btn btn-success btn-lg mt-3">
-                        <i class="fas fa-rocket me-2"></i>Начать глубокий анализ
-                    </button>
-                    <button type="button" class="btn btn-secondary btn-sm mt-2" onclick="resetUpload()">
-                        Выбрать другой файл
-                    </button>
                 </div>
             </div>
         </div>
-    </form>
+    </div>
 
     <!-- What's New Section -->
     <div class="mt-5">
@@ -387,24 +471,78 @@
             return false;
         }
         
+        showProcessingModal();
+    });
+
+    // URL form handling
+    const urlForm = document.getElementById('url-form');
+    urlForm.addEventListener('submit', (e) => {
+        const videoUrl = document.getElementById('video-url').value.trim();
+        
+        if (!videoUrl) {
+            e.preventDefault();
+            alert('Пожалуйста, введите ссылку на видео');
+            return false;
+        }
+        
+        // Basic URL validation
+        try {
+            new URL(videoUrl);
+        } catch {
+            e.preventDefault();
+            alert('Введите корректную ссылку на видео');
+            return false;
+        }
+        
+        showProcessingModal('video');
+    });
+
+    function showProcessingModal(type = 'file') {
         const modal = new bootstrap.Modal(document.getElementById('processingModal'));
+        
+        // Update modal content based on type
+        if (type === 'video') {
+            document.querySelector('#processingModal h4').innerHTML = '🎥 Загружаем и анализируем видео с помощью ИИ';
+            document.querySelectorAll('.modal-body p')[0].innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Загрузка видео...';
+            document.querySelectorAll('.modal-body p')[1].innerHTML = '<i class="far fa-circle me-2"></i>Извлечение аудио и транскрипция...';
+            document.querySelector('.modal-body .text-muted:last-child').textContent = 'Это может занять 3-7 минут для загрузки и анализа видео';
+        }
+        
         modal.show();
         
         // Animate processing steps
         setTimeout(() => {
-            document.querySelectorAll('.modal-body p')[1].innerHTML = '<i class="fas fa-check-circle text-success me-2"></i>Анализ структуры и иерархии тем...';
-            document.querySelectorAll('.modal-body p')[2].innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Генерация ментальной карты...';
+            if (type === 'video') {
+                document.querySelectorAll('.modal-body p')[0].innerHTML = '<i class="fas fa-check-circle text-success me-2"></i>Загрузка видео...';
+                document.querySelectorAll('.modal-body p')[1].innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Извлечение аудио и транскрипция...';
+                document.querySelectorAll('.modal-body p')[2].innerHTML = '<i class="far fa-circle me-2"></i>Анализ структуры и иерархии тем...';
+            } else {
+                document.querySelectorAll('.modal-body p')[1].innerHTML = '<i class="fas fa-check-circle text-success me-2"></i>Анализ структуры и иерархии тем...';
+                document.querySelectorAll('.modal-body p')[2].innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Генерация ментальной карты...';
+            }
         }, 10000);
         
         setTimeout(() => {
-            document.querySelectorAll('.modal-body p')[2].innerHTML = '<i class="fas fa-check-circle text-success me-2"></i>Генерация ментальной карты...';
-            document.querySelectorAll('.modal-body p')[3].innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Создание умных флеш-карт...';
+            if (type === 'video') {
+                document.querySelectorAll('.modal-body p')[1].innerHTML = '<i class="fas fa-check-circle text-success me-2"></i>Извлечение аудио и транскрипция...';
+                document.querySelectorAll('.modal-body p')[2].innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Анализ структуры и иерархии тем...';
+                document.querySelectorAll('.modal-body p')[3].innerHTML = '<i class="far fa-circle me-2"></i>Генерация ментальной карты...';
+            } else {
+                document.querySelectorAll('.modal-body p')[2].innerHTML = '<i class="fas fa-check-circle text-success me-2"></i>Генерация ментальной карты...';
+                document.querySelectorAll('.modal-body p')[3].innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Создание умных флеш-карт...';
+            }
         }, 20000);
         
         setTimeout(() => {
-            document.querySelectorAll('.modal-body p')[3].innerHTML = '<i class="fas fa-check-circle text-success me-2"></i>Создание умных флеш-карт...';
-            document.querySelectorAll('.modal-body p')[4].innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Составление плана обучения...';
+            if (type === 'video') {
+                document.querySelectorAll('.modal-body p')[2].innerHTML = '<i class="fas fa-check-circle text-success me-2"></i>Анализ структуры и иерархии тем...';
+                document.querySelectorAll('.modal-body p')[3].innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Генерация ментальной карты...';
+                document.querySelectorAll('.modal-body p')[4].innerHTML = '<i class="far fa-circle me-2"></i>Создание умных флеш-карт...';
+            } else {
+                document.querySelectorAll('.modal-body p')[3].innerHTML = '<i class="fas fa-check-circle text-success me-2"></i>Создание умных флеш-карт...';
+                document.querySelectorAll('.modal-body p')[4].innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Составление плана обучения...';
+            }
         }, 30000);
-    });
+    }
 </script>
 {% endblock %}
