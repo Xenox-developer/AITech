@@ -771,7 +771,95 @@ def extract_meaningful_examples(paragraphs: List[str]) -> List[str]:
                     example = example.replace(indicator, '').strip()
                 
                 if len(example) > 20:
-                    examples.append(example)
+                    examples.append(example[:200])
+            
+            elif re.search(r'\d+\s*(?:%|процент|объект|элемент|класс)', sent) and len(sent) < 200:
+                examples.append(sent.strip())
+    
+    return examples[:3]
+
+def get_chat_response(user_message: str, full_text: str, result_data: Dict[str, Any]) -> str:
+    """Получение ответа от ChatGPT на основе текста лекции"""
+    try:
+        if not openai_client:
+            load_models()
+        
+        # Ограничиваем размер текста для контекста
+        max_context_chars = 100000
+        context_text = full_text[:max_context_chars] if len(full_text) > max_context_chars else full_text
+        
+        # Получаем дополнительную информацию из анализа
+        topics = result_data.get('topics_data', {}).get('main_topics', [])
+        summary = result_data.get('summary', '')
+        filename = result_data.get('filename', 'лекция')
+        
+        # Формируем контекст для ChatGPT
+        topics_context = ""
+        if topics:
+            topics_list = [f"- {topic.get('title', 'Тема')}: {topic.get('summary', '')}" for topic in topics[:5]]
+            topics_context = f"\n\nОсновные темы лекции:\n" + "\n".join(topics_list)
+        
+        system_prompt = f"""Ты - AI-ассистент для изучения материалов. Отвечай на вопросы студента на основе предоставленной лекции.
+
+ПРАВИЛА:
+1. Отвечай ТОЛЬКО на основе содержания лекции
+2. Если информации нет в лекции, честно скажи об этом
+3. Давай конкретные и полезные ответы
+4. Используй примеры из лекции когда это уместно
+5. Помогай понять сложные концепции простыми словами
+6. Если студент просит объяснить что-то подробнее, используй информацию из лекции
+
+Название файла: {filename}
+
+Краткое содержание лекции:
+{summary[:500]}...{topics_context}"""
+
+        user_prompt = f"""Вопрос студента: {user_message}
+
+Текст лекции для справки:
+{context_text}
+
+Пожалуйста, ответь на вопрос студента, опираясь на содержание лекции."""
+
+        response = openai_client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            temperature=0.7,
+            max_tokens=1500
+        )
+        
+        ai_response = response.choices[0].message.content.strip()
+        
+        # Добавляем информацию о источнике
+        if len(ai_response) > 50:  # Только если ответ содержательный
+            ai_response += f"\n\n💡 *Ответ основан на материале лекции \"{filename}\"*"
+        
+        return ai_response
+        
+    except Exception as e:
+        logger.error(f"Error getting chat response: {str(e)}")
+        return f"Извините, произошла ошибка при обработке вашего вопроса: {str(e)}"
+
+def extract_meaningful_examples_complete(paragraphs: List[str]) -> List[str]:
+    """Извлекаем примеры - завершенная функция"""
+    examples = []
+    
+    for para in paragraphs:
+        sentences = sent_tokenize(para)
+        for sent in sentences:
+            if any(indicator in sent.lower() for indicator in [
+                'например', 'к примеру', 'в частности', 'рассмотрим',
+                'пусть', 'допустим', 'представим', 'возьмем'
+            ]):
+                example = sent.strip()
+                for indicator in ['Например,', 'К примеру,', 'В частности,']:
+                    example = example.replace(indicator, '').strip()
+                
+                if len(example) > 20:
+                    examples.append(example[:200])
             
             elif re.search(r'\d+\s*(?:%|процент|объект|элемент|класс)', sent) and len(sent) < 200:
                 examples.append(sent.strip())
@@ -1869,6 +1957,7 @@ def process_file(filepath: str, filename: str, page_range: str = None) -> Dict[s
             "mind_map": mind_map,
             "study_plan": study_plan,
             "quality_assessment": quality,
+            "full_text": text,  # Добавляем полный текст для чата
             "metadata": {
                 "filename": filename,
                 "file_type": file_ext,

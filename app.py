@@ -172,9 +172,18 @@ def init_db():
             quality_json TEXT,
             video_segments_json TEXT,
             key_moments_json TEXT,
+            full_text TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
+    
+    # Добавляем колонку full_text если её нет (миграция)
+    try:
+        c.execute('ALTER TABLE result ADD COLUMN full_text TEXT')
+        logger.info("Added full_text column to result table")
+    except sqlite3.OperationalError:
+        # Колонка уже существует
+        pass
     
     # Таблица прогресса пользователя
     c.execute('''
@@ -186,6 +195,18 @@ def init_db():
             next_review TIMESTAMP,
             ease_factor REAL DEFAULT 2.5,
             consecutive_correct INTEGER DEFAULT 0,
+            FOREIGN KEY (result_id) REFERENCES result(id)
+        )
+    ''')
+    
+    # Таблица для истории чата
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS chat_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            result_id INTEGER,
+            user_message TEXT NOT NULL,
+            ai_response TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (result_id) REFERENCES result(id)
         )
     ''')
@@ -211,17 +232,20 @@ def save_result(filename, file_type, analysis_result, page_info=None):
     video_segments_json = json.dumps(analysis_result.get('video_segments', []), ensure_ascii=False)
     key_moments_json = json.dumps(analysis_result.get('key_moments', []), ensure_ascii=False)
     
+    # Получаем полный текст для чата
+    full_text = analysis_result.get('full_text', '')
+    
     c.execute('''
         INSERT INTO result (
             filename, file_type, topics_json, summary, flashcards_json,
             mind_map_json, study_plan_json, quality_json,
-            video_segments_json, key_moments_json
+            video_segments_json, key_moments_json, full_text
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ''', (
         filename, file_type, topics_json, analysis_result['summary'], 
         flashcards_json, mind_map_json, study_plan_json, quality_json,
-        video_segments_json, key_moments_json
+        video_segments_json, key_moments_json, full_text
     ))
     
     result_id = c.lastrowid
@@ -238,7 +262,7 @@ def get_result(result_id):
     c.execute('''
         SELECT filename, file_type, topics_json, summary, flashcards_json,
                mind_map_json, study_plan_json, quality_json,
-               video_segments_json, key_moments_json, created_at
+               video_segments_json, key_moments_json, full_text, created_at
         FROM result WHERE id = ?
     ''', (result_id,))
     
@@ -257,7 +281,8 @@ def get_result(result_id):
             'quality_assessment': json.loads(row[7]),
             'video_segments': json.loads(row[8]),
             'key_moments': json.loads(row[9]),
-            'created_at': row[10]
+            'full_text': row[10] or '',
+            'created_at': row[11]
         }
         
         # Извлекаем информацию о страницах из mind_map (если она там сохранена)
@@ -693,6 +718,95 @@ def get_study_progress(result_id):
         
     except Exception as e:
         logger.error(f"Error getting study progress: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/chat/<int:result_id>', methods=['POST'])
+def chat_with_lecture(result_id):
+    """Чат с ChatGPT на основе загруженной лекции"""
+    try:
+        data = request.json
+        if not data:
+            return jsonify({"success": False, "error": "No data provided"}), 400
+            
+        user_message = data.get('message', '').strip()
+        if not user_message:
+            return jsonify({"success": False, "error": "Message is required"}), 400
+            
+        # Получаем данные лекции
+        result_data = get_result(result_id)
+        if not result_data:
+            return jsonify({"success": False, "error": "Lecture not found"}), 404
+            
+        full_text = result_data.get('full_text', '')
+        if not full_text:
+            return jsonify({"success": False, "error": "No lecture text available for chat"}), 400
+            
+        # Импортируем OpenAI клиент из ml.py
+        from ml import get_chat_response
+        
+        # Получаем ответ от ChatGPT
+        ai_response = get_chat_response(user_message, full_text, result_data)
+        
+        # Сохраняем в историю чата
+        conn = sqlite3.connect('ai_study.db')
+        c = conn.cursor()
+        
+        c.execute('''
+            INSERT INTO chat_history (result_id, user_message, ai_response)
+            VALUES (?, ?, ?)
+        ''', (result_id, user_message, ai_response))
+        
+        conn.commit()
+        conn.close()
+        
+        logger.info(f"Chat message processed for result {result_id}")
+        return jsonify({
+            "success": True, 
+            "response": ai_response,
+            "timestamp": datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in chat: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/api/chat_history/<int:result_id>')
+def get_chat_history(result_id):
+    """Получение истории чата для лекции"""
+    try:
+        # Проверяем, что результат существует
+        result_data = get_result(result_id)
+        if not result_data:
+            return jsonify({"error": "Lecture not found"}), 404
+            
+        conn = sqlite3.connect('ai_study.db')
+        c = conn.cursor()
+        
+        c.execute('''
+            SELECT user_message, ai_response, created_at
+            FROM chat_history
+            WHERE result_id = ?
+            ORDER BY created_at ASC
+        ''', (result_id,))
+        
+        history = []
+        for row in c.fetchall():
+            history.append({
+                "user_message": row[0],
+                "ai_response": row[1],
+                "timestamp": row[2]
+            })
+        
+        conn.close()
+        
+        return jsonify({
+            "success": True,
+            "history": history,
+            "lecture_title": result_data.get('filename', 'Лекция')
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting chat history: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 @app.errorhandler(413)
