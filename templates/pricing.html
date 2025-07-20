@@ -1,0 +1,374 @@
+{% extends "base.html" %}
+
+{% block title %}Тарифы - AI-конспект Pro{% endblock %}
+
+{% block extra_styles %}
+<style>
+    :root {
+        --primary: #6366f1;
+        --secondary: #06b6d4;
+        --success: #10b981;
+        --text-primary: #1f2937;
+        --text-secondary: #6b7280;
+        --bg-primary: #ffffff;
+        --bg-secondary: #f9fafb;
+        --border-primary: #e5e7eb;
+        --gradient-primary: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    }
+
+    body {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        background-attachment: fixed;
+        min-height: 100vh;
+    }
+
+    .pricing-hero {
+        text-align: center;
+        padding: 60px 0 40px;
+    }
+
+    .pricing-title {
+        font-size: 3rem;
+        font-weight: 900;
+        margin-bottom: 16px;
+        background: var(--gradient-primary);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .pricing-subtitle {
+        font-size: 1.2rem;
+        color: var(--text-secondary);
+        max-width: 600px;
+        margin: 0 auto 40px;
+    }
+
+    .pricing-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 30px;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 20px;
+    }
+
+    .pricing-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 24px;
+        padding: 40px 30px;
+        text-align: center;
+        position: relative;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+
+    .pricing-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    }
+
+    .pricing-card.featured {
+        border: 2px solid var(--primary);
+        transform: scale(1.05);
+    }
+
+    .pricing-card.featured::before {
+        content: "Популярный";
+        position: absolute;
+        top: -12px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--gradient-primary);
+        color: white;
+        padding: 6px 20px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .plan-name {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+        color: var(--text-primary);
+    }
+
+    .plan-price {
+        font-size: 3rem;
+        font-weight: 900;
+        color: var(--primary);
+        margin-bottom: 5px;
+    }
+
+    .plan-period {
+        color: var(--text-secondary);
+        margin-bottom: 30px;
+    }
+
+    .plan-features {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 30px;
+    }
+
+    .plan-features li {
+        padding: 8px 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .plan-features li::before {
+        content: "✓";
+        color: var(--success);
+        font-weight: bold;
+        font-size: 1.2rem;
+    }
+
+    .plan-button {
+        width: 100%;
+        padding: 15px;
+        border: none;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .plan-button.primary {
+        background: var(--gradient-primary);
+        color: white;
+    }
+
+    .plan-button.secondary {
+        background: transparent;
+        color: var(--primary);
+        border: 2px solid var(--primary);
+    }
+
+    .plan-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+    }
+
+    .features-comparison {
+        margin-top: 80px;
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 24px;
+        padding: 40px;
+        max-width: 1000px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .comparison-title {
+        text-align: center;
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 30px;
+        color: var(--text-primary);
+    }
+
+    .comparison-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .comparison-table th,
+    .comparison-table td {
+        padding: 15px;
+        text-align: center;
+        border-bottom: 1px solid var(--border-primary);
+    }
+
+    .comparison-table th {
+        background: var(--bg-secondary);
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .faq-section {
+        margin-top: 80px;
+        max-width: 800px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .faq-title {
+        text-align: center;
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 40px;
+        color: var(--text-primary);
+    }
+
+    .faq-item {
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 12px;
+        margin-bottom: 15px;
+        overflow: hidden;
+    }
+
+    .faq-question {
+        padding: 20px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .faq-answer {
+        padding: 0 20px 20px;
+        color: var(--text-secondary);
+        display: none;
+    }
+
+    @media (max-width: 768px) {
+        .pricing-title {
+            font-size: 2rem;
+        }
+        
+        .pricing-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .pricing-card.featured {
+            transform: none;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="pricing-hero">
+    <h1 class="pricing-title">Выберите свой план</h1>
+    <p class="pricing-subtitle">
+        Начните с бесплатного плана и масштабируйтесь по мере роста ваших потребностей в обучении
+    </p>
+</section>
+
+<section class="pricing-grid">
+    <!-- FREE Plan -->
+    <div class="pricing-card">
+        <h3 class="plan-name">FREE</h3>
+        <div class="plan-price">₽0</div>
+        <div class="plan-period">навсегда</div>
+        <ul class="plan-features">
+            <li>3 анализа в месяц</li>
+            <li>До 5 страниц PDF</li>
+            <li>Видео до 10 минут</li>
+            <li>Базовые флеш-карты</li>
+            <li>Экспорт с водяным знаком</li>
+        </ul>
+        <button class="plan-button secondary">Начать бесплатно</button>
+    </div>
+
+    <!-- BASIC Plan -->
+    <div class="pricing-card">
+        <h3 class="plan-name">BASIC</h3>
+        <div class="plan-price">₽699</div>
+        <div class="plan-period">в месяц</div>
+        <ul class="plan-features">
+            <li>25 анализов в месяц</li>
+            <li>До 20 страниц PDF</li>
+            <li>Видео до 1 часа</li>
+            <li>Полные флеш-карты</li>
+            <li>Mind Maps</li>
+            <li>Чат с ИИ (50 сообщений)</li>
+            <li>Экспорт без водяных знаков</li>
+        </ul>
+        <button class="plan-button secondary">Выбрать BASIC</button>
+    </div>
+
+    <!-- PRO Plan -->
+    <div class="pricing-card featured">
+        <h3 class="plan-name">PRO</h3>
+        <div class="plan-price">₽1399</div>
+        <div class="plan-period">в месяц</div>
+        <ul class="plan-features">
+            <li>Безлимитные анализы</li>
+            <li>До 100 страниц PDF</li>
+            <li>Видео до 2 часов</li>
+            <li>Продвинутые флеш-карты</li>
+            <li>Интерактивные Mind Maps</li>
+            <li>Планы обучения</li>
+            <li>Безлимитный чат с ИИ</li>
+            <li>API доступ</li>
+            <li>Приоритетная обработка</li>
+        </ul>
+        <button class="plan-button primary">Выбрать PRO</button>
+    </div>
+
+    <!-- BUSINESS Plan -->
+    <div class="pricing-card">
+        <h3 class="plan-name">BUSINESS</h3>
+        <div class="plan-price">₽3499</div>
+        <div class="plan-period">в месяц</div>
+        <ul class="plan-features">
+            <li>Все функции PRO</li>
+            <li>Командная работа (10 пользователей)</li>
+            <li>Корпоративная аналитика</li>
+            <li>Интеграции (LMS, Slack)</li>
+            <li>Белый лейбл</li>
+            <li>Техподдержка 24/7</li>
+            <li>Персональный менеджер</li>
+        </ul>
+        <button class="plan-button secondary">Связаться с нами</button>
+    </div>
+</section>
+
+<section class="faq-section">
+    <h2 class="faq-title">Часто задаваемые вопросы</h2>
+    
+    <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+            Можно ли изменить план в любое время?
+            <span>+</span>
+        </div>
+        <div class="faq-answer">
+            Да, вы можете повысить или понизить свой план в любое время. Изменения вступают в силу немедленно.
+        </div>
+    </div>
+
+    <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+            Что происходит с моими данными при отмене подписки?
+            <span>+</span>
+        </div>
+        <div class="faq-answer">
+            Ваши данные сохраняются в течение 30 дней после отмены. Вы можете экспортировать их в любое время.
+        </div>
+    </div>
+
+    <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+            Есть ли скидки для студентов?
+            <span>+</span>
+        </div>
+        <div class="faq-answer">
+            Да, мы предоставляем 50% скидку для студентов при предъявлении студенческого билета.
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function toggleFaq(element) {
+    const answer = element.nextElementSibling;
+    const icon = element.querySelector('span');
+    
+    if (answer.style.display === 'block') {
+        answer.style.display = 'none';
+        icon.textContent = '+';
+    } else {
+        answer.style.display = 'block';
+        icon.textContent = '−';
+    }
+}
+</script>
+{% endblock %}

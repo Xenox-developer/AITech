@@ -2,8 +2,9 @@ import os
 import json
 import sqlite3
 from datetime import datetime
-from flask import Flask, render_template, request, redirect, url_for, flash, send_file, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, send_file, jsonify, session
 from werkzeug.utils import secure_filename
+from usage_tracking import usage_tracker
 import logging
 from pathlib import Path
 import yt_dlp
@@ -297,6 +298,11 @@ def get_result(result_id):
 def index():
     """Главная страница"""
     return render_template('index.html')
+
+@app.route('/pricing')
+def pricing():
+    """Страница тарифов"""
+    return render_template('pricing.html')
 
 @app.route('/upload', methods=['POST'])
 def upload_file():

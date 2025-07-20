@@ -1,337 +1,1061 @@
 {% extends "base.html" %}
 
-{% block title %}AI-конспект Pro - Глубокий анализ{% endblock %}
+{% block title %}AI-конспект Pro - Революция в обучении{% endblock %}
 
 {% block extra_styles %}
 <style>
-    .feature-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    /* CSS Variables for consistent theming */
+    :root {
+        --primary: #6366f1;
+        --secondary: #06b6d4;
+        --success: #10b981;
+        --text-primary: #1f2937;
+        --text-secondary: #6b7280;
+        --bg-primary: #ffffff;
+        --bg-secondary: #f9fafb;
+        --bg-tertiary: #f3f4f6;
+        --bg-glass: rgba(255, 255, 255, 0.9);
+        --border-primary: #e5e7eb;
+        --gradient-primary: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Override base styles for better contrast */
+    html, body {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        background-attachment: fixed;
+        min-height: 100vh;
+        color: var(--text-primary);
+    }
+
+    body {
+        background-color: #f8fafc; /* Fallback color */
+    }
+
+    /* Compact Layout - No scrolling needed */
+    .hero {
+        padding: 20px 0 30px;
+        text-align: center;
+    }
+
+    .hero-title {
+        font-size: 2.2rem;
+        font-weight: 900;
+        margin-bottom: 12px;
+        background: linear-gradient(135deg, #f8fafc 0%, #6366f1 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .hero-subtitle {
+        font-size: 1rem;
+        color: var(--text-secondary);
+        margin-bottom: 20px;
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    /* Main Upload Section */
+    .upload-section {
+        padding: 20px 0;
+    }
+
+    .upload-container {
+        background: var(--bg-glass);
+        backdrop-filter: blur(20px);
+        border: 2px solid rgba(99, 102, 241, 0.3);
+        border-radius: 24px;
+        padding: 32px;
+        box-shadow: 0 0 40px rgba(99, 102, 241, 0.15);
+    }
+
+    .upload-tabs {
+        display: flex;
+        background: rgba(255, 255, 255, 0.8);
+        border: 1px solid var(--border-primary);
+        border-radius: 16px;
+        padding: 6px;
+        margin-bottom: 24px;
+    }
+
+    .upload-tab {
+        flex: 1;
+        padding: 12px 20px;
+        border: none;
+        background: transparent;
+        color: var(--text-secondary);
+        border-radius: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        font-size: 0.9rem;
+    }
+
+    .upload-tab.active {
+        background: var(--gradient-primary);
         color: white;
-        padding: 20px;
-        border-radius: 10px;
-        margin-bottom: 15px;
-        transition: transform 0.3s ease;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
     }
-    .feature-card:hover {
-        transform: translateY(-5px);
+
+    .upload-content {
+        display: none;
     }
-    .feature-icon {
+
+    .upload-content.active {
+        display: block;
+    }
+
+    /* Upload Area */
+    .upload-area {
+        border: 2px dashed var(--border-primary);
+        border-radius: 16px;
+        padding: 40px 24px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+
+    .upload-area:hover {
+        border-color: var(--primary);
+        background: rgba(99, 102, 241, 0.05);
+        transform: translateY(-2px);
+    }
+
+    .upload-area.dragover {
+        border-color: var(--success);
+        background: rgba(16, 185, 129, 0.05);
+    }
+
+    .upload-icon {
+        font-size: 2.5rem;
+        color: var(--primary);
+        margin-bottom: 16px;
+    }
+
+    .upload-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 8px;
+        color: var(--text-primary);
+    }
+
+    .upload-subtitle {
+        color: var(--text-secondary);
+        margin-bottom: 16px;
+        font-size: 0.85rem;
+    }
+
+    .file-types {
+        display: flex;
+        justify-content: center;
+        gap: 16px;
+        margin: 16px 0;
+        flex-wrap: wrap;
+    }
+
+    .file-type {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(255, 255, 255, 0.7);
+        border: 1px solid var(--border-primary);
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        color: var(--text-primary);
+    }
+
+    /* File Selected */
+    .file-selected {
+        display: none;
+        text-align: center;
+        padding: 24px;
+        background: var(--bg-glass);
+        border-radius: 16px;
+        margin-top: 16px;
+        border: 1px solid var(--border-primary);
+    }
+
+    .file-icon {
         font-size: 2rem;
+        color: var(--success);
+        margin-bottom: 12px;
+    }
+
+    .file-name {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 6px;
+    }
+
+    .file-size {
+        color: var(--text-secondary);
+        margin-bottom: 16px;
+        font-size: 0.85rem;
+    }
+
+    /* Page Selection */
+    .page-selection {
+        display: none;
+        background: rgba(255, 255, 255, 0.6);
+        border: 1px solid var(--border-primary);
+        border-radius: 12px;
+        padding: 16px;
+        margin: 16px 0;
+    }
+
+    .page-selection-title {
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.9rem;
+    }
+
+    .page-input {
+        width: 100%;
+        padding: 10px;
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid var(--border-primary);
+        border-radius: 8px;
+        color: var(--text-primary);
+        font-size: 0.85rem;
         margin-bottom: 10px;
     }
-    .stats-card {
-        background: #f8f9fa;
-        border: none;
-        border-radius: 10px;
-        padding: 20px;
-        text-align: center;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+
+    .page-input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
     }
-    .upload-area {
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+
+    .quick-buttons {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        justify-content: center;
     }
-    .upload-area:hover {
-        background: linear-gradient(135deg, #e9ecef 0%, #b8c6db 100%);
-    }
-    .badge-new {
-        background: #ff6b6b;
-        color: white;
-        padding: 2px 8px;
-        border-radius: 10px;
+
+    .quick-btn {
+        padding: 4px 10px;
+        background: rgba(255, 255, 255, 0.8);
+        border: 1px solid var(--border-primary);
+        border-radius: 8px;
+        color: var(--text-primary);
         font-size: 0.75rem;
-        margin-left: 5px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .quick-btn:hover,
+    .quick-btn.active {
+        background: var(--gradient-primary);
+        color: white;
+    }
+
+    /* Page recommendation info */
+    .page-info {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(5, 150, 105, 0.12) 100%);
+        border: 1px solid rgba(16, 185, 129, 0.25);
+        border-radius: 12px;
+        padding: 16px;
+        margin: 12px 0;
+        font-size: 0.8rem;
+        color: var(--text-primary);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .page-info::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+        border-radius: 0 2px 2px 0;
+    }
+
+    .page-info h6 {
+        color: #059669;
+        margin-bottom: 12px;
+        font-size: 0.9rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .page-info h6 i {
+        font-size: 1rem;
+        color: #10b981;
+    }
+
+    .page-recommendations {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .page-recommendation-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 12px;
+        background: rgba(255, 255, 255, 0.6);
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        border: 1px solid rgba(16, 185, 129, 0.15);
+    }
+
+    .page-recommendation-item:hover {
+        background: rgba(255, 255, 255, 0.8);
+        transform: translateX(4px);
+        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);
+    }
+
+    .recommendation-icon {
+        width: 20px;
+        height: 20px;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 0.7rem;
+        flex-shrink: 0;
+    }
+
+    .recommendation-text {
+        flex: 1;
+        font-size: 0.8rem;
+        color: var(--text-primary);
+        font-weight: 500;
+    }
+
+    .recommendation-pages {
+        font-weight: 700;
+        color: #059669;
+    }
+
+    /* URL Upload */
+    .url-input {
+        width: 100%;
+        padding: 14px;
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid var(--border-primary);
+        border-radius: 12px;
+        color: var(--text-primary);
+        font-size: 0.9rem;
+        margin-bottom: 16px;
+        text-align: center;
+    }
+
+    .url-input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+    }
+
+    .url-info {
+        background: linear-gradient(135deg, rgba(6, 182, 212, 0.08) 0%, rgba(14, 165, 233, 0.12) 100%);
+        border: 1px solid rgba(6, 182, 212, 0.25);
+        border-radius: 12px;
+        padding: 16px;
+        margin: 12px 0;
+        font-size: 0.8rem;
+        color: var(--text-primary);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .url-info::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: linear-gradient(180deg, #06b6d4 0%, #0ea5e9 100%);
+        border-radius: 0 2px 2px 0;
+    }
+
+    .url-info h6 {
+        color: #0891b2;
+        margin-bottom: 12px;
+        font-size: 0.9rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .url-info h6 i {
+        font-size: 1rem;
+        color: #06b6d4;
+    }
+
+    .url-limitations {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .url-limitation-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 12px;
+        background: rgba(255, 255, 255, 0.6);
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        border: 1px solid rgba(6, 182, 212, 0.15);
+    }
+
+    .url-limitation-item:hover {
+        background: rgba(255, 255, 255, 0.8);
+        transform: translateX(4px);
+        box-shadow: 0 2px 8px rgba(6, 182, 212, 0.15);
+    }
+
+    .limitation-icon {
+        width: 20px;
+        height: 20px;
+        background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 0.7rem;
+        flex-shrink: 0;
+    }
+
+    .limitation-text {
+        flex: 1;
+        font-size: 0.8rem;
+        color: var(--text-primary);
+        font-weight: 500;
+    }
+
+    .limitation-value {
+        font-weight: 700;
+        color: #0891b2;
+    }
+
+    /* Compact Features */
+    .features-compact {
+        padding: 30px 0;
+    }
+
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-top: 20px;
+    }
+
+    .feature-card {
+        background: var(--bg-glass);
+        border: 1px solid var(--border-primary);
+        border-radius: 16px;
+        padding: 20px 16px;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .feature-icon {
+        width: 50px;
+        height: 50px;
+        background: var(--gradient-primary);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 12px;
+        font-size: 1.2rem;
+        color: white;
+    }
+
+    .feature-title {
+        font-size: 0.95rem;
+        font-weight: 700;
+        margin-bottom: 8px;
+        color: var(--text-primary);
+    }
+
+    .feature-description {
+        color: var(--text-secondary);
+        font-size: 0.8rem;
+        line-height: 1.4;
+    }
+
+    /* Processing Modal */
+    .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(10px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+    }
+
+    .modal.active {
+        display: flex;
+    }
+
+    .modal-content {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: 24px;
+        padding: 32px;
+        max-width: 450px;
+        width: 90%;
+        text-align: center;
+    }
+
+    .processing-icon {
+        width: 70px;
+        height: 70px;
+        background: var(--gradient-primary);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 16px;
+        font-size: 1.8rem;
+        color: white;
+        animation: pulse 2s infinite;
+    }
+
+    .processing-title {
+        font-size: 1.2rem;
+        font-weight: 700;
+        margin-bottom: 8px;
+        color: var(--text-primary);
+    }
+
+    .processing-subtitle {
+        color: var(--text-secondary);
+        margin-bottom: 20px;
+        font-size: 0.85rem;
+    }
+
+    .progress-bar {
+        width: 100%;
+        height: 6px;
+        background: var(--bg-tertiary);
+        border-radius: 6px;
+        overflow: hidden;
+        margin-bottom: 12px;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: var(--gradient-primary);
+        width: 40%;
+        transition: width 0.5s ease;
+        position: relative;
+    }
+
+    .progress-fill::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+        animation: shimmer 2s infinite;
+    }
+
+    @keyframes shimmer {
+        0% { left: -100%; }
+        100% { left: 100%; }
+    }
+
+    /* Social Proof Section */
+    .social-proof-section {
+        text-align: center;
+        padding: 40px 0;
+        margin-top: 40px;
+        background: rgba(255, 255, 255, 0.7);
+        border-radius: 20px;
+        backdrop-filter: blur(10px);
+    }
+
+    .social-proof-section h3 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 30px;
+        color: var(--text-primary);
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 30px;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .stat-item {
+        text-align: center;
+    }
+
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 900;
+        color: var(--primary);
+        margin-bottom: 8px;
+        background: var(--gradient-primary);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
+
+    /* CTA Section */
+    .cta-section {
+        text-align: center;
+        padding: 50px 30px;
+        margin-top: 40px;
+        background: var(--gradient-primary);
+        border-radius: 24px;
+        color: white;
+    }
+
+    .cta-section h3 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 12px;
+    }
+
+    .cta-section p {
+        font-size: 1rem;
+        margin-bottom: 30px;
+        opacity: 0.9;
+    }
+
+    .cta-buttons {
+        display: flex;
+        gap: 16px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .btn-large {
+        padding: 15px 30px;
+        font-size: 1rem;
+        font-weight: 600;
+        border-radius: 12px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-primary.btn-large {
+        background: white;
+        color: var(--primary);
+        border: 2px solid white;
+    }
+
+    .btn-primary.btn-large:hover {
+        background: transparent;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(255, 255, 255, 0.3);
+    }
+
+    .btn-outline.btn-large {
+        background: transparent;
+        color: white;
+        border: 2px solid rgba(255, 255, 255, 0.5);
+    }
+
+    .btn-outline.btn-large:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: white;
+        transform: translateY(-2px);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .hero-title {
+            font-size: 1.8rem;
+        }
+        
+        .upload-container {
+            padding: 20px;
+        }
+        
+        .upload-tabs {
+            flex-direction: column;
+        }
+        
+        .upload-area {
+            padding: 30px 16px;
+        }
+        
+        .file-types {
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .features-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .stats-grid {
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        .cta-buttons {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .btn-large {
+            width: 100%;
+            max-width: 300px;
+        }
+
+        .cta-section h3 {
+            font-size: 1.4rem;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="main-container">
-    <div class="text-center mb-5">
-        <h1 class="display-4">
-            <i class="fas fa-brain text-primary me-3"></i>AI-конспект 
-            <span class="badge bg-primary">Pro</span>
-        </h1>
-        <p class="lead text-muted">
-            Глубокий анализ с иерархией тем, ментальными картами и персональным планом обучения
-        </p>
-    </div>
+<!-- Compact Hero -->
+<section class="hero">
+    <h1 class="hero-title">
+        AI-конспект <span class="text-gradient">Pro</span>
+    </h1>
+    <p class="hero-subtitle">
+        Революционная платформа для глубокого анализа материалов с использованием ИИ
+    </p>
+</section>
 
-    <!-- New Features Section -->
-    <div class="row mb-5">
-        <div class="col-md-3">
-            <div class="feature-card">
-                <div class="feature-icon">
-                    <i class="fas fa-sitemap"></i>
-                </div>
-                <h5>Иерархия тем</h5>
-                <small>Структурированное дерево знаний</small>
-            </div>
+<!-- Main Upload Section -->
+<section class="upload-section">
+    <div class="upload-container">
+        <!-- Upload Tabs -->
+        <div class="upload-tabs">
+            <button class="upload-tab active" onclick="switchTab('file')">
+                <i class="fas fa-file-upload"></i>
+                <span>Загрузить файл</span>
+            </button>
+            <button class="upload-tab" onclick="switchTab('url')">
+                <i class="fas fa-link"></i>
+                <span>Видео по ссылке</span>
+            </button>
         </div>
-        <div class="col-md-3">
-            <div class="feature-card">
-                <div class="feature-icon">
-                    <i class="fas fa-project-diagram"></i>
-                </div>
-                <h5>Mind Map</h5>
-                <small>Визуальные связи концепций</small>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="feature-card">
-                <div class="feature-icon">
-                    <i class="fas fa-calendar-check"></i>
-                </div>
-                <h5>План обучения</h5>
-                <small>Персональное расписание</small>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="feature-card">
-                <div class="feature-icon">
-                    <i class="fas fa-layer-group"></i>
-                </div>
-                <h5>Умные карточки</h5>
-                <small>5 типов с уровнями сложности</small>
-            </div>
-        </div>
-    </div>
-
-    <!-- Upload Options -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body">
-                    <ul class="nav nav-pills nav-justified mb-4" id="upload-tabs" role="tablist">
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="file-tab" data-bs-toggle="pill" data-bs-target="#file-upload" type="button" role="tab">
-                                <i class="fas fa-upload me-2"></i>Загрузить файл
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="url-tab" data-bs-toggle="pill" data-bs-target="#url-upload" type="button" role="tab">
-                                <i class="fas fa-link me-2"></i>Видео по ссылке
-                                <span class="badge bg-success ms-2">NEW</span>
-                            </button>
-                        </li>
-                    </ul>
+        
+        <!-- File Upload -->
+        <div id="file-upload" class="upload-content active">
+            <form id="upload-form" action="{{ url_for('upload_file') }}" method="POST" enctype="multipart/form-data">
+                <input type="file" name="file" id="file-input" accept=".pdf,.mp4,.mov,.mkv" style="display: none;" required>
+                
+                <div class="upload-area" id="upload-area">
+                    <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                    <h3 class="upload-title">Перетащите файл сюда или нажмите для выбора</h3>
+                    <p class="upload-subtitle">Максимальный размер файла: 500 МБ</p>
                     
-                    <div class="tab-content" id="upload-content">
-                        <!-- File Upload Tab -->
-                        <div class="tab-pane fade show active" id="file-upload" role="tabpanel">
-                            <form id="upload-form" action="{{ url_for('upload_file') }}" method="POST" enctype="multipart/form-data">
-                                <input type="file" name="file" id="file-input" accept=".pdf,.mp4,.mov,.mkv" style="display: none;" required>
-                                
-                                <div class="upload-area" id="upload-area">
-                                    <i class="fas fa-cloud-upload-alt fa-4x text-primary mb-3"></i>
-                                    <h3>Перетащите файл сюда или нажмите для выбора</h3>
-                                    <p class="text-muted mt-3">
-                                        <i class="fas fa-file-pdf text-danger me-2"></i>PDF (до 30 МБ)
-                                        <span class="mx-2">|</span>
-                                        <i class="fas fa-video text-info me-2"></i>MP4, MOV, MKV (до {{ config.MAX_CONTENT_LENGTH // (1024*1024) }} МБ)
-                                    </p>
-                                    <button type="button" class="btn btn-primary btn-lg mt-3" onclick="document.getElementById('file-input').click()">
-                                        <i class="fas fa-upload me-2"></i>Выбрать файл
-                                    </button>
-                                </div>
-                                
-                                <div id="file-selected" style="display: none;" class="text-center mt-4">
-                                    <div class="card">
-                                        <div class="card-body">
-                                            <i class="fas fa-file-check fa-3x text-success mb-3"></i>
-                                            <h4 id="file-name"></h4>
-                                            <p class="text-muted" id="file-size"></p>
-                                            
-                                            <!-- Page Selection Section -->
-                                            <div id="page-selection" style="display: none;" class="mt-4 mb-4">
-                                                <div class="card bg-light">
-                                                    <div class="card-body">
-                                                        <h5 class="card-title">
-                                                            <i class="fas fa-file-alt me-2"></i>Выбор страниц для анализа
-                                                        </h5>
-                                                        <p class="text-muted small mb-3">
-                                                            Укажите диапазон страниц для обработки. Это поможет сосредоточиться на нужных разделах и ускорить анализ.
-                                                        </p>
-                                                        
-                                                        <div class="row">
-                                                            <div class="col-md-6">
-                                                                <label for="page-range" class="form-label">Диапазон страниц:</label>
-                                                                <input type="text" class="form-control" id="page-range" name="page_range" 
-                                                                       placeholder="1-20, 50-100" value="1-20">
-                                                                <div class="form-text">
-                                                                    Примеры: "1-10", "5-25", "1-10,15-20", "все"
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-md-6">
-                                                                <label class="form-label">Быстрый выбор:</label>
-                                                                <div class="d-flex flex-wrap gap-2">
-                                                                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="setPageRange('1-10')">
-                                                                        Первые 10
-                                                                    </button>
-                                                                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="setPageRange('1-20')">
-                                                                        Первые 20
-                                                                    </button>
-                                                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="setPageRange('все')">
-                                                                        Все страницы
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        
-                                                        <div class="alert alert-info mt-3 mb-0">
-                                                            <i class="fas fa-info-circle me-2"></i>
-                                                            <strong>Рекомендация:</strong> Для оптимального качества анализа рекомендуется обрабатывать не более 20-30 страниц за раз.
-                                                            Большие документы лучше разбивать на логические части.
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            
-                                            <button type="submit" class="btn btn-success btn-lg mt-3">
-                                                <i class="fas fa-rocket me-2"></i>Начать глубокий анализ
-                                            </button>
-                                            <button type="button" class="btn btn-secondary btn-sm mt-2" onclick="resetUpload()">
-                                                Выбрать другой файл
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </form>
+                    <div class="file-types">
+                        <div class="file-type">
+                            <i class="fas fa-file-pdf" style="color: #ef4444;"></i>
+                            <span>PDF документы</span>
                         </div>
-                        
-                        <!-- URL Upload Tab -->
-                        <div class="tab-pane fade" id="url-upload" role="tabpanel">
-                            <form id="url-form" action="{{ url_for('upload_video_url') }}" method="POST">
-                                <div class="text-center">
-                                    <i class="fas fa-link fa-4x text-success mb-3"></i>
-                                    <h3>Загрузить видео по ссылке</h3>
-                                    <p class="text-muted mt-3 mb-4">
-                                        Поддерживаемые платформы: YouTube, Vimeo, RuTube, VK, OK.ru, Dailymotion и другие
-                                    </p>
-                                    
-                                    <div class="row justify-content-center">
-                                        <div class="col-md-8">
-                                            <div class="input-group input-group-lg mb-3">
-                                                <span class="input-group-text">
-                                                    <i class="fas fa-link"></i>
-                                                </span>
-                                                <input type="url" class="form-control" id="video-url" name="video_url" 
-                                                       placeholder="https://www.youtube.com/watch?v=..." required>
-                                            </div>
-                                            
-                                            <div class="alert alert-info text-start">
-                                                <h6><i class="fas fa-info-circle me-2"></i>Ограничения:</h6>
-                                                <ul class="mb-0">
-                                                    <li>Максимальная длительность: 2 часа</li>
-                                                    <li>Качество загрузки: до 720p</li>
-                                                    <li>Время обработки: 3-7 минут</li>
-                                                </ul>
-                                            </div>
-                                            
-                                            <button type="submit" class="btn btn-success btn-lg">
-                                                <i class="fas fa-download me-2"></i>Загрузить и анализировать
-                                            </button>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="mt-4">
-                                        <h6>Примеры поддерживаемых ссылок:</h6>
-                                        <div class="row text-start">
-                                            <div class="col-md-6">
-                                                <small class="text-muted">
-                                                    <i class="fab fa-youtube text-danger me-1"></i> YouTube:<br>
-                                                    youtube.com/watch?v=...<br>
-                                                    youtu.be/...
-                                                </small>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <small class="text-muted">
-                                                    <i class="fab fa-vimeo text-info me-1"></i> Vimeo:<br>
-                                                    vimeo.com/...<br>
-                                                    <i class="fas fa-globe me-1"></i> RuTube, VK, OK.ru
-                                                </small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </form>
+                        <div class="file-type">
+                            <i class="fas fa-video" style="color: #06b6d4;"></i>
+                            <span>MP4, MOV, MKV</span>
                         </div>
                     </div>
+                    
+                    <button type="button" class="btn btn-primary" onclick="document.getElementById('file-input').click()">
+                        <i class="fas fa-upload" style="margin-right: 8px;"></i>
+                        Выбрать файл
+                    </button>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- What's New Section -->
-    <div class="mt-5">
-        <h4 class="text-center mb-4">🚀 Что нового в Pro версии</h4>
-        <div class="row">
-            <div class="col-md-4">
-                <div class="stats-card">
-                    <i class="fas fa-brain fa-2x text-primary mb-2"></i>
-                    <h5>Глубокий анализ</h5>
-                    <p class="text-muted mb-0">10+ тем с подтемами и примерами</p>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="stats-card">
-                    <i class="fas fa-chart-line fa-2x text-success mb-2"></i>
-                    <h5>Оценка качества</h5>
-                    <p class="text-muted mb-0">4 метрики глубины анализа</p>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="stats-card">
-                    <i class="fas fa-sync fa-2x text-info mb-2"></i>
-                    <h5>Spaced Repetition</h5>
-                    <p class="text-muted mb-0">Алгоритм SuperMemo для карточек</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="mt-4 text-center text-muted">
-        <p><i class="fas fa-magic me-2"></i>Обработка включает: иерархию тем, связи между концепциями, практические примеры</p>
-        <p><i class="fas fa-clock me-2"></i>Глубокий анализ занимает 2-5 минут в зависимости от объема материала</p>
-    </div>
-</div>
-
-<!-- Enhanced Processing Modal -->
-<div class="modal fade" id="processingModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content">
-            <div class="modal-body text-center py-5">
-                <div class="mb-4">
-                    <div class="spinner-grow text-primary" role="status"></div>
-                    <div class="spinner-grow text-success" role="status"></div>
-                    <div class="spinner-grow text-info" role="status"></div>
-                    <div class="spinner-grow text-warning" role="status"></div>
-                </div>
-                <h4>🧠 Проводим глубокий анализ с помощью ИИ</h4>
-                <div class="mt-4">
-                    <div class="text-start" style="max-width: 500px; margin: 0 auto;">
-                        <p class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>Извлечение текста...</p>
-                        <p class="mb-2 text-muted"><i class="fas fa-spinner fa-spin me-2"></i>Анализ структуры и иерархии тем...</p>
-                        <p class="mb-2 text-muted"><i class="far fa-circle me-2"></i>Генерация ментальной карты...</p>
-                        <p class="mb-2 text-muted"><i class="far fa-circle me-2"></i>Создание умных флеш-карт...</p>
-                        <p class="mb-2 text-muted"><i class="far fa-circle me-2"></i>Составление плана обучения...</p>
+                
+                <!-- File Selected -->
+                <div id="file-selected" class="file-selected">
+                    <i class="fas fa-file-check file-icon"></i>
+                    <div id="file-name" class="file-name"></div>
+                    <div id="file-size" class="file-size"></div>
+                    
+                    <!-- Page Selection -->
+                    <div id="page-selection" class="page-selection">
+                        <div class="page-selection-title">
+                            <i class="fas fa-file-alt"></i>
+                            <span>Выбор страниц для анализа</span>
+                        </div>
+                        <div class="page-info">
+                            <h6>
+                                <i class="fas fa-lightbulb"></i>
+                                <span>Рекомендации по количеству страниц:</span>
+                            </h6>
+                            <ul class="page-recommendations">
+                                <li class="page-recommendation-item">
+                                    <div class="recommendation-icon">
+                                        <i class="fas fa-gem"></i>
+                                    </div>
+                                    <div class="recommendation-text">
+                                        Лучшее качество: <span class="recommendation-pages">5-10 страниц</span>
+                                    </div>
+                                </li>
+                                <li class="page-recommendation-item">
+                                    <div class="recommendation-icon">
+                                        <i class="fas fa-star"></i>
+                                    </div>
+                                    <div class="recommendation-text">
+                                        Отличное качество: <span class="recommendation-pages">10-20 страниц</span>
+                                    </div>
+                                </li>
+                                <li class="page-recommendation-item">
+                                    <div class="recommendation-icon">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    </div>
+                                    <div class="recommendation-text">
+                                        Снижение качества: <span class="recommendation-pages">свыше 20 страниц</span>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                        <input type="text" class="page-input" id="page-range" name="page_range" 
+                               placeholder="1-20, 50-100" value="1-20">
+                        <div class="quick-buttons">
+                            <button type="button" class="quick-btn" onclick="setPageRange('1-10')">Первые 10</button>
+                            <button type="button" class="quick-btn" onclick="setPageRange('1-20')">Первые 20</button>
+                            <button type="button" class="quick-btn" onclick="setPageRange('все')">Все страницы</button>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 16px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-rocket" style="margin-right: 8px;"></i>
+                            Начать анализ
+                        </button>
+                        <button type="button" class="btn btn-outline" onclick="resetUpload()">
+                            <i class="fas fa-undo" style="margin-right: 8px;"></i>
+                            Сбросить
+                        </button>
                     </div>
                 </div>
-                <div class="progress mt-4" style="height: 10px;">
-                    <div class="progress-bar progress-bar-striped progress-bar-animated bg-gradient" style="width: 100%"></div>
+            </form>
+        </div>
+        
+        <!-- URL Upload -->
+        <div id="url-upload" class="upload-content">
+            <form id="url-form" action="{{ url_for('upload_video_url') }}" method="POST">
+                <div style="text-align: center;">
+                    <i class="fas fa-link upload-icon" style="color: var(--secondary);"></i>
+                    <h3 class="upload-title">Загрузить видео по ссылке</h3>
+                    <p class="upload-subtitle">Поддерживаемые платформы: YouTube, Vimeo, RuTube, VK, OK.ru</p>
+                    
+                    <input type="url" class="url-input" id="video-url" name="video_url" 
+                           placeholder="https://www.youtube.com/watch?v=..." required>
+                    
+                    <div class="url-info">
+                        <h6>
+                            <i class="fas fa-info-circle"></i>
+                            <span>Ограничения:</span>
+                        </h6>
+                        <ul class="url-limitations">
+                            <li class="url-limitation-item">
+                                <div class="limitation-icon">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <div class="limitation-text">
+                                    Максимальная длительность: <span class="limitation-value">2 часа</span>
+                                </div>
+                            </li>
+                            <li class="url-limitation-item">
+                                <div class="limitation-icon">
+                                    <i class="fas fa-video"></i>
+                                </div>
+                                <div class="limitation-text">
+                                    Качество загрузки: <span class="limitation-value">до 720p</span>
+                                </div>
+                            </li>
+                            <li class="url-limitation-item">
+                                <div class="limitation-icon">
+                                    <i class="fas fa-hourglass-half"></i>
+                                </div>
+                                <div class="limitation-text">
+                                    Время обработки: <span class="limitation-value">3-7 минут</span>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-secondary">
+                        <i class="fas fa-download" style="margin-right: 8px;"></i>
+                        Загрузить и анализировать
+                    </button>
                 </div>
-                <p class="text-muted mt-3 mb-0">Это может занять 2-5 минут для глубокого анализа</p>
+            </form>
+        </div>
+    </div>
+</section>
+
+<!-- Compact Features -->
+<section class="features-compact">
+    <div class="text-center">
+        <h2>Возможности платформы</h2>
+        <p class="text-secondary">Мощные инструменты для эффективного обучения</p>
+    </div>
+    
+    <div class="features-grid">
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-sitemap"></i>
+            </div>
+            <h3 class="feature-title">Иерархия тем</h3>
+            <p class="feature-description">
+                Структурированное дерево знаний с подтемами
+            </p>
+        </div>
+        
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-project-diagram"></i>
+            </div>
+            <h3 class="feature-title">Mind Map</h3>
+            <p class="feature-description">
+                Интерактивные ментальные карты
+            </p>
+        </div>
+        
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-calendar-check"></i>
+            </div>
+            <h3 class="feature-title">План обучения</h3>
+            <p class="feature-description">
+                Персональное расписание повторений
+            </p>
+        </div>
+        
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-layer-group"></i>
+            </div>
+            <h3 class="feature-title">Умные карточки</h3>
+            <p class="feature-description">
+                5 типов флеш-карт с алгоритмом SuperMemo
+            </p>
+        </div>
+    </div>
+    
+    <!-- Social Proof Section -->
+    <div class="social-proof-section">
+        <h3>Более 10,000 студентов уже улучшили свои результаты</h3>
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-number">95%</div>
+                <div class="stat-label">улучшение запоминания</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">3x</div>
+                <div class="stat-label">быстрее изучение</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">50+</div>
+                <div class="stat-label">поддерживаемых форматов</div>
             </div>
         </div>
+    </div>
+    
+    <!-- CTA Section -->
+    <div class="cta-section">
+        <h3>Готовы революционизировать свое обучение?</h3>
+        <p>Начните бесплатно и убедитесь в эффективности ИИ-анализа</p>
+        <div class="cta-buttons">
+            <a href="#" class="btn btn-primary btn-large">
+                <i class="fas fa-rocket" style="margin-right: 8px;"></i>
+                Начать бесплатно
+            </a>
+            <a href="/pricing" class="btn btn-outline btn-large">
+                <i class="fas fa-crown" style="margin-right: 8px;"></i>
+                Посмотреть тарифы
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Processing Modal -->
+<div id="processing-modal" class="modal">
+    <div class="modal-content">
+        <div class="processing-icon">
+            <i class="fas fa-brain"></i>
+        </div>
+        <h2 class="processing-title">Глубокий анализ с помощью ИИ</h2>
+        <p class="processing-subtitle">Анализируем ваш материал и создаем структурированные знания</p>
+        
+        <div class="progress-bar">
+            <div class="progress-fill"></div>
+        </div>
+        
+        <p class="text-secondary" style="font-size: 0.8rem;">Примерное время обработки: 2-5 минут</p>
     </div>
 </div>
 {% endblock %}
 
 {% block extra_scripts %}
 <script>
+    // Tab switching
+    function switchTab(tab) {
+        document.querySelectorAll('.upload-tab').forEach(btn => btn.classList.remove('active'));
+        event.target.closest('.upload-tab').classList.add('active');
+        
+        document.querySelectorAll('.upload-content').forEach(content => content.classList.remove('active'));
+        document.getElementById(tab + '-upload').classList.add('active');
+    }
+
+    // File upload handling
     const uploadArea = document.getElementById('upload-area');
     const fileInput = document.getElementById('file-input');
-    const uploadForm = document.getElementById('upload-form');
-    const fileSelectedDiv = document.getElementById('file-selected');
+    const fileSelected = document.getElementById('file-selected');
+    const pageSelection = document.getElementById('page-selection');
 
     // Drag and drop
     uploadArea.addEventListener('dragover', (e) => {
@@ -353,14 +1077,12 @@
         }
     });
 
-    // Click to upload
     uploadArea.addEventListener('click', (e) => {
         if (e.target.tagName !== 'BUTTON' && !e.target.closest('button')) {
             fileInput.click();
         }
     });
 
-    // File selection
     fileInput.addEventListener('change', handleFileSelect);
 
     function handleFileSelect() {
@@ -370,179 +1092,63 @@
             const fileSize = (file.size / (1024 * 1024)).toFixed(2);
             const fileExtension = fileName.split('.').pop().toLowerCase();
             
-            // Show file info
             document.getElementById('file-name').textContent = fileName;
             document.getElementById('file-size').textContent = `Размер: ${fileSize} МБ`;
             
-            // Show page selection only for PDF files
-            const pageSelection = document.getElementById('page-selection');
             if (fileExtension === 'pdf') {
                 pageSelection.style.display = 'block';
-                
-                // Set smart default based on file size (примерно 1 МБ = 20-30 страниц)
-                const estimatedPages = Math.ceil(fileSize * 25); // Примерная оценка
-                let defaultRange;
-                
-                if (estimatedPages <= 20) {
-                    defaultRange = 'все';
-                } else if (estimatedPages <= 50) {
-                    defaultRange = '1-20';
-                } else {
-                    defaultRange = '1-20';
-                }
-                
-                document.getElementById('page-range').value = defaultRange;
-                
-                // Update info text
-                const infoText = document.querySelector('#page-selection .alert-info');
-                if (estimatedPages > 30) {
-                    infoText.innerHTML = `
-                        <i class="fas fa-info-circle me-2"></i>
-                        <strong>Рекомендация:</strong> Документ содержит примерно ${estimatedPages} страниц. 
-                        Для оптимального качества анализа рекомендуется обрабатывать не более 20-30 страниц за раз.
-                        Большие документы лучше разбивать на логические части.
-                    `;
-                } else {
-                    infoText.innerHTML = `
-                        <i class="fas fa-info-circle me-2"></i>
-                        <strong>Информация:</strong> Документ содержит примерно ${estimatedPages} страниц. 
-                        Вы можете обработать весь документ или выбрать конкретные разделы.
-                    `;
-                }
             } else {
                 pageSelection.style.display = 'none';
             }
             
-            // Hide upload area and show file selected
             uploadArea.style.display = 'none';
-            fileSelectedDiv.style.display = 'block';
+            fileSelected.style.display = 'block';
+            
+            // Плавная прокрутка к кнопке анализа
+            setTimeout(() => {
+                fileSelected.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'center' 
+                });
+            }, 100);
         }
     }
 
     function setPageRange(range) {
         document.getElementById('page-range').value = range;
-        
-        // Visual feedback
-        const buttons = document.querySelectorAll('#page-selection .btn-outline-primary, #page-selection .btn-outline-secondary');
-        buttons.forEach(btn => {
-            btn.classList.remove('active');
-            if (btn.textContent.includes(range) || (range === 'все' && btn.textContent.includes('Все'))) {
-                btn.classList.add('active');
-            }
-        });
-    }
-
-    function validatePageRange() {
-        const pageRange = document.getElementById('page-range').value.trim();
-        if (!pageRange) return true; // Empty is OK for video files
-        
-        // Allow "все" or "all"
-        if (pageRange.toLowerCase() === 'все' || pageRange.toLowerCase() === 'all') {
-            return true;
-        }
-        
-        // Validate format: numbers, ranges, and commas
-        const pattern = /^(\d+(-\d+)?)(\s*,\s*\d+(-\d+)?)*$/;
-        if (!pattern.test(pageRange)) {
-            alert('Неверный формат диапазона страниц. Используйте формат: "1-10", "5-25", "1-10,15-20" или "все"');
-            return false;
-        }
-        
-        return true;
+        document.querySelectorAll('.quick-btn').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
     }
 
     function resetUpload() {
         fileInput.value = '';
         uploadArea.style.display = 'block';
-        fileSelectedDiv.style.display = 'none';
+        fileSelected.style.display = 'none';
+        pageSelection.style.display = 'none';
     }
 
-    // Show enhanced processing modal on form submit
-    uploadForm.addEventListener('submit', (e) => {
+    // Form submissions
+    document.getElementById('upload-form').addEventListener('submit', (e) => {
         if (fileInput.files.length === 0) {
             e.preventDefault();
             alert('Пожалуйста, выберите файл');
-            return false;
+            return;
         }
-        
-        // Validate page range for PDF files
-        if (!validatePageRange()) {
-            e.preventDefault();
-            return false;
-        }
-        
         showProcessingModal();
     });
 
-    // URL form handling
-    const urlForm = document.getElementById('url-form');
-    urlForm.addEventListener('submit', (e) => {
+    document.getElementById('url-form').addEventListener('submit', (e) => {
         const videoUrl = document.getElementById('video-url').value.trim();
-        
         if (!videoUrl) {
             e.preventDefault();
             alert('Пожалуйста, введите ссылку на видео');
-            return false;
+            return;
         }
-        
-        // Basic URL validation
-        try {
-            new URL(videoUrl);
-        } catch {
-            e.preventDefault();
-            alert('Введите корректную ссылку на видео');
-            return false;
-        }
-        
-        showProcessingModal('video');
+        showProcessingModal();
     });
 
-    function showProcessingModal(type = 'file') {
-        const modal = new bootstrap.Modal(document.getElementById('processingModal'));
-        
-        // Update modal content based on type
-        if (type === 'video') {
-            document.querySelector('#processingModal h4').innerHTML = '🎥 Загружаем и анализируем видео с помощью ИИ';
-            document.querySelectorAll('.modal-body p')[0].innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Загрузка видео...';
-            document.querySelectorAll('.modal-body p')[1].innerHTML = '<i class="far fa-circle me-2"></i>Извлечение аудио и транскрипция...';
-            document.querySelector('.modal-body .text-muted:last-child').textContent = 'Это может занять 3-7 минут для загрузки и анализа видео';
-        }
-        
-        modal.show();
-        
-        // Animate processing steps
-        setTimeout(() => {
-            if (type === 'video') {
-                document.querySelectorAll('.modal-body p')[0].innerHTML = '<i class="fas fa-check-circle text-success me-2"></i>Загрузка видео...';
-                document.querySelectorAll('.modal-body p')[1].innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Извлечение аудио и транскрипция...';
-                document.querySelectorAll('.modal-body p')[2].innerHTML = '<i class="far fa-circle me-2"></i>Анализ структуры и иерархии тем...';
-            } else {
-                document.querySelectorAll('.modal-body p')[1].innerHTML = '<i class="fas fa-check-circle text-success me-2"></i>Анализ структуры и иерархии тем...';
-                document.querySelectorAll('.modal-body p')[2].innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Генерация ментальной карты...';
-            }
-        }, 10000);
-        
-        setTimeout(() => {
-            if (type === 'video') {
-                document.querySelectorAll('.modal-body p')[1].innerHTML = '<i class="fas fa-check-circle text-success me-2"></i>Извлечение аудио и транскрипция...';
-                document.querySelectorAll('.modal-body p')[2].innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Анализ структуры и иерархии тем...';
-                document.querySelectorAll('.modal-body p')[3].innerHTML = '<i class="far fa-circle me-2"></i>Генерация ментальной карты...';
-            } else {
-                document.querySelectorAll('.modal-body p')[2].innerHTML = '<i class="fas fa-check-circle text-success me-2"></i>Генерация ментальной карты...';
-                document.querySelectorAll('.modal-body p')[3].innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Создание умных флеш-карт...';
-            }
-        }, 20000);
-        
-        setTimeout(() => {
-            if (type === 'video') {
-                document.querySelectorAll('.modal-body p')[2].innerHTML = '<i class="fas fa-check-circle text-success me-2"></i>Анализ структуры и иерархии тем...';
-                document.querySelectorAll('.modal-body p')[3].innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Генерация ментальной карты...';
-                document.querySelectorAll('.modal-body p')[4].innerHTML = '<i class="far fa-circle me-2"></i>Создание умных флеш-карт...';
-            } else {
-                document.querySelectorAll('.modal-body p')[3].innerHTML = '<i class="fas fa-check-circle text-success me-2"></i>Создание умных флеш-карт...';
-                document.querySelectorAll('.modal-body p')[4].innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Составление плана обучения...';
-            }
-        }, 30000);
+    function showProcessingModal() {
+        document.getElementById('processing-modal').classList.add('active');
     }
 </script>
 {% endblock %}
