@@ -1,0 +1,377 @@
+{% extends "base.html" %}
+
+{% block title %}Профиль - AI-конспект{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .profile-container {
+        max-width: 800px;
+        margin: 30px auto;
+    }
+    
+    .profile-header {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        color: white;
+        padding: 40px;
+        border-radius: 20px;
+        margin-bottom: 30px;
+        text-align: center;
+    }
+    
+    .profile-avatar {
+        width: 80px;
+        height: 80px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        font-size: 2rem;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .profile-name {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+    
+    .profile-email {
+        opacity: 0.9;
+        font-size: 1.1rem;
+    }
+    
+    .profile-meta {
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+        margin-top: 20px;
+        flex-wrap: wrap;
+    }
+    
+    .profile-meta-item {
+        text-align: center;
+    }
+    
+    .profile-meta-value {
+        font-size: 1.2rem;
+        font-weight: 700;
+        margin-bottom: 4px;
+    }
+    
+    .profile-meta-label {
+        opacity: 0.8;
+        font-size: 0.9rem;
+    }
+    
+    .profile-section {
+        background: white;
+        border-radius: 16px;
+        padding: 30px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        margin-bottom: 30px;
+    }
+    
+    .section-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .section-icon {
+        width: 35px;
+        height: 35px;
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 0.9rem;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 8px;
+        display: block;
+    }
+    
+    .form-control {
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 12px 16px;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        width: 100%;
+    }
+    
+    .form-control:focus {
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        outline: none;
+    }
+    
+    .btn-update {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        border: none;
+        border-radius: 12px;
+        color: white;
+        font-weight: 600;
+        padding: 12px 24px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-update:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3);
+    }
+    
+    .password-section {
+        border-top: 1px solid #e5e7eb;
+        padding-top: 30px;
+        margin-top: 30px;
+    }
+    
+    .password-requirements {
+        background: #f3f4f6;
+        border-radius: 8px;
+        padding: 12px;
+        margin-top: 8px;
+        font-size: 0.8rem;
+        color: #6b7280;
+    }
+    
+    .subscription-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-top: 8px;
+    }
+    
+    .subscription-badge.free {
+        background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+    }
+    
+    .subscription-badge.premium {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    }
+    
+    .danger-zone {
+        border: 2px solid #ef4444;
+        border-radius: 12px;
+        padding: 20px;
+        margin-top: 30px;
+    }
+    
+    .danger-title {
+        color: #ef4444;
+        font-weight: 700;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .danger-description {
+        color: #6b7280;
+        margin-bottom: 16px;
+        font-size: 0.9rem;
+    }
+    
+    .btn-danger {
+        background: #ef4444;
+        border: none;
+        border-radius: 8px;
+        color: white;
+        font-weight: 600;
+        padding: 10px 20px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-danger:hover {
+        background: #dc2626;
+        transform: translateY(-1px);
+    }
+    
+    @media (max-width: 768px) {
+        .profile-container {
+            margin: 20px;
+        }
+        
+        .profile-header {
+            padding: 30px 20px;
+        }
+        
+        .profile-meta {
+            gap: 20px;
+        }
+        
+        .profile-section {
+            padding: 20px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <!-- Заголовок профиля -->
+    <div class="profile-header">
+        <div class="profile-avatar">
+            <i class="fas fa-user"></i>
+        </div>
+        <h1 class="profile-name">{{ current_user.username }}</h1>
+        <p class="profile-email">{{ current_user.email }}</p>
+        
+        <div class="subscription-badge {{ current_user.subscription_type }}">
+            <i class="fas fa-{{ 'crown' if current_user.subscription_type == 'premium' else 'user' }}"></i>
+            {{ current_user.subscription_type.title() }}
+        </div>
+        
+        <div class="profile-meta">
+            <div class="profile-meta-item">
+                <div class="profile-meta-value">{{ current_user.get_results_count() }}</div>
+                <div class="profile-meta-label">Файлов обработано</div>
+            </div>
+            <div class="profile-meta-item">
+                <div class="profile-meta-value">{{ current_user.created_at[:10] if current_user.created_at else 'Неизвестно' }}</div>
+                <div class="profile-meta-label">Дата регистрации</div>
+            </div>
+            {% if current_user.last_login %}
+            <div class="profile-meta-item">
+                <div class="profile-meta-value">{{ current_user.last_login[:10] if current_user.last_login else 'Неизвестно' }}</div>
+                <div class="profile-meta-label">Последний вход</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Настройки профиля -->
+    <div class="profile-section">
+        <h2 class="section-title">
+            <div class="section-icon">
+                <i class="fas fa-user-edit"></i>
+            </div>
+            Настройки профиля
+        </h2>
+        
+        <form method="POST" action="{{ url_for('update_profile') }}">
+            <div class="form-group">
+                <label for="username" class="form-label">Имя пользователя</label>
+                <input type="text" class="form-control" id="username" name="username" 
+                       value="{{ current_user.username }}" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="email_display" class="form-label">Email (только для чтения)</label>
+                <input type="email" class="form-control" id="email_display" 
+                       value="{{ current_user.email }}" disabled>
+                <small class="text-muted">Email нельзя изменить после регистрации</small>
+            </div>
+            
+            <div class="password-section">
+                <h3 style="color: #374151; margin-bottom: 20px;">Изменить пароль</h3>
+                
+                <div class="form-group">
+                    <label for="current_password" class="form-label">Текущий пароль</label>
+                    <input type="password" class="form-control" id="current_password" name="current_password">
+                </div>
+                
+                <div class="form-group">
+                    <label for="new_password" class="form-label">Новый пароль</label>
+                    <input type="password" class="form-control" id="new_password" name="new_password">
+                    <div class="password-requirements">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Минимум 6 символов
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="new_password_confirm" class="form-label">Подтвердите новый пароль</label>
+                    <input type="password" class="form-control" id="new_password_confirm" name="new_password_confirm">
+                </div>
+            </div>
+            
+            <button type="submit" class="btn btn-update">
+                <i class="fas fa-save me-2"></i>
+                Сохранить изменения
+            </button>
+        </form>
+    </div>
+    
+    <!-- Статистика -->
+    <div class="profile-section">
+        <h2 class="section-title">
+            <div class="section-icon">
+                <i class="fas fa-chart-bar"></i>
+            </div>
+            Статистика использования
+        </h2>
+        
+        <div class="row">
+            <div class="col-md-4 text-center mb-3">
+                <div style="font-size: 2rem; font-weight: 700; color: #6366f1;">
+                    {{ current_user.get_results_count() }}
+                </div>
+                <div style="color: #6b7280;">Обработанных файлов</div>
+            </div>
+            <div class="col-md-4 text-center mb-3">
+                <div style="font-size: 2rem; font-weight: 700; color: #10b981;">
+                    {{ current_user.subscription_type.title() }}
+                </div>
+                <div style="color: #6b7280;">Тип подписки</div>
+            </div>
+            <div class="col-md-4 text-center mb-3">
+                <div style="font-size: 2rem; font-weight: 700; color: #f59e0b;">
+                    {{ current_user.subscription_type.title() }}
+                </div>
+                <div style="color: #6b7280;">Статус аккаунта</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Опасная зона -->
+    <div class="profile-section">
+        <div class="danger-zone">
+            <h3 class="danger-title">
+                <i class="fas fa-exclamation-triangle"></i>
+                Опасная зона
+            </h3>
+            <p class="danger-description">
+                Удаление аккаунта необратимо. Все ваши данные, результаты и прогресс будут потеряны навсегда.
+            </p>
+            <button type="button" class="btn btn-danger" onclick="confirmDelete()">
+                <i class="fas fa-trash me-2"></i>
+                Удалить аккаунт
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmDelete() {
+    if (confirm('Вы уверены, что хотите удалить свой аккаунт? Это действие нельзя отменить.')) {
+        if (confirm('Последнее предупреждение! Все ваши данные будут потеряны навсегда. Продолжить?')) {
+            // Здесь можно добавить запрос на удаление аккаунта
+            alert('Функция удаления аккаунта будет добавлена в следующих версиях.');
+        }
+    }
+}
+</script>
+{% endblock %}

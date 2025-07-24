@@ -1,0 +1,407 @@
+{% extends "base.html" %}
+
+{% block title %}Регистрация - AI-конспект{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .auth-container {
+        max-width: 400px;
+        margin: 50px auto;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        padding: 40px;
+    }
+    
+    .auth-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    
+    .auth-icon {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        font-size: 1.5rem;
+        color: white;
+    }
+    
+    .auth-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 8px;
+    }
+    
+    .auth-subtitle {
+        color: #6b7280;
+        font-size: 0.9rem;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 8px;
+        display: block;
+    }
+    
+    .form-control {
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 12px 16px;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus {
+        border-color: #10b981;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        outline: none;
+    }
+    
+    .btn-auth {
+        width: 100%;
+        padding: 12px;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border: none;
+        border-radius: 12px;
+        color: white;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        margin-bottom: 20px;
+    }
+    
+    .btn-auth:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+    }
+    
+    .password-requirements {
+        background: #f3f4f6;
+        border-radius: 8px;
+        padding: 12px;
+        margin-top: 8px;
+        font-size: 0.8rem;
+        color: #6b7280;
+    }
+    
+    .auth-links {
+        text-align: center;
+        padding-top: 20px;
+        border-top: 1px solid #e5e7eb;
+    }
+    
+    .auth-links a {
+        color: #10b981;
+        text-decoration: none;
+        font-weight: 500;
+    }
+    
+    .auth-links a:hover {
+        text-decoration: underline;
+    }
+    
+    /* Email feedback styles */
+    .email-feedback {
+        margin-top: 8px;
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        display: none;
+        transition: all 0.3s ease;
+    }
+    
+    .email-feedback.success {
+        background: #d1fae5;
+        color: #065f46;
+        border: 1px solid #a7f3d0;
+        display: block;
+    }
+    
+    .email-feedback.error {
+        background: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #fca5a5;
+        display: block;
+    }
+    
+    .email-feedback.warning {
+        background: #fef3c7;
+        color: #92400e;
+        border: 1px solid #fde68a;
+        display: block;
+    }
+    
+    .email-feedback.checking {
+        background: #e0f2fe;
+        color: #0c4a6e;
+        border: 1px solid #7dd3fc;
+        display: block;
+    }
+    
+    .form-control.valid {
+        border-color: #10b981;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+    }
+    
+    .form-control.invalid {
+        border-color: #ef4444;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+    }
+    
+    .btn-auth:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+    
+    .btn-auth:disabled:hover {
+        transform: none;
+        box-shadow: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-header">
+        <div class="auth-icon">
+            <i class="fas fa-user-plus"></i>
+        </div>
+        <h1 class="auth-title">Создать аккаунт</h1>
+        <p class="auth-subtitle">Присоединяйтесь к AI-конспект уже сегодня</p>
+    </div>
+    
+    <form method="POST">
+        <div class="form-group">
+            <label for="email" class="form-label">Email</label>
+            <input type="email" class="form-control" id="email" name="email" required 
+                   placeholder="your@email.com">
+            <div id="email-feedback" class="email-feedback"></div>
+        </div>
+        
+        <div class="form-group">
+            <label for="username" class="form-label">Имя пользователя</label>
+            <input type="text" class="form-control" id="username" name="username" required 
+                   placeholder="Ваше имя">
+        </div>
+        
+        <div class="form-group">
+            <label for="password" class="form-label">Пароль</label>
+            <input type="password" class="form-control" id="password" name="password" required 
+                   placeholder="Создайте пароль">
+            <div class="password-requirements">
+                <i class="fas fa-info-circle me-1"></i>
+                Минимум 6 символов
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="password_confirm" class="form-label">Подтвердите пароль</label>
+            <input type="password" class="form-control" id="password_confirm" name="password_confirm" required 
+                   placeholder="Повторите пароль">
+        </div>
+        
+        <button type="submit" class="btn btn-auth">
+            <i class="fas fa-user-plus me-2"></i>
+            Создать аккаунт
+        </button>
+    </form>
+    
+    <div class="auth-links">
+        <p>Уже есть аккаунт? <a href="{{ url_for('login') }}">Войти</a></p>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const emailInput = document.getElementById('email');
+    const emailFeedback = document.getElementById('email-feedback');
+    const submitButton = document.querySelector('.btn-auth');
+    const form = document.querySelector('form');
+    
+    let emailCheckTimeout;
+    let isEmailValid = false;
+    
+    // Функция для показа обратной связи
+    function showEmailFeedback(message, type) {
+        emailFeedback.className = `email-feedback ${type}`;
+        emailFeedback.innerHTML = `<i class="fas fa-${getIcon(type)} me-1"></i>${message}`;
+    }
+    
+    // Функция для получения иконки по типу
+    function getIcon(type) {
+        switch(type) {
+            case 'success': return 'check-circle';
+            case 'error': return 'exclamation-circle';
+            case 'warning': return 'exclamation-triangle';
+            case 'checking': return 'spinner fa-spin';
+            default: return 'info-circle';
+        }
+    }
+    
+    // Функция для скрытия обратной связи
+    function hideEmailFeedback() {
+        emailFeedback.style.display = 'none';
+        emailInput.classList.remove('valid', 'invalid');
+    }
+    
+    // Функция для проверки email
+    async function checkEmail(email) {
+        try {
+            showEmailFeedback('Проверяем доступность email...', 'checking');
+            emailInput.classList.remove('valid', 'invalid');
+            
+            const response = await fetch('/api/check_email', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email: email })
+            });
+            
+            const data = await response.json();
+            
+            if (data.error) {
+                showEmailFeedback('Ошибка проверки email', 'error');
+                emailInput.classList.add('invalid');
+                isEmailValid = false;
+            } else if (!data.valid) {
+                showEmailFeedback(data.message, 'error');
+                emailInput.classList.add('invalid');
+                isEmailValid = false;
+            } else if (data.exists) {
+                showEmailFeedback(data.message, 'warning');
+                emailInput.classList.add('invalid');
+                isEmailValid = false;
+            } else {
+                showEmailFeedback(data.message, 'success');
+                emailInput.classList.add('valid');
+                isEmailValid = true;
+            }
+            
+            updateSubmitButton();
+            
+        } catch (error) {
+            console.error('Error checking email:', error);
+            showEmailFeedback('Ошибка соединения с сервером', 'error');
+            emailInput.classList.add('invalid');
+            isEmailValid = false;
+            updateSubmitButton();
+        }
+    }
+    
+    // Функция для обновления состояния кнопки отправки
+    function updateSubmitButton() {
+        const email = emailInput.value.trim();
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+        const passwordConfirm = document.getElementById('password_confirm').value;
+        
+        const isFormValid = email && username && password && passwordConfirm && 
+                           password === passwordConfirm && password.length >= 6 && isEmailValid;
+        
+        submitButton.disabled = !isFormValid;
+    }
+    
+    // Обработчик ввода email
+    emailInput.addEventListener('input', function() {
+        const email = this.value.trim();
+        
+        // Очищаем предыдущий таймер
+        clearTimeout(emailCheckTimeout);
+        
+        if (!email) {
+            hideEmailFeedback();
+            isEmailValid = false;
+            updateSubmitButton();
+            return;
+        }
+        
+        // Базовая валидация email на клиенте
+        const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        if (!emailPattern.test(email)) {
+            showEmailFeedback('Неверный формат email', 'error');
+            emailInput.classList.add('invalid');
+            isEmailValid = false;
+            updateSubmitButton();
+            return;
+        }
+        
+        // Задержка перед проверкой на сервере (500ms)
+        emailCheckTimeout = setTimeout(() => {
+            checkEmail(email);
+        }, 500);
+    });
+    
+    // Обработчики для других полей формы
+    document.getElementById('username').addEventListener('input', updateSubmitButton);
+    document.getElementById('password').addEventListener('input', function() {
+        updateSubmitButton();
+        validatePasswordMatch();
+    });
+    document.getElementById('password_confirm').addEventListener('input', function() {
+        updateSubmitButton();
+        validatePasswordMatch();
+    });
+    
+    // Функция для проверки совпадения паролей
+    function validatePasswordMatch() {
+        const password = document.getElementById('password').value;
+        const passwordConfirm = document.getElementById('password_confirm').value;
+        const passwordConfirmInput = document.getElementById('password_confirm');
+        
+        if (passwordConfirm && password !== passwordConfirm) {
+            passwordConfirmInput.classList.add('invalid');
+        } else if (passwordConfirm) {
+            passwordConfirmInput.classList.remove('invalid');
+            passwordConfirmInput.classList.add('valid');
+        }
+    }
+    
+    // Обработчик отправки формы
+    form.addEventListener('submit', function(e) {
+        if (!isEmailValid) {
+            e.preventDefault();
+            showEmailFeedback('Пожалуйста, используйте другой email', 'error');
+            return false;
+        }
+        
+        // Дополнительная проверка перед отправкой
+        const password = document.getElementById('password').value;
+        const passwordConfirm = document.getElementById('password_confirm').value;
+        
+        if (password !== passwordConfirm) {
+            e.preventDefault();
+            alert('Пароли не совпадают');
+            return false;
+        }
+        
+        if (password.length < 6) {
+            e.preventDefault();
+            alert('Пароль должен содержать минимум 6 символов');
+            return false;
+        }
+        
+        // Показываем индикатор загрузки
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Создаем аккаунт...';
+        submitButton.disabled = true;
+    });
+    
+    // Инициализация состояния кнопки
+    updateSubmitButton();
+});
+</script>
+
+{% endblock %}

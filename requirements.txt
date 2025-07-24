@@ -1,5 +1,8 @@
 # Web Framework
 Flask
+Flask-Login
+Flask-WTF
+Flask-Bcrypt
 gunicorn
 python-dotenv
 

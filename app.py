@@ -3,8 +3,10 @@ import json
 import sqlite3
 from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, flash, send_file, jsonify, session
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename
 from usage_tracking import usage_tracker
+from auth import User, init_auth_db, generate_password_hash, check_password_hash
 import logging
 from pathlib import Path
 import yt_dlp
@@ -15,6 +17,17 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
 app.config['MAX_CONTENT_LENGTH'] = int(os.environ.get('MAX_UPLOAD_MB', 200)) * 1024 * 1024
 app.config['UPLOAD_FOLDER'] = 'uploads'
+
+# Настройка Flask-Login
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+login_manager.login_message = 'Пожалуйста, войдите в систему для доступа к этой странице.'
+login_manager.login_message_category = 'info'
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.get(int(user_id))
 
 # Убедитесь, что папка для загрузки существует
 Path(app.config['UPLOAD_FOLDER']).mkdir(exist_ok=True)
@@ -174,7 +187,9 @@ def init_db():
             video_segments_json TEXT,
             key_moments_json TEXT,
             full_text TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            user_id INTEGER,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id)
         )
     ''')
     
@@ -186,31 +201,62 @@ def init_db():
         # Колонка уже существует
         pass
     
+    # Добавляем колонку user_id если её нет (миграция)
+    try:
+        c.execute('ALTER TABLE result ADD COLUMN user_id INTEGER')
+        logger.info("Added user_id column to result table")
+    except sqlite3.OperationalError:
+        # Колонка уже существует
+        pass
+    
     # Таблица прогресса пользователя
     c.execute('''
         CREATE TABLE IF NOT EXISTS user_progress (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             result_id INTEGER,
             flashcard_id INTEGER,
+            user_id INTEGER,
             last_review TIMESTAMP,
             next_review TIMESTAMP,
             ease_factor REAL DEFAULT 2.5,
             consecutive_correct INTEGER DEFAULT 0,
-            FOREIGN KEY (result_id) REFERENCES result(id)
+            FOREIGN KEY (result_id) REFERENCES result(id),
+            FOREIGN KEY (user_id) REFERENCES users(id)
         )
     ''')
+    
+    # Добавляем колонку user_id в user_progress если её нет
+    try:
+        c.execute('ALTER TABLE user_progress ADD COLUMN user_id INTEGER')
+        logger.info("Added user_id column to user_progress table")
+    except sqlite3.OperationalError:
+        # Колонка уже существует
+        pass
     
     # Таблица для истории чата
     c.execute('''
         CREATE TABLE IF NOT EXISTS chat_history (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             result_id INTEGER,
+            user_id INTEGER,
             user_message TEXT NOT NULL,
             ai_response TEXT NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (result_id) REFERENCES result(id)
+            FOREIGN KEY (result_id) REFERENCES result(id),
+            FOREIGN KEY (user_id) REFERENCES users(id)
         )
     ''')
+    
+    # Добавляем колонку user_id в chat_history если её нет
+    try:
+        c.execute('ALTER TABLE chat_history ADD COLUMN user_id INTEGER')
+        logger.info("Added user_id column to chat_history table")
+    except sqlite3.OperationalError:
+        # Колонка уже существует
+        pass
+    
+    # Инициализируем таблицы аутентификации
+    init_auth_db()
     
     conn.commit()
     conn.close()
@@ -236,17 +282,20 @@ def save_result(filename, file_type, analysis_result, page_info=None):
     # Получаем полный текст для чата
     full_text = analysis_result.get('full_text', '')
     
+    # Получаем ID текущего пользователя (если авторизован)
+    user_id = current_user.id if current_user.is_authenticated else None
+    
     c.execute('''
         INSERT INTO result (
             filename, file_type, topics_json, summary, flashcards_json,
             mind_map_json, study_plan_json, quality_json,
-            video_segments_json, key_moments_json, full_text
+            video_segments_json, key_moments_json, full_text, user_id
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ''', (
         filename, file_type, topics_json, analysis_result['summary'], 
         flashcards_json, mind_map_json, study_plan_json, quality_json,
-        video_segments_json, key_moments_json, full_text
+        video_segments_json, key_moments_json, full_text, user_id
     ))
     
     result_id = c.lastrowid
@@ -255,7 +304,7 @@ def save_result(filename, file_type, analysis_result, page_info=None):
     
     return result_id
 
-def get_result(result_id):
+def get_result(result_id, check_access=True):
     """Получение результата из базы данных"""
     conn = sqlite3.connect('ai_study.db')
     c = conn.cursor()
@@ -263,7 +312,7 @@ def get_result(result_id):
     c.execute('''
         SELECT filename, file_type, topics_json, summary, flashcards_json,
                mind_map_json, study_plan_json, quality_json,
-               video_segments_json, key_moments_json, full_text, created_at
+               video_segments_json, key_moments_json, full_text, created_at, user_id
         FROM result WHERE id = ?
     ''', (result_id,))
     
@@ -271,6 +320,12 @@ def get_result(result_id):
     conn.close()
     
     if row:
+        # Проверяем права доступа
+        if check_access and current_user.is_authenticated:
+            result_user_id = row[12]  # user_id из результата
+            if result_user_id and result_user_id != current_user.id:
+                return None  # Нет доступа к чужому результату
+        
         result_data = {
             'filename': row[0],
             'file_type': row[1],
@@ -283,7 +338,8 @@ def get_result(result_id):
             'video_segments': json.loads(row[8]),
             'key_moments': json.loads(row[9]),
             'full_text': row[10] or '',
-            'created_at': row[11]
+            'created_at': row[11],
+            'user_id': row[12]
         }
         
         # Извлекаем информацию о страницах из mind_map (если она там сохранена)
@@ -293,6 +349,303 @@ def get_result(result_id):
         
         return result_data
     return None
+
+# Маршруты аутентификации
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    """Страница входа"""
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+    
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip().lower()
+        password = request.form.get('password', '')
+        remember = bool(request.form.get('remember'))
+        
+        if not email or not password:
+            flash('Заполните все поля', 'danger')
+            return render_template('auth/login.html')
+        
+        user = User.get_by_email(email)
+        if user and user.check_password(password):
+            if user.is_active:
+                login_user(user, remember=remember)
+                
+                # Обновляем время последнего входа
+                conn = sqlite3.connect('ai_study.db')
+                c = conn.cursor()
+                c.execute('UPDATE users SET last_login = ? WHERE id = ?', 
+                         (datetime.now(), user.id))
+                conn.commit()
+                conn.close()
+                
+                logger.info(f"User logged in: {email}")
+                
+                # Перенаправляем на запрошенную страницу или в личный кабинет
+                next_page = request.args.get('next')
+                if next_page:
+                    return redirect(next_page)
+                return redirect(url_for('dashboard'))
+            else:
+                flash('Аккаунт деактивирован', 'danger')
+        else:
+            flash('Неверный email или пароль', 'danger')
+    
+    return render_template('auth/login.html')
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    """Страница регистрации"""
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+    
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip().lower()
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '')
+        password_confirm = request.form.get('password_confirm', '')
+        
+        # Расширенная валидация
+        errors = []
+        
+        # Проверка заполненности полей
+        if not email:
+            errors.append('Email обязателен для заполнения')
+        if not username:
+            errors.append('Имя пользователя обязательно для заполнения')
+        if not password:
+            errors.append('Пароль обязателен для заполнения')
+        if not password_confirm:
+            errors.append('Подтверждение пароля обязательно')
+        
+        # Валидация email
+        if email:
+            import re
+            email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+            if not re.match(email_pattern, email):
+                errors.append('Неверный формат email адреса')
+        
+        # Валидация имени пользователя
+        if username:
+            if len(username) < 2:
+                errors.append('Имя пользователя должно содержать минимум 2 символа')
+            if len(username) > 50:
+                errors.append('Имя пользователя не должно превышать 50 символов')
+        
+        # Валидация пароля
+        if password:
+            if len(password) < 6:
+                errors.append('Пароль должен содержать минимум 6 символов')
+            if len(password) > 128:
+                errors.append('Пароль не должен превышать 128 символов')
+        
+        # Проверка совпадения паролей
+        if password and password_confirm and password != password_confirm:
+            errors.append('Пароли не совпадают')
+        
+        # Проверка существования пользователя
+        if email and not errors:  # Проверяем только если email валиден
+            existing_user = User.get_by_email(email)
+            if existing_user:
+                errors.append('Пользователь с таким email уже зарегистрирован')
+        
+        # Если есть ошибки, показываем их
+        if errors:
+            for error in errors:
+                flash(error, 'danger')
+            return render_template('auth/register.html')
+        
+        # Создаем пользователя
+        try:
+            user = User.create(email, username, password)
+            if user:
+                login_user(user)
+                logger.info(f"New user registered and logged in: {email}")
+                flash('Добро пожаловать! Регистрация прошла успешно', 'success')
+                return redirect(url_for('dashboard'))
+            else:
+                flash('Ошибка при создании аккаунта. Попробуйте еще раз', 'danger')
+        except Exception as e:
+            logger.error(f"Error creating user {email}: {str(e)}")
+            flash('Произошла ошибка при регистрации. Попробуйте позже', 'danger')
+    
+    return render_template('auth/register.html')
+
+@app.route('/logout')
+@login_required
+def logout():
+    """Выход из системы"""
+    logger.info(f"User logged out: {current_user.email}")
+    logout_user()
+    flash('Вы успешно вышли из системы', 'info')
+    return redirect(url_for('index'))
+
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    """Личный кабинет пользователя"""
+    # Получаем статистику пользователя
+    conn = sqlite3.connect('ai_study.db')
+    c = conn.cursor()
+    
+    # Общая статистика
+    c.execute('SELECT COUNT(*) FROM result WHERE user_id = ?', (current_user.id,))
+    total_results = c.fetchone()[0]
+    
+    c.execute('''
+        SELECT COUNT(*) FROM user_progress 
+        WHERE user_id = ? AND consecutive_correct >= 3
+    ''', (current_user.id,))
+    mastered_cards = c.fetchone()[0]
+    
+    c.execute('SELECT COUNT(*) FROM user_progress WHERE user_id = ?', (current_user.id,))
+    total_progress = c.fetchone()[0]
+    
+    # Последние результаты
+    c.execute('''
+        SELECT id, filename, file_type, created_at
+        FROM result 
+        WHERE user_id = ?
+        ORDER BY created_at DESC
+        LIMIT 5
+    ''', (current_user.id,))
+    
+    recent_results = []
+    for row in c.fetchall():
+        recent_results.append({
+            'id': row[0],
+            'filename': row[1],
+            'file_type': row[2],
+            'created_at': row[3]
+        })
+    
+    # Карточки для повторения сегодня
+    c.execute('''
+        SELECT COUNT(*) FROM user_progress 
+        WHERE user_id = ? AND date(next_review) <= date('now')
+    ''', (current_user.id,))
+    cards_due_today = c.fetchone()[0]
+    
+    conn.close()
+    
+    stats = {
+        'total_results': total_results,
+        'mastered_cards': mastered_cards,
+        'total_progress': total_progress,
+        'cards_due_today': cards_due_today,
+        'recent_results': recent_results
+    }
+    
+    return render_template('dashboard.html', stats=stats)
+
+@app.route('/profile')
+@login_required
+def profile():
+    """Профиль пользователя"""
+    return render_template('profile.html', datetime=datetime)
+
+@app.route('/profile/update', methods=['POST'])
+@login_required
+def update_profile():
+    """Обновление профиля пользователя"""
+    username = request.form.get('username', '').strip()
+    current_password = request.form.get('current_password', '')
+    new_password = request.form.get('new_password', '')
+    new_password_confirm = request.form.get('new_password_confirm', '')
+    
+    conn = sqlite3.connect('ai_study.db')
+    c = conn.cursor()
+    
+    # Обновляем имя пользователя
+    if username and username != current_user.username:
+        c.execute('UPDATE users SET username = ? WHERE id = ?', 
+                 (username, current_user.id))
+        flash('Имя пользователя обновлено', 'success')
+    
+    # Обновляем пароль
+    if new_password:
+        if not current_password:
+            flash('Введите текущий пароль', 'danger')
+            conn.close()
+            return redirect(url_for('profile'))
+        
+        if not current_user.check_password(current_password):
+            flash('Неверный текущий пароль', 'danger')
+            conn.close()
+            return redirect(url_for('profile'))
+        
+        if new_password != new_password_confirm:
+            flash('Новые пароли не совпадают', 'danger')
+            conn.close()
+            return redirect(url_for('profile'))
+        
+        if len(new_password) < 6:
+            flash('Новый пароль должен содержать минимум 6 символов', 'danger')
+            conn.close()
+            return redirect(url_for('profile'))
+        
+        new_password_hash = generate_password_hash(new_password)
+        c.execute('UPDATE users SET password_hash = ? WHERE id = ?', 
+                 (new_password_hash, current_user.id))
+        flash('Пароль успешно изменен', 'success')
+    
+    conn.commit()
+    conn.close()
+    
+    return redirect(url_for('profile'))
+
+@app.route('/my-results')
+@login_required
+def my_results():
+    """Мои результаты"""
+    page = request.args.get('page', 1, type=int)
+    per_page = 10
+    
+    conn = sqlite3.connect('ai_study.db')
+    c = conn.cursor()
+    
+    # Получаем общее количество результатов
+    c.execute('SELECT COUNT(*) FROM result WHERE user_id = ?', (current_user.id,))
+    total = c.fetchone()[0]
+    
+    # Получаем результаты с пагинацией
+    offset = (page - 1) * per_page
+    c.execute('''
+        SELECT id, filename, file_type, created_at
+        FROM result 
+        WHERE user_id = ?
+        ORDER BY created_at DESC
+        LIMIT ? OFFSET ?
+    ''', (current_user.id, per_page, offset))
+    
+    results = []
+    for row in c.fetchall():
+        results.append({
+            'id': row[0],
+            'filename': row[1],
+            'file_type': row[2],
+            'created_at': row[3]
+        })
+    
+    conn.close()
+    
+    # Простая пагинация
+    has_prev = page > 1
+    has_next = offset + per_page < total
+    prev_num = page - 1 if has_prev else None
+    next_num = page + 1 if has_next else None
+    
+    pagination = {
+        'page': page,
+        'per_page': per_page,
+        'total': total,
+        'has_prev': has_prev,
+        'has_next': has_next,
+        'prev_num': prev_num,
+        'next_num': next_num
+    }
+    
+    return render_template('my_results.html', results=results, pagination=pagination)
 
 @app.route('/')
 def index():
@@ -539,6 +892,7 @@ def create_flashcard():
         return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/api/flashcard_progress', methods=['POST'])
+@login_required
 def update_flashcard_progress():
     """Обновление прогресса изучения флеш-карт"""
     try:
@@ -560,12 +914,19 @@ def update_flashcard_progress():
         conn = sqlite3.connect('ai_study.db')
         c = conn.cursor()
         
+        # Проверяем, что результат принадлежит текущему пользователю
+        c.execute('SELECT user_id FROM result WHERE id = ?', (result_id,))
+        result_owner = c.fetchone()
+        if not result_owner or result_owner[0] != current_user.id:
+            conn.close()
+            return jsonify({"success": False, "error": "Access denied"}), 403
+        
         # Проверка существования прогресса
         c.execute('''
             SELECT id, ease_factor, consecutive_correct 
             FROM user_progress 
-            WHERE result_id = ? AND flashcard_id = ?
-        ''', (result_id, flashcard_id))
+            WHERE result_id = ? AND flashcard_id = ? AND user_id = ?
+        ''', (result_id, flashcard_id, current_user.id))
         
         progress = c.fetchone()
         
@@ -604,9 +965,9 @@ def update_flashcard_progress():
                 
             c.execute('''
                 INSERT INTO user_progress 
-                (result_id, flashcard_id, last_review, next_review, ease_factor, consecutive_correct)
-                VALUES (?, ?, CURRENT_TIMESTAMP, datetime('now', '+' || ? || ' days'), 2.5, ?)
-            ''', (result_id, flashcard_id, interval_days, consecutive))
+                (result_id, flashcard_id, user_id, last_review, next_review, ease_factor, consecutive_correct)
+                VALUES (?, ?, ?, CURRENT_TIMESTAMP, datetime('now', '+' || ? || ' days'), 2.5, ?)
+            ''', (result_id, flashcard_id, current_user.id, interval_days, consecutive))
         
         conn.commit()
         conn.close()
@@ -727,6 +1088,7 @@ def get_study_progress(result_id):
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/chat/<int:result_id>', methods=['POST'])
+@login_required
 def chat_with_lecture(result_id):
     """Чат с ChatGPT на основе загруженной лекции"""
     try:
@@ -738,10 +1100,10 @@ def chat_with_lecture(result_id):
         if not user_message:
             return jsonify({"success": False, "error": "Message is required"}), 400
             
-        # Получаем данные лекции
-        result_data = get_result(result_id)
+        # Получаем данные лекции с проверкой доступа
+        result_data = get_result(result_id, check_access=True)
         if not result_data:
-            return jsonify({"success": False, "error": "Lecture not found"}), 404
+            return jsonify({"success": False, "error": "Lecture not found or access denied"}), 404
             
         full_text = result_data.get('full_text', '')
         if not full_text:
@@ -758,14 +1120,14 @@ def chat_with_lecture(result_id):
         c = conn.cursor()
         
         c.execute('''
-            INSERT INTO chat_history (result_id, user_message, ai_response)
-            VALUES (?, ?, ?)
-        ''', (result_id, user_message, ai_response))
+            INSERT INTO chat_history (result_id, user_id, user_message, ai_response)
+            VALUES (?, ?, ?, ?)
+        ''', (result_id, current_user.id, user_message, ai_response))
         
         conn.commit()
         conn.close()
         
-        logger.info(f"Chat message processed for result {result_id}")
+        logger.info(f"Chat message processed for result {result_id} by user {current_user.id}")
         return jsonify({
             "success": True, 
             "response": ai_response,
@@ -775,6 +1137,35 @@ def chat_with_lecture(result_id):
     except Exception as e:
         logger.error(f"Error in chat: {str(e)}")
         return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route('/api/check_email', methods=['POST'])
+def check_email():
+    """Проверка существования email для AJAX запросов"""
+    try:
+        data = request.json
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
+            
+        email = data.get('email', '').strip().lower()
+        if not email:
+            return jsonify({"error": "Email is required"}), 400
+        
+        # Простая валидация email
+        import re
+        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not re.match(email_pattern, email):
+            return jsonify({"exists": False, "valid": False, "message": "Неверный формат email"})
+        
+        # Проверяем существование пользователя
+        user = User.get_by_email(email)
+        if user:
+            return jsonify({"exists": True, "valid": True, "message": "Пользователь с таким email уже существует"})
+        else:
+            return jsonify({"exists": False, "valid": True, "message": "Email доступен"})
+            
+    except Exception as e:
+        logger.error(f"Error checking email: {str(e)}")
+        return jsonify({"error": "Server error"}), 500
 
 @app.route('/api/chat_history/<int:result_id>')
 def get_chat_history(result_id):
