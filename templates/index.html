@@ -1007,18 +1007,33 @@
     
     <!-- CTA Section -->
     <div class="cta-section">
-        <h3>Готовы революционизировать свое обучение?</h3>
-        <p>Начните бесплатно и убедитесь в эффективности ИИ-анализа</p>
-        <div class="cta-buttons">
-            <a href="#" class="btn btn-primary btn-large">
-                <i class="fas fa-rocket" style="margin-right: 8px;"></i>
-                Начать бесплатно
-            </a>
-            <a href="/pricing" class="btn btn-outline btn-large">
-                <i class="fas fa-crown" style="margin-right: 8px;"></i>
-                Посмотреть тарифы
-            </a>
-        </div>
+        {% if current_user.is_authenticated %}
+            <h3>Добро пожаловать, {{ current_user.username }}!</h3>
+            <p>Загрузите файл выше или перейдите в личный кабинет для управления результатами</p>
+            <div class="cta-buttons">
+                <a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-large">
+                    <i class="fas fa-tachometer-alt" style="margin-right: 8px;"></i>
+                    Личный кабинет
+                </a>
+                <a href="{{ url_for('profile') }}" class="btn btn-outline btn-large">
+                    <i class="fas fa-user-cog" style="margin-right: 8px;"></i>
+                    Профиль
+                </a>
+            </div>
+        {% else %}
+            <h3>Готовы революционизировать свое обучение?</h3>
+            <p>Зарегистрируйтесь бесплатно и убедитесь в эффективности ИИ-анализа</p>
+            <div class="cta-buttons">
+                <a href="{{ url_for('register') }}" class="btn btn-primary btn-large">
+                    <i class="fas fa-user-plus" style="margin-right: 8px;"></i>
+                    Зарегистрироваться
+                </a>
+                <a href="{{ url_for('login') }}" class="btn btn-outline btn-large">
+                    <i class="fas fa-sign-in-alt" style="margin-right: 8px;"></i>
+                    Войти
+                </a>
+            </div>
+        {% endif %}
     </div>
 </section>
 

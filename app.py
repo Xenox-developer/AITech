@@ -484,6 +484,9 @@ def logout():
 @login_required
 def dashboard():
     """Личный кабинет пользователя"""
+    page = request.args.get('page', 1, type=int)
+    per_page = 10
+    
     # Получаем статистику пользователя
     conn = sqlite3.connect('ai_study.db')
     c = conn.cursor()
@@ -501,24 +504,6 @@ def dashboard():
     c.execute('SELECT COUNT(*) FROM user_progress WHERE user_id = ?', (current_user.id,))
     total_progress = c.fetchone()[0]
     
-    # Последние результаты
-    c.execute('''
-        SELECT id, filename, file_type, created_at
-        FROM result 
-        WHERE user_id = ?
-        ORDER BY created_at DESC
-        LIMIT 5
-    ''', (current_user.id,))
-    
-    recent_results = []
-    for row in c.fetchall():
-        recent_results.append({
-            'id': row[0],
-            'filename': row[1],
-            'file_type': row[2],
-            'created_at': row[3]
-        })
-    
     # Карточки для повторения сегодня
     c.execute('''
         SELECT COUNT(*) FROM user_progress 
@@ -526,17 +511,51 @@ def dashboard():
     ''', (current_user.id,))
     cards_due_today = c.fetchone()[0]
     
+    # Все результаты с пагинацией
+    offset = (page - 1) * per_page
+    c.execute('''
+        SELECT id, filename, file_type, created_at
+        FROM result 
+        WHERE user_id = ?
+        ORDER BY created_at DESC
+        LIMIT ? OFFSET ?
+    ''', (current_user.id, per_page, offset))
+    
+    all_results = []
+    for row in c.fetchall():
+        all_results.append({
+            'id': row[0],
+            'filename': row[1],
+            'file_type': row[2],
+            'created_at': row[3]
+        })
+    
     conn.close()
+    
+    # Простая пагинация
+    has_prev = page > 1
+    has_next = offset + per_page < total_results
+    prev_num = page - 1 if has_prev else None
+    next_num = page + 1 if has_next else None
+    
+    pagination = {
+        'page': page,
+        'per_page': per_page,
+        'total': total_results,
+        'has_prev': has_prev,
+        'has_next': has_next,
+        'prev_num': prev_num,
+        'next_num': next_num
+    }
     
     stats = {
         'total_results': total_results,
         'mastered_cards': mastered_cards,
         'total_progress': total_progress,
-        'cards_due_today': cards_due_today,
-        'recent_results': recent_results
+        'cards_due_today': cards_due_today
     }
     
-    return render_template('dashboard.html', stats=stats)
+    return render_template('dashboard.html', stats=stats, all_results=all_results, pagination=pagination)
 
 @app.route('/profile')
 @login_required
@@ -980,8 +999,8 @@ def update_flashcard_progress():
         return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/download/<int:result_id>')
-def download_flashcards(result_id):
-    """Сохранение флеш-карт как JSON"""
+def download_flashcards_old(result_id):
+    """Старая функция скачивания флеш-карт (оставлена для совместимости)"""
     data = get_result(result_id)
     if not data:
         flash('Результат не найден', 'danger')
@@ -1205,6 +1224,116 @@ def get_chat_history(result_id):
     except Exception as e:
         logger.error(f"Error getting chat history: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
+# API endpoints
+@app.route('/api/check_email', methods=['POST'])
+def api_check_email():
+    """API для проверки доступности email"""
+    try:
+        data = request.get_json()
+        email = data.get('email', '').strip().lower()
+        
+        if not email:
+            return jsonify({'error': True, 'message': 'Email не указан'})
+        
+        # Валидация формата email
+        import re
+        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not re.match(email_pattern, email):
+            return jsonify({
+                'valid': False,
+                'message': 'Неверный формат email адреса'
+            })
+        
+        # Проверка существования пользователя
+        existing_user = User.get_by_email(email)
+        if existing_user:
+            return jsonify({
+                'valid': True,
+                'exists': True,
+                'message': 'Пользователь с таким email уже зарегистрирован'
+            })
+        
+        return jsonify({
+            'valid': True,
+            'exists': False,
+            'message': 'Email доступен для регистрации'
+        })
+        
+    except Exception as e:
+        logger.error(f"Error checking email: {str(e)}")
+        return jsonify({'error': True, 'message': 'Ошибка сервера'})
+
+@app.route('/api/delete_result/<int:result_id>', methods=['DELETE'])
+@login_required
+def delete_result_api(result_id):
+    """API для удаления результата"""
+    try:
+        # Проверяем права доступа
+        result_data = get_result(result_id, check_access=True)
+        if not result_data:
+            return jsonify({'error': True, 'message': 'Результат не найден или нет доступа'})
+        
+        # Удаляем из базы данных
+        conn = sqlite3.connect('ai_study.db')
+        c = conn.cursor()
+        
+        # Удаляем связанные данные
+        c.execute('DELETE FROM user_progress WHERE result_id = ?', (result_id,))
+        c.execute('DELETE FROM chat_history WHERE result_id = ?', (result_id,))
+        c.execute('DELETE FROM result WHERE id = ? AND user_id = ?', (result_id, current_user.id))
+        
+        conn.commit()
+        conn.close()
+        
+        logger.info(f"Result {result_id} deleted by user {current_user.id}")
+        return jsonify({'success': True, 'message': 'Результат успешно удален'})
+        
+    except Exception as e:
+        logger.error(f"Error deleting result {result_id}: {str(e)}")
+        return jsonify({'error': True, 'message': 'Ошибка при удалении'})
+
+@app.route('/download_flashcards/<int:result_id>')
+@login_required
+def download_flashcards(result_id):
+    """Скачивание флеш-карт в формате JSON"""
+    try:
+        result_data = get_result(result_id, check_access=True)
+        if not result_data:
+            flash('Результат не найден', 'danger')
+            return redirect(url_for('my_results'))
+        
+        # Подготавливаем данные для скачивания
+        export_data = {
+            'filename': result_data['filename'],
+            'created_at': result_data['created_at'],
+            'summary': result_data['summary'],
+            'flashcards': result_data['flashcards'],
+            'topics': result_data['topics_data']
+        }
+        
+        # Создаем временный файл
+        import tempfile
+        import json
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False, encoding='utf-8') as f:
+            json.dump(export_data, f, ensure_ascii=False, indent=2)
+            temp_path = f.name
+        
+        # Отправляем файл
+        safe_filename = secure_filename(f"flashcards_{result_data['filename']}.json")
+        
+        return send_file(
+            temp_path,
+            as_attachment=True,
+            download_name=safe_filename,
+            mimetype='application/json'
+        )
+        
+    except Exception as e:
+        logger.error(f"Error downloading flashcards for result {result_id}: {str(e)}")
+        flash('Ошибка при скачивании файла', 'danger')
+        return redirect(url_for('my_results'))
 
 @app.errorhandler(413)
 def request_entity_too_large(e):

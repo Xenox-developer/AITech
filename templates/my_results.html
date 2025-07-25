@@ -411,11 +411,73 @@
 </div>
 
 <script>
-function confirmDelete(resultId) {
+async function confirmDelete(resultId) {
     if (confirm('Вы уверены, что хотите удалить этот результат? Это действие нельзя отменить.')) {
-        // Здесь можно добавить AJAX запрос для удаления
-        alert('Функция удаления будет добавлена в следующих версиях.');
+        try {
+            const response = await fetch(`/api/delete_result/${resultId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Удаляем элемент из DOM
+                const resultCard = event.target.closest('.result-card');
+                if (resultCard) {
+                    resultCard.style.transition = 'all 0.3s ease';
+                    resultCard.style.opacity = '0';
+                    resultCard.style.transform = 'translateX(-100%)';
+                    
+                    setTimeout(() => {
+                        resultCard.remove();
+                        
+                        // Проверяем, остались ли результаты
+                        const remainingResults = document.querySelectorAll('.result-card');
+                        if (remainingResults.length === 0) {
+                            location.reload(); // Перезагружаем страницу для показа пустого состояния
+                        }
+                    }, 300);
+                }
+                
+                // Показываем уведомление об успехе
+                showNotification('Результат успешно удален', 'success');
+            } else {
+                showNotification(data.message || 'Ошибка при удалении', 'error');
+            }
+        } catch (error) {
+            console.error('Error deleting result:', error);
+            showNotification('Ошибка соединения с сервером', 'error');
+        }
     }
+}
+
+function showNotification(message, type) {
+    // Создаем уведомление
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show`;
+    notification.style.position = 'fixed';
+    notification.style.top = '20px';
+    notification.style.right = '20px';
+    notification.style.zIndex = '9999';
+    notification.style.minWidth = '300px';
+    
+    notification.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Автоматически удаляем через 5 секунд
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
 }
 </script>
 {% endblock %}
