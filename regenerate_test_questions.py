@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Скрипт для миграции существующих результатов - генерация тестовых вопросов
+Скрипт для регенерации тестовых вопросов с улучшенным промптом
 """
 
 import sqlite3
@@ -17,7 +17,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 def generate_test_questions(result_data):
-    """Генерирует тестовые вопросы с вариантами ответов на основе материала"""
+    """Генерирует тестовые вопросы с улучшенным промптом"""
     try:
         # Проверяем наличие API ключа
         api_key = os.environ.get('OPENAI_API_KEY')
@@ -34,7 +34,6 @@ def generate_test_questions(result_data):
         topics_data = result_data.get('topics_data', {})
         
         # Формируем расширенный контекст для генерации вопросов
-        # Берем больше текста для лучшего понимания материала
         text_sample = full_text[:5000] if len(full_text) > 5000 else full_text
         
         # Извлекаем ключевые темы и подтемы
@@ -42,7 +41,7 @@ def generate_test_questions(result_data):
         if isinstance(topics_data, dict):
             for topic, details in topics_data.items():
                 if isinstance(details, dict) and 'subtopics' in details:
-                    subtopics = details['subtopics'][:3]  # Берем первые 3 подтемы
+                    subtopics = details['subtopics'][:3]
                     main_topics.append(f"{topic}: {', '.join(subtopics)}")
                 else:
                     main_topics.append(str(topic))
@@ -127,7 +126,7 @@ def generate_test_questions(result_data):
                 {"role": "system", "content": "Ты эксперт по созданию образовательных тестов, специализирующийся на создании вопросов строго по содержанию конкретного учебного материала. Твоя задача - создавать вопросы, которые можно ответить ТОЛЬКО прочитав данный материал, а не на основе общих знаний по теме. Фокусируйся на специфических деталях, примерах, формулах и концепциях из предоставленного текста."},
                 {"role": "user", "content": prompt}
             ],
-            temperature=0.3,  # Снижаем температуру для более точных вопросов
+            temperature=0.3,
             max_tokens=4000
         )
         
@@ -154,12 +153,48 @@ def generate_test_questions(result_data):
                     fixed_json = re.sub(r'"\s*\n\s*"', '",\n"', fixed_json)
                     # Исправляем отсутствующие запятые после чисел
                     fixed_json = re.sub(r'(\d)\s*\n\s*"', r'\1,\n"', fixed_json)
+                    # Исправляем отсутствующие запятые после закрывающих скобок
+                    fixed_json = re.sub(r'}\s*\n\s*"', '},\n"', fixed_json)
+                    # Исправляем отсутствующие запятые в массивах
+                    fixed_json = re.sub(r'}\s*\n\s*{', '},\n{', fixed_json)
                     
                     questions_data = json.loads(fixed_json)
                     print("✅ JSON успешно исправлен")
                     return questions_data.get('questions', [])
-                except json.JSONDecodeError:
-                    print("❌ Не удалось исправить JSON, используем демонстрационные вопросы")
+                except json.JSONDecodeError as e2:
+                    print(f"❌ Не удалось исправить JSON: {e2}")
+                    # Попробуем извлечь отдельные вопросы
+                    try:
+                        questions = []
+                        question_pattern = r'"question":\s*"([^"]+)".*?"options":\s*{([^}]+)}.*?"correct_answer":\s*"([^"]+)".*?"explanation":\s*"([^"]+)"'
+                        matches = re.findall(question_pattern, json_text, re.DOTALL)
+                        
+                        for i, (question, options_str, correct, explanation) in enumerate(matches[:10]):  # Берем максимум 10 вопросов
+                            # Парсим опции
+                            options = {}
+                            option_pattern = r'"([A-D])":\s*"([^"]+)"'
+                            option_matches = re.findall(option_pattern, options_str)
+                            for opt_key, opt_value in option_matches:
+                                options[opt_key] = opt_value
+                            
+                            if len(options) == 4:  # Только если все 4 опции найдены
+                                questions.append({
+                                    "id": i + 1,
+                                    "question": question,
+                                    "options": options,
+                                    "correct_answer": correct,
+                                    "explanation": explanation,
+                                    "difficulty": 1 + (i % 3),  # Распределяем сложность
+                                    "topic": "Материал"
+                                })
+                        
+                        if questions:
+                            print(f"✅ Извлечено {len(questions)} вопросов из поврежденного JSON")
+                            return questions
+                    except Exception as e3:
+                        print(f"❌ Не удалось извлечь вопросы: {e3}")
+                    
+                    print("❌ Используем демонстрационные вопросы")
                     return get_demo_questions()
         else:
             print("Не удалось извлечь JSON из ответа GPT")
@@ -245,35 +280,37 @@ def get_demo_questions():
         }
     ]
 
-def migrate_test_questions():
-    """Миграция существующих результатов - добавление тестовых вопросов"""
-    print("🔄 Начинаем миграцию тестовых вопросов...")
+def regenerate_test_questions():
+    """Регенерация тестовых вопросов с улучшенным промптом"""
+    print("🔄 Начинаем регенерацию тестовых вопросов с улучшенным промптом...")
     
     conn = sqlite3.connect('ai_study.db')
     c = conn.cursor()
     
-    # Находим результаты без тестовых вопросов
+    # Находим все результаты
     c.execute('''
         SELECT id, filename, topics_json, summary, full_text
         FROM result 
-        WHERE test_questions_json IS NULL OR test_questions_json = ''
+        WHERE topics_json IS NOT NULL AND summary IS NOT NULL
+        ORDER BY created_at DESC
+        LIMIT 5
     ''')
     
-    results_to_migrate = c.fetchall()
-    total_results = len(results_to_migrate)
+    results_to_regenerate = c.fetchall()
+    total_results = len(results_to_regenerate)
     
     if total_results == 0:
-        print("✅ Все результаты уже имеют тестовые вопросы")
+        print("❌ Не найдено результатов для регенерации")
         conn.close()
         return
     
-    print(f"📊 Найдено {total_results} результатов для миграции")
+    print(f"📊 Найдено {total_results} результатов для регенерации (последние 5)")
     
     success_count = 0
     error_count = 0
     
-    for i, (result_id, filename, topics_json, summary, full_text) in enumerate(results_to_migrate, 1):
-        print(f"🔄 [{i}/{total_results}] Обрабатываем: {filename}")
+    for i, (result_id, filename, topics_json, summary, full_text) in enumerate(results_to_regenerate, 1):
+        print(f"🔄 [{i}/{total_results}] Регенерируем вопросы для: {filename}")
         
         try:
             # Проверяем данные
@@ -291,6 +328,7 @@ def migrate_test_questions():
             
             # Подготавливаем данные для генерации вопросов
             result_data = {
+                'filename': filename,
                 'full_text': full_text or '',
                 'summary': summary or '',
                 'topics_data': topics_data
@@ -298,7 +336,7 @@ def migrate_test_questions():
             
             print(f"   📝 Данные для генерации: текст={len(result_data['full_text'])} символов, резюме={len(result_data['summary'])} символов")
             
-            # Генерируем тестовые вопросы
+            # Генерируем тестовые вопросы с улучшенным промптом
             test_questions = generate_test_questions(result_data)
             
             if test_questions:
@@ -307,10 +345,10 @@ def migrate_test_questions():
                 c.execute('UPDATE result SET test_questions_json = ? WHERE id = ?', 
                          (test_questions_json, result_id))
                 
-                print(f"✅ [{i}/{total_results}] Сгенерировано {len(test_questions)} вопросов для {filename}")
+                print(f"✅ [{i}/{total_results}] Регенерировано {len(test_questions)} вопросов для {filename}")
                 success_count += 1
             else:
-                print(f"❌ [{i}/{total_results}] Не удалось сгенерировать вопросы для {filename}")
+                print(f"❌ [{i}/{total_results}] Не удалось регенерировать вопросы для {filename}")
                 error_count += 1
                 
         except Exception as e:
@@ -321,10 +359,10 @@ def migrate_test_questions():
     conn.commit()
     conn.close()
     
-    print(f"\n📈 Миграция завершена:")
+    print(f"\n📈 Регенерация завершена:")
     print(f"✅ Успешно обработано: {success_count}")
     print(f"❌ Ошибок: {error_count}")
     print(f"📊 Всего: {total_results}")
 
 if __name__ == '__main__':
-    migrate_test_questions()
+    regenerate_test_questions()
