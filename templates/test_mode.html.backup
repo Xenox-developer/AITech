@@ -1,0 +1,1716 @@
+{% extends "base.html" %}
+
+{% block title %}Режим теста - {{ result_data.filename }}{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .test-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .test-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 30px;
+        text-align: center;
+    }
+
+    .test-progress {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .progress-bar-container {
+        background: #e9ecef;
+        border-radius: 10px;
+        height: 20px;
+        overflow: hidden;
+        margin-bottom: 15px;
+    }
+
+    .progress-bar {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        height: 100%;
+        transition: width 0.3s ease;
+        border-radius: 10px;
+    }
+
+    .flashcard-test {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+        overflow: hidden;
+        min-height: 400px;
+        position: relative;
+    }
+
+    .card-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 20px;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .card-number {
+        color: #667eea;
+        font-weight: bold;
+        font-size: 1.1rem;
+    }
+
+    .difficulty-badge {
+        padding: 4px 12px;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .difficulty-1 { background: #d4edda; color: #155724; }
+    .difficulty-2 { background: #fff3cd; color: #856404; }
+    .difficulty-3 { background: #f8d7da; color: #721c24; }
+
+    .card-content {
+        padding: 30px;
+        text-align: center;
+    }
+
+    .question {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 30px;
+        line-height: 1.6;
+    }
+
+    .answer {
+        font-size: 1.1rem;
+        color: #495057;
+        line-height: 1.7;
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+        display: none;
+    }
+
+    .card-actions {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-top: 20px;
+    }
+
+    .btn-show-answer {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        color: white;
+        padding: 12px 30px;
+        border-radius: 25px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .btn-show-answer:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        color: white;
+    }
+
+    .feedback-buttons {
+        display: none;
+        gap: 15px;
+    }
+
+    .btn-correct {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border: none;
+        color: white;
+        padding: 12px 25px;
+        border-radius: 25px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .btn-correct:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+        color: white;
+    }
+
+    .btn-incorrect {
+        background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
+        border: none;
+        color: white;
+        padding: 12px 25px;
+        border-radius: 25px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .btn-incorrect:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(220, 53, 69, 0.4);
+        color: white;
+    }
+
+    .test-stats {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+    }
+
+    .stat-item {
+        text-align: center;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 10px;
+    }
+
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #667eea;
+        display: block;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .test-complete {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 40px;
+        text-align: center;
+        display: none;
+    }
+
+    .test-complete h2 {
+        margin-bottom: 20px;
+        color: white;
+    }
+
+    .test-complete .btn {
+        background: rgba(255,255,255,0.2);
+        border: 2px solid white;
+        color: white;
+        margin: 10px;
+    }
+
+    .test-complete .btn:hover {
+        background: white;
+        color: #28a745;
+    }
+
+    .card-progress-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-top: 10px;
+    }
+
+    .mastery-level {
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .mastery-new { background: #e9ecef; color: #495057; }
+    .mastery-learning { background: #fff3cd; color: #856404; }
+    .mastery-review { background: #d1ecf1; color: #0c5460; }
+    .mastery-mastered { background: #d4edda; color: #155724; }
+
+    /* Стили для вариантов ответов */
+    .answer-option {
+        display: flex;
+        align-items: center;
+        padding: 15px;
+        margin: 10px 0;
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: white;
+    }
+
+    .answer-option:hover {
+        border-color: #667eea;
+        background: #f8f9ff;
+        transform: translateX(5px);
+    }
+
+    .answer-option.selected {
+        border-color: #667eea;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .answer-option.correct {
+        border-color: #28a745;
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+    }
+
+    .answer-option.incorrect {
+        border-color: #dc3545;
+        background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
+        color: white;
+    }
+
+    .option-letter {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #f8f9fa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 1.1rem;
+        margin-right: 15px;
+        flex-shrink: 0;
+    }
+
+    .answer-option.selected .option-letter,
+    .answer-option.correct .option-letter,
+    .answer-option.incorrect .option-letter {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+    }
+
+    .option-text {
+        flex-grow: 1;
+        font-size: 1rem;
+        line-height: 1.4;
+    }
+
+    .btn-submit-answer {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        color: white;
+        padding: 12px 30px;
+        border-radius: 25px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: none;
+    }
+
+    .btn-submit-answer:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        color: white;
+    }
+
+    .navigation-buttons {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 20px;
+        gap: 15px;
+    }
+
+    .btn-nav {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        border: none;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 20px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-nav:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(108, 117, 125, 0.4);
+        color: white;
+    }
+
+    .btn-nav:disabled {
+        background: #e9ecef;
+        color: #6c757d;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
+    .btn-next {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    }
+
+    .btn-next:hover:not(:disabled) {
+        box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+    }
+
+    .question-navigation {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .question-indicator {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+    }
+
+    .question-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #e9ecef;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+
+    .question-dot.current {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        transform: scale(1.3);
+    }
+
+    .question-dot.answered {
+        background: #28a745;
+    }
+
+    .question-dot.incorrect {
+        background: #dc3545;
+    }
+
+    .question-dot:hover {
+        transform: scale(1.2);
+    }
+
+    .question-dot::after {
+        content: attr(data-question);
+        position: absolute;
+        bottom: -25px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 10px;
+        color: #6c757d;
+        white-space: nowrap;
+    }
+
+    .explanation {
+        margin-top: 20px;
+        padding: 20px;
+        background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+        border-radius: 10px;
+        border-left: 5px solid #ffc107;
+    }
+
+    .explanation-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+        color: #856404;
+    }
+
+    .explanation-header i {
+        margin-right: 8px;
+        font-size: 1.2rem;
+    }
+
+    .explanation p {
+        margin: 0;
+        color: #856404;
+        line-height: 1.6;
+    }
+
+    @media (max-width: 768px) {
+        .test-container {
+            padding: 10px;
+        }
+        
+        .card-content {
+            padding: 20px;
+        }
+        
+        .question {
+            font-size: 1.1rem;
+        }
+        
+        .card-actions {
+            flex-direction: column;
+        }
+        
+        .feedback-buttons {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="test-container">
+    <!-- Заголовок теста -->
+    <div class="test-header">
+        <h1><i class="fas fa-brain me-2"></i>Режим теста</h1>
+        <p class="mb-0">{{ result_data.filename }}</p>
+    </div>
+
+    <!-- Прогресс теста -->
+    <div class="test-progress">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <span><strong>Прогресс:</strong> <span id="currentCard">1</span> из {{ test_questions|length }}</span>
+            <span id="progressPercent">0%</span>
+        </div>
+        <div class="progress-bar-container">
+            <div class="progress-bar" id="progressBar" style="width: 0%"></div>
+        </div>
+    </div>
+
+    <!-- Навигация по вопросам -->
+    <div class="question-navigation">
+        <h6 class="text-center mb-3"><i class="fas fa-map me-2"></i>Навигация по вопросам</h6>
+        <div class="question-indicator" id="questionIndicator">
+            <!-- Индикаторы вопросов будут добавлены через JavaScript -->
+        </div>
+    </div>
+
+    <!-- Статистика -->
+    <div class="test-stats">
+        <h5><i class="fas fa-chart-line me-2"></i>Статистика сессии</h5>
+        <div class="stats-grid">
+            <div class="stat-item">
+                <span class="stat-number" id="correctCount">0</span>
+                <span class="stat-label">Правильно</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" id="incorrectCount">0</span>
+                <span class="stat-label">Неправильно</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" id="accuracyRate">0%</span>
+                <span class="stat-label">Точность</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" id="masteredCount">0</span>
+                <span class="stat-label">Изучено</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Карточка для тестирования -->
+    <div class="flashcard-test" id="testCard">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="card-number">Карточка <span id="cardNumber">1</span></span>
+                <div>
+                    <span class="difficulty-badge" id="difficultyBadge">Легко</span>
+                    <span class="mastery-level ms-2" id="masteryLevel">Новая</span>
+                </div>
+            </div>
+            <div class="card-progress-info">
+                <span>Правильных ответов подряд: <strong id="consecutiveCorrect">0</strong></span>
+                <span>Коэффициент сложности: <strong id="easeFactor">2.5</strong></span>
+            </div>
+        </div>
+        
+        <div class="card-content">
+            <div class="question" id="questionText">
+                <!-- Вопрос будет загружен через JavaScript -->
+            </div>
+            
+            <div class="answer" id="answerText">
+                <!-- Ответ будет показан после нажатия кнопки -->
+            </div>
+            
+            <div class="card-actions">
+                <button class="btn btn-submit-answer" id="submitAnswerBtn" onclick="submitAnswer()">
+                    <i class="fas fa-check me-2"></i>Ответить
+                </button>
+            </div>
+            
+            <!-- Кнопки навигации -->
+            <div class="navigation-buttons">
+                <button class="btn btn-nav" id="prevBtn" onclick="goToPreviousQuestion()" disabled>
+                    <i class="fas fa-chevron-left"></i>
+                    Назад
+                </button>
+                
+                <div class="d-flex align-items-center gap-2">
+                    <span class="text-muted">Вопрос</span>
+                    <span id="currentQuestionNumber" class="fw-bold text-primary">1</span>
+                    <span class="text-muted">из</span>
+                    <span class="fw-bold">{{ test_questions|length }}</span>
+                </div>
+                
+                <button class="btn btn-nav btn-next" id="nextBtn" onclick="goToNextQuestion()" disabled>
+                    Далее
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Завершение теста -->
+    <div class="test-complete" id="testComplete">
+        <h2><i class="fas fa-trophy me-2"></i>Тест завершен!</h2>
+        <p class="lead">Отличная работа! Вы прошли все карточки.</p>
+        <div class="mt-4">
+            <a href="{{ url_for('result', result_id=result_id) }}" class="btn btn-lg">
+                <i class="fas fa-arrow-left me-2"></i>Вернуться к результатам
+            </a>
+            <button class="btn btn-lg" onclick="restartTest()">
+                <i class="fas fa-redo me-2"></i>Пройти еще раз
+            </button>
+        </div>
+    </div>
+
+    <!-- Подсказки по навигации -->
+    <div class="alert alert-info mt-4">
+        <h6><i class="fas fa-keyboard me-2"></i>Горячие клавиши:</h6>
+        <div class="row">
+            <div class="col-md-6">
+                <small>
+                    <strong>Ответы:</strong> A, B, C, D<br>
+                    <strong>Отправить:</strong> Enter<br>
+                    <strong>Навигация:</strong> ← → (стрелки)
+                </small>
+            </div>
+            <div class="col-md-6">
+                <small>
+                    <strong>Следующий:</strong> Пробел<br>
+                    <strong>Переход:</strong> 1-9 (номер вопроса)<br>
+                    <strong>Клик:</strong> По точкам выше
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Навигация -->
+    <div class="text-center mt-4">
+        <a href="{{ url_for('result', result_id=result_id) }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Вернуться к результатам
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Данные для теста
+const testQuestions = {{ test_questions | tojson }};
+const resultId = {{ result_id }};
+
+// Состояние теста
+let currentQuestionIndex = 0;
+let correctCount = 0;
+let incorrectCount = 0;
+let totalAnswered = 0;
+let selectedAnswer = null;
+let questionAnswers = {}; // Хранит ответы пользователя для каждого вопроса
+let questionResults = {}; // Хранит результаты (правильно/неправильно) для каждого вопроса
+
+// Инициализация теста
+document.addEventListener('DOMContentLoaded', function() {
+    createQuestionIndicators();
+    loadQuestion(currentQuestionIndex);
+    updateProgress();
+    updateStats();
+    updateNavigationButtons();
+});
+
+// Создание индикаторов вопросов
+function createQuestionIndicators() {
+    const indicatorContainer = document.getElementById('questionIndicator');
+    indicatorContainer.innerHTML = '';
+    
+    testQuestions.forEach((question, index) => {
+        const dot = document.createElement('div');
+        dot.className = 'question-dot';
+        dot.setAttribute('data-question', index + 1);
+        dot.onclick = () => goToQuestion(index);
+        dot.title = `Вопрос ${index + 1}`;
+        indicatorContainer.appendChild(dot);
+    });
+    
+    updateQuestionIndicators();
+}
+
+// Обновление индикаторов вопросов
+function updateQuestionIndicators() {
+    const dots = document.querySelectorAll('.question-dot');
+    dots.forEach((dot, index) => {
+        dot.classList.remove('current', 'answered', 'incorrect');
+        
+        if (index === currentQuestionIndex) {
+            dot.classList.add('current');
+        } else if (questionResults[index] !== undefined) {
+            if (questionResults[index]) {
+                dot.classList.add('answered');
+            } else {
+                dot.classList.add('incorrect');
+            }
+        }
+    });
+}
+
+// Обновление кнопок навигации
+function updateNavigationButtons() {
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const currentQuestionNumber = document.getElementById('currentQuestionNumber');
+    
+    // Обновляем номер текущего вопроса
+    currentQuestionNumber.textContent = currentQuestionIndex + 1;
+    
+    // Кнопка "Назад"
+    prevBtn.disabled = currentQuestionIndex === 0;
+    
+    // Кнопка "Далее" - доступна только если на вопрос уже отвечали
+    const hasAnswered = questionAnswers[currentQuestionIndex] !== undefined;
+    const isLastQuestion = currentQuestionIndex === testQuestions.length - 1;
+    
+    if (isLastQuestion) {
+        nextBtn.textContent = 'Завершить';
+        nextBtn.innerHTML = 'Завершить <i class="fas fa-flag-checkered"></i>';
+    } else {
+        nextBtn.innerHTML = 'Далее <i class="fas fa-chevron-right"></i>';
+    }
+    
+    nextBtn.disabled = !hasAnswered;
+}
+
+// Переход к предыдущему вопросу
+function goToPreviousQuestion() {
+    if (currentQuestionIndex > 0) {
+        currentQuestionIndex--;
+        loadQuestion(currentQuestionIndex);
+        updateNavigationButtons();
+        updateQuestionIndicators();
+    }
+}
+
+// Переход к следующему вопросу
+function goToNextQuestion() {
+    if (currentQuestionIndex < testQuestions.length - 1) {
+        currentQuestionIndex++;
+        loadQuestion(currentQuestionIndex);
+        updateNavigationButtons();
+        updateQuestionIndicators();
+    } else {
+        // Последний вопрос - завершаем тест
+        completeTest();
+    }
+}
+
+// Переход к конкретному вопросу
+function goToQuestion(index) {
+    if (index >= 0 && index < testQuestions.length) {
+        currentQuestionIndex = index;
+        loadQuestion(currentQuestionIndex);
+        updateNavigationButtons();
+        updateQuestionIndicators();
+    }
+}
+
+// Загрузка вопроса
+function loadQuestion(index) {
+    if (index >= testQuestions.length) {
+        completeTest();
+        return;
+    }
+    
+    const question = testQuestions[index];
+    
+    // Обновляем содержимое вопроса
+    document.getElementById('questionText').innerHTML = question.question;
+    document.getElementById('cardNumber').textContent = index + 1;
+    
+    // Создаем варианты ответов
+    const answerContainer = document.getElementById('answerText');
+    answerContainer.innerHTML = '';
+    
+    const optionsHtml = Object.entries(question.options).map(([key, value]) => `
+        <div class="answer-option" onclick="selectAnswer('${key}', this)">
+            <div class="option-letter">${key}</div>
+            <div class="option-text">${value}</div>
+        </div>
+    `).join('');
+    
+    answerContainer.innerHTML = optionsHtml;
+    answerContainer.style.display = 'block';
+    
+    // Обновляем информацию о сложности
+    const difficultyBadge = document.getElementById('difficultyBadge');
+    const difficultyClass = `difficulty-${question.difficulty || 1}`;
+    difficultyBadge.className = `difficulty-badge ${difficultyClass}`;
+    
+    const difficultyText = {1: 'Легко', 2: 'Средне', 3: 'Сложно'};
+    difficultyBadge.textContent = difficultyText[question.difficulty || 1];
+    
+    // Обновляем прогресс вопроса
+    const progress = question.progress || {consecutive_correct: 0, ease_factor: 2.5};
+    document.getElementById('consecutiveCorrect').textContent = progress.consecutive_correct;
+    document.getElementById('easeFactor').textContent = progress.ease_factor.toFixed(1);
+    
+    // Обновляем уровень изучения
+    const masteryLevel = document.getElementById('masteryLevel');
+    const consecutive = progress.consecutive_correct;
+    if (consecutive === 0) {
+        masteryLevel.className = 'mastery-level mastery-new';
+        masteryLevel.textContent = 'Новая';
+    } else if (consecutive < 3) {
+        masteryLevel.className = 'mastery-level mastery-learning';
+        masteryLevel.textContent = 'Изучается';
+    } else if (consecutive < 5) {
+        masteryLevel.className = 'mastery-level mastery-review';
+        masteryLevel.textContent = 'Повторение';
+    } else {
+        masteryLevel.className = 'mastery-level mastery-mastered';
+        masteryLevel.textContent = 'Изучена';
+    }
+    
+    // Проверяем, есть ли уже сохраненный ответ для этого вопроса
+    const savedAnswer = questionAnswers[index];
+    if (savedAnswer) {
+        // Восстанавливаем выбранный ответ
+        selectedAnswer = savedAnswer;
+        
+        // Находим и выделяем сохраненный вариант ответа
+        const options = document.querySelectorAll('.answer-option');
+        options.forEach(option => {
+            const optionLetter = option.querySelector('.option-letter').textContent;
+            if (optionLetter === savedAnswer) {
+                option.classList.add('selected');
+            }
+        });
+        
+        // Если вопрос уже был отвечен, показываем результат
+        if (questionResults[index] !== undefined) {
+            showCorrectAnswer(question, questionResults[index], true);
+        } else {
+            // Показываем кнопку отправки для неотправленного ответа
+            document.getElementById('submitAnswerBtn').style.display = 'block';
+        }
+    } else {
+        // Сбрасываем состояние для нового вопроса
+        selectedAnswer = null;
+        document.getElementById('submitAnswerBtn').style.display = 'none';
+    }
+    
+    updateNavigationButtons();
+    updateQuestionIndicators();
+}
+
+// Выбор ответа
+function selectAnswer(optionKey, element) {
+    // Убираем выделение с других вариантов
+    document.querySelectorAll('.answer-option').forEach(option => {
+        option.classList.remove('selected');
+    });
+    
+    // Выделяем выбранный вариант
+    element.classList.add('selected');
+    selectedAnswer = optionKey;
+    
+    // Показываем кнопку отправки
+    document.getElementById('submitAnswerBtn').style.display = 'block';
+}
+
+// Отправить ответ
+function submitAnswer() {
+    if (!selectedAnswer) {
+        alert('Выберите вариант ответа');
+        return;
+    }
+    
+    const question = testQuestions[currentQuestionIndex];
+    const isCorrect = selectedAnswer === question.correct_answer;
+    
+    // Обновляем статистику сразу
+    if (isCorrect) {
+        correctCount++;
+    } else {
+        incorrectCount++;
+    }
+    totalAnswered++;
+    
+    // Показываем правильный ответ
+    showCorrectAnswer(question, isCorrect);
+    
+    // Обновляем прогресс и статистику
+    updateProgress();
+    updateStats();
+    
+    // Отправляем данные на сервер
+    fetch(`/test/${resultId}/answer`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            flashcard_id: question.id,
+            is_correct: isCorrect
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Обновляем прогресс вопроса
+            question.progress.consecutive_correct = data.consecutive_correct;
+            question.progress.ease_factor = data.ease_factor;
+        }
+    })
+    .catch(error => {
+        console.error('Ошибка:', error);
+    });
+    
+    // Убираем автоматический переход - пользователь сам выберет когда перейти
+}
+
+// Показать правильный ответ
+function showCorrectAnswer(question, wasCorrect, isReview = false) {
+    const options = document.querySelectorAll('.answer-option');
+    
+    options.forEach(option => {
+        const optionKey = option.querySelector('.option-letter').textContent;
+        
+        if (optionKey === question.correct_answer) {
+            option.classList.add('correct');
+        } else if (optionKey === selectedAnswer && !wasCorrect) {
+            option.classList.add('incorrect');
+        }
+        
+        option.style.pointerEvents = 'none';
+    });
+    
+    // Показываем объяснение (только если его еще нет)
+    if (!document.querySelector('.explanation')) {
+        const explanationDiv = document.createElement('div');
+        explanationDiv.className = 'explanation';
+        explanationDiv.innerHTML = `
+            <div class="explanation-header">
+                <i class="fas fa-lightbulb"></i>
+                <strong>Объяснение:</strong>
+            </div>
+            <p>${question.explanation}</p>
+        `;
+        
+        document.getElementById('answerText').appendChild(explanationDiv);
+    }
+    
+    // Сохраняем ответ и результат
+    questionAnswers[currentQuestionIndex] = selectedAnswer;
+    questionResults[currentQuestionIndex] = wasCorrect;
+    
+    // Скрываем кнопку отправки
+    document.getElementById('submitAnswerBtn').style.display = 'none';
+    
+    // Обновляем навигацию и индикаторы
+    updateNavigationButtons();
+    updateQuestionIndicators();
+}
+
+// Обновление прогресса
+function updateProgress() {
+    const progress = (totalAnswered / testQuestions.length) * 100;
+    document.getElementById('progressBar').style.width = progress + '%';
+    document.getElementById('progressPercent').textContent = Math.round(progress) + '%';
+    document.getElementById('currentCard').textContent = currentQuestionIndex + 1;
+}
+
+// Обновление статистики
+function updateStats() {
+    document.getElementById('correctCount').textContent = correctCount;
+    document.getElementById('incorrectCount').textContent = incorrectCount;
+    
+    const accuracy = totalAnswered > 0 ? Math.round((correctCount / totalAnswered) * 100) : 0;
+    document.getElementById('accuracyRate').textContent = accuracy + '%';
+    
+    const mastered = testQuestions.filter(question => 
+        question.progress && question.progress.consecutive_correct >= 3
+    ).length;
+    document.getElementById('masteredCount').textContent = mastered;
+}
+
+// Завершение теста
+function completeTest() {
+    document.getElementById('testCard').style.display = 'none';
+    document.getElementById('testComplete').style.display = 'block';
+    
+    // Обновляем финальную статистику
+    updateStats();
+}
+
+// Перезапуск теста
+function restartTest() {
+    currentQuestionIndex = 0;
+    correctCount = 0;
+    incorrectCount = 0;
+    totalAnswered = 0;
+    selectedAnswer = null;
+    questionAnswers = {}; // Очищаем сохраненные ответы
+    questionResults = {}; // Очищаем результаты
+    
+    document.getElementById('testCard').style.display = 'block';
+    document.getElementById('testComplete').style.display = 'none';
+    
+    createQuestionIndicators();
+    loadQuestion(currentQuestionIndex);
+    updateProgress();
+    updateStats();
+    updateNavigationButtons();
+}
+
+// Горячие клавиши
+document.addEventListener('keydown', function(e) {
+    // Выбор ответов клавишами A, B, C, D
+    if (['KeyA', 'KeyB', 'KeyC', 'KeyD'].includes(e.code)) {
+        e.preventDefault();
+        const letter = e.code.replace('Key', '');
+        
+        // Находим опцию с нужной буквой
+        const options = document.querySelectorAll('.answer-option');
+        for (let option of options) {
+            const optionLetter = option.querySelector('.option-letter').textContent;
+            if (optionLetter === letter && option.style.pointerEvents !== 'none') {
+                selectAnswer(letter, option);
+                break;
+            }
+        }
+    }
+    // Отправка ответа клавишей Enter
+    else if (e.code === 'Enter') {
+        e.preventDefault();
+        const submitBtn = document.getElementById('submitAnswerBtn');
+        if (submitBtn && submitBtn.style.display !== 'none' && selectedAnswer) {
+            submitAnswer();
+        }
+    }
+    // Навигация стрелками
+    else if (e.code === 'ArrowLeft') {
+        e.preventDefault();
+        const prevBtn = document.getElementById('prevBtn');
+        if (!prevBtn.disabled) {
+            goToPreviousQuestion();
+        }
+    }
+    else if (e.code === 'ArrowRight') {
+        e.preventDefault();
+        const nextBtn = document.getElementById('nextBtn');
+        if (!nextBtn.disabled) {
+            goToNextQuestion();
+        }
+    }
+    // Переход к следующему вопросу клавишей Space (после показа ответа)
+    else if (e.code === 'Space') {
+        e.preventDefault();
+        const nextBtn = document.getElementById('nextBtn');
+        if (!nextBtn.disabled) {
+            goToNextQuestion();
+        }
+    }
+    // Быстрый переход к вопросам по номерам (1-9)
+    else if (e.code.startsWith('Digit') && e.code !== 'Digit0') {
+        e.preventDefault();
+        const questionNumber = parseInt(e.code.replace('Digit', ''));
+        if (questionNumber <= testQuestions.length) {
+            goToQuestion(questionNumber - 1);
+        }
+    }
+});
+</script>
+{% endblock %} else if (e.code === 'ArrowLeft') {
+        e.preventDefault();
+        const prevBtn = document.getElementById('prevBtn');
+        if (!prevBtn.disabled) {
+            goToPreviousQuestion();
+        }
+    }
+    else if (e.code === 'ArrowRight') {
+        e.preventDefault();
+        const nextBtn = document.getElementById('nextBtn');
+        if (!nextBtn.disabled) {
+            goToNextQuestion();
+        }
+    }
+    // Переход к следующему вопросу клавишей Space (после показа ответа)
+    else if (e.code === 'Space') {
+        e.preventDefault();
+        const nextBtn = document.getElementById('nextBtn');
+        if (!nextBtn.disabled) {
+            goToNextQuestion();
+        }
+    }
+    // Быстрый переход к вопросам по номерам (1-9)
+    else if (e.code.startsWith('Digit') && e.code !== 'Digit0') {
+        e.preventDefault();
+        const questionNumber = parseInt(e.code.replace('Digit', ''));
+        if (questionNumber <= testQuestions.length) {
+            goToQuestion(questionNumber - 1);
+        }
+    }
+});
+</script>
+{% endblock %} else if (e.code === 'ArrowLeft') {
+        e.preventDefault();
+        const prevBtn = document.getElementById('prevBtn');
+        if (!prevBtn.disabled) {
+            goToPreviousQuestion();
+        }
+    }
+    else if (e.code === 'ArrowRight') {
+        e.preventDefault();
+        const nextBtn = document.getElementById('nextBtn');
+        if (!nextBtn.disabled) {
+            goToNextQuestion();
+        }
+    }
+    // Переход к следующему вопросу клавишей Space (после показа ответа)
+    else if (e.code === 'Space') {
+        e.preventDefault();
+        const nextBtn = document.getElementById('nextBtn');
+        if (!nextBtn.disabled) {
+            goToNextQuestion();
+        }
+    }
+    // Быстрый переход к вопросам по номерам (1-9)
+    else if (e.code.startsWith('Digit') && e.code !== 'Digit0') {
+        e.preventDefault();
+        const questionNumber = parseInt(e.code.replace('Digit', ''));
+        if (questionNumber <= testQuestions.length) {
+            goToQuestion(questionNumber - 1);
+        }
+    }
+});
+</script>
+{% endblock %} else if (e.code === 'ArrowLeft') {
+        e.preventDefault();
+        const prevBtn = document.getElementById('prevBtn');
+        if (!prevBtn.disabled) {
+            goToPreviousQuestion();
+        }
+    }
+    else if (e.code === 'ArrowRight') {
+        e.preventDefault();
+        const nextBtn = document.getElementById('nextBtn');
+        if (!nextBtn.disabled) {
+            goToNextQuestion();
+        }
+    }
+    // Переход к следующему вопросу клавишей Space (после показа ответа)
+    else if (e.code === 'Space') {
+        e.preventDefault();
+        const nextBtn = document.getElementById('nextBtn');
+        if (!nextBtn.disabled) {
+            goToNextQuestion();
+        }
+    }
+    // Быстрый переход к вопросам по номерам (1-9)
+    else if (e.code.startsWith('Digit') && e.code !== 'Digit0') {
+        e.preventDefault();
+        const questionNumber = parseInt(e.code.replace('Digit', ''));
+        if (questionNumber <= testQuestions.length) {
+            goToQuestion(questionNumber - 1);
+        }
+    }
+});
+</script>
+{% endblock %} else if (e.code === 'ArrowLeft') {
+        e.preventDefault();
+        const prevBtn = document.getElementById('prevBtn');
+        if (!prevBtn.disabled) {
+            goToPreviousQuestion();
+        }
+    }
+    else if (e.code === 'ArrowRight') {
+        e.preventDefault();
+        const nextBtn = document.getElementById('nextBtn');
+        if (!nextBtn.disabled) {
+            goToNextQuestion();
+        }
+    }
+    // Переход к следующему вопросу клавишей Space (после показа ответа)
+    else if (e.code === 'Space') {
+        e.preventDefault();
+        const nextBtn = document.getElementById('nextBtn');
+        if (!nextBtn.disabled) {
+            goToNextQuestion();
+        }
+    }
+    // Быстрый переход к вопросам по номерам (1-9)
+    else if (e.code.startsWith('Digit') && e.code !== 'Digit0') {
+        e.preventDefault();
+        const questionNumber = parseInt(e.code.replace('Digit', ''));
+        if (questionNumber <= testQuestions.length) {
+            goToQuestion(questionNumber - 1);
+        }
+    }
+});
+</script>
+{% endblock %} else if (e.code === 'ArrowLeft') {
+        e.preventDefault();
+        const prevBtn = document.getElementById('prevBtn');
+        if (!prevBtn.disabled) {
+            goToPreviousQuestion();
+        }
+    }
+    else if (e.code === 'ArrowRight') {
+        e.preventDefault();
+        const nextBtn = document.getElementById('nextBtn');
+        if (!nextBtn.disabled) {
+            goToNextQuestion();
+        }
+    }
+    // Переход к следующему вопросу клавишей Space (после показа ответа)
+    else if (e.code === 'Space') {
+        e.preventDefault();
+        const nextBtn = document.getElementById('nextBtn');
+        if (!nextBtn.disabled) {
+            goToNextQuestion();
+        }
+    }
+    // Быстрый переход к вопросам по номерам (1-9)
+    else if (e.code.startsWith('Digit') && e.code !== 'Digit0') {
+        e.preventDefault();
+        const questionNumber = parseInt(e.code.replace('Digit', ''));
+        if (questionNumber <= testQuestions.length) {
+            goToQuestion(questionNumber - 1);
+        }
+    }
+});
+</script>
+{% endblock %} else if (e.code === 'ArrowLeft') {
+        e.preventDefault();
+        const prevBtn = document.getElementById('prevBtn');
+        if (!prevBtn.disabled) {
+            goToPreviousQuestion();
+        }
+    }
+    else if (e.code === 'ArrowRight') {
+        e.preventDefault();
+        const nextBtn = document.getElementById('nextBtn');
+        if (!nextBtn.disabled) {
+            goToNextQuestion();
+        }
+    }
+    // Переход к следующему вопросу клавишей Space (после показа ответа)
+    else if (e.code === 'Space') {
+        e.preventDefault();
+        const nextBtn = document.getElementById('nextBtn');
+        if (!nextBtn.disabled) {
+            goToNextQuestion();
+        }
+    }
+    // Быстрый переход к вопросам по номерам (1-9)
+    else if (e.code.startsWith('Digit') && e.code !== 'Digit0') {
+        e.preventDefault();
+        const questionNumber = parseInt(e.code.replace('Digit', ''));
+        if (questionNumber <= testQuestions.length) {
+            goToQuestion(questionNumber - 1);
+        }
+    }
+});
+</script>
+{% endblock %} else if (e.code === 'ArrowLeft') {
+        e.preventDefault();
+        const prevBtn = document.getElementById('prevBtn');
+        if (!prevBtn.disabled) {
+            goToPreviousQuestion();
+        }
+    }
+    else if (e.code === 'ArrowRight') {
+        e.preventDefault();
+        const nextBtn = document.getElementById('nextBtn');
+        if (!nextBtn.disabled) {
+            goToNextQuestion();
+        }
+    }
+    // Переход к следующему вопросу клавишей Space (после показа ответа)
+    else if (e.code === 'Space') {
+        e.preventDefault();
+        const nextBtn = document.getElementById('nextBtn');
+        if (!nextBtn.disabled) {
+            goToNextQuestion();
+        }
+    }
+    // Быстрый переход к вопросам по номерам (1-9)
+    else if (e.code.startsWith('Digit') && e.code !== 'Digit0') {
+        e.preventDefault();
+        const questionNumber = parseInt(e.code.replace('Digit', ''));
+        if (questionNumber <= testQuestions.length) {
+            goToQuestion(questionNumber - 1);
+        }
+    }
+});
+</script>
+{% endblock %} else if (e.code === 'ArrowLeft') {
+        e.preventDefault();
+        const prevBtn = document.getElementById('prevBtn');
+        if (!prevBtn.disabled) {
+            goToPreviousQuestion();
+        }
+    }
+    else if (e.code === 'ArrowRight') {
+        e.preventDefault();
+        const nextBtn = document.getElementById('nextBtn');
+        if (!nextBtn.disabled) {
+            goToNextQuestion();
+        }
+    }
+    // Переход к следующему вопросу клавишей Space (после показа ответа)
+    else if (e.code === 'Space') {
+        e.preventDefault();
+        const nextBtn = document.getElementById('nextBtn');
+        if (!nextBtn.disabled) {
+            goToNextQuestion();
+        }
+    }
+    // Быстрый переход к вопросам по номерам (1-9)
+    else if (e.code.startsWith('Digit') && e.code !== 'Digit0') {
+        e.preventDefault();
+        const questionNumber = parseInt(e.code.replace('Digit', ''));
+        if (questionNumber <= testQuestions.length) {
+            goToQuestion(questionNumber - 1);
+        }
+    }
+});
+</script>
+{% endblock %} else if (e.code === 'ArrowLeft') {
+        e.preventDefault();
+        const prevBtn = document.getElementById('prevBtn');
+        if (!prevBtn.disabled) {
+            goToPreviousQuestion();
+        }
+    }
+    else if (e.code === 'ArrowRight') {
+        e.preventDefault();
+        const nextBtn = document.getElementById('nextBtn');
+        if (!nextBtn.disabled) {
+            goToNextQuestion();
+        }
+    }
+    // Переход к следующему вопросу клавишей Space (после показа ответа)
+    else if (e.code === 'Space') {
+        e.preventDefault();
+        const nextBtn = document.getElementById('nextBtn');
+        if (!nextBtn.disabled) {
+            goToNextQuestion();
+        }
+    }
+    // Быстрый переход к вопросам по номерам (1-9)
+    else if (e.code.startsWith('Digit') && e.code !== 'Digit0') {
+        e.preventDefault();
+        const questionNumber = parseInt(e.code.replace('Digit', ''));
+        if (questionNumber <= testQuestions.length) {
+            goToQuestion(questionNumber - 1);
+        }
+    }
+});
+</script>
+{% endblock %} else if (e.code === 'ArrowLeft') {
+        e.preventDefault();
+        const prevBtn = document.getElementById('prevBtn');
+        if (!prevBtn.disabled) {
+            goToPreviousQuestion();
+        }
+    }
+    else if (e.code === 'ArrowRight') {
+        e.preventDefault();
+        const nextBtn = document.getElementById('nextBtn');
+        if (!nextBtn.disabled) {
+            goToNextQuestion();
+        }
+    }
+    // Переход к следующему вопросу клавишей Space (после показа ответа)
+    else if (e.code === 'Space') {
+        e.preventDefault();
+        const nextBtn = document.getElementById('nextBtn');
+        if (!nextBtn.disabled) {
+            goToNextQuestion();
+        }
+    }
+    // Быстрый переход к вопросам по номерам (1-9)
+    else if (e.code.startsWith('Digit') && e.code !== 'Digit0') {
+        e.preventDefault();
+        const questionNumber = parseInt(e.code.replace('Digit', ''));
+        if (questionNumber <= testQuestions.length) {
+            goToQuestion(questionNumber - 1);
+        }
+    }
+});
+</script>
+{% endblock %} else if (e.code === 'ArrowLeft') {
+        e.preventDefault();
+        const prevBtn = document.getElementById('prevBtn');
+        if (!prevBtn.disabled) {
+            goToPreviousQuestion();
+        }
+    }
+    else if (e.code === 'ArrowRight') {
+        e.preventDefault();
+        const nextBtn = document.getElementById('nextBtn');
+        if (!nextBtn.disabled) {
+            goToNextQuestion();
+        }
+    }
+    // Переход к следующему вопросу клавишей Space (после показа ответа)
+    else if (e.code === 'Space') {
+        e.preventDefault();
+        const nextBtn = document.getElementById('nextBtn');
+        if (!nextBtn.disabled) {
+            goToNextQuestion();
+        }
+    }
+    // Быстрый переход к вопросам по номерам (1-9)
+    else if (e.code.startsWith('Digit') && e.code !== 'Digit0') {
+        e.preventDefault();
+        const questionNumber = parseInt(e.code.replace('Digit', ''));
+        if (questionNumber <= testQuestions.length) {
+            goToQuestion(questionNumber - 1);
+        }
+    }
+});
+</script>
+{% endblock %} else if (e.code === 'ArrowLeft') {
+        e.preventDefault();
+        const prevBtn = document.getElementById('prevBtn');
+        if (!prevBtn.disabled) {
+            goToPreviousQuestion();
+        }
+    }
+    else if (e.code === 'ArrowRight') {
+        e.preventDefault();
+        const nextBtn = document.getElementById('nextBtn');
+        if (!nextBtn.disabled) {
+            goToNextQuestion();
+        }
+    }
+    // Переход к следующему вопросу клавишей Space (после показа ответа)
+    else if (e.code === 'Space') {
+        e.preventDefault();
+        const nextBtn = document.getElementById('nextBtn');
+        if (!nextBtn.disabled) {
+            goToNextQuestion();
+        }
+    }
+    // Быстрый переход к вопросам по номерам (1-9)
+    else if (e.code.startsWith('Digit') && e.code !== 'Digit0') {
+        e.preventDefault();
+        const questionNumber = parseInt(e.code.replace('Digit', ''));
+        if (questionNumber <= testQuestions.length) {
+            goToQuestion(questionNumber - 1);
+        }
+    }
+});
+</script>
+{% endblock %}
+    else if (e.code === 'ArrowLeft') {
+        e.preventDefault();
+        const prevBtn = document.getElementById('prevBtn');
+        if (!prevBtn.disabled) {
+            goToPreviousQuestion();
+        }
+    }
+    else if (e.code === 'ArrowRight') {
+        e.preventDefault();
+        const nextBtn = document.getElementById('nextBtn');
+        if (!nextBtn.disabled) {
+            goToNextQuestion();
+        }
+    }
+    // Переход к следующему вопросу клавишей Space (после показа ответа)
+    else if (e.code === 'Space') {
+        e.preventDefault();
+        const nextBtn = document.getElementById('nextBtn');
+        if (!nextBtn.disabled) {
+            goToNextQuestion();
+        }
+    }
+    // Быстрый переход к вопросам по номерам (1-9)
+    else if (e.code.startsWith('Digit') && e.code !== 'Digit0') {
+        e.preventDefault();
+        const questionNumber = parseInt(e.code.replace('Digit', ''));
+        if (questionNumber <= testQuestions.length) {
+            goToQuestion(questionNumber - 1);
+        }
+    }
+});
+</script>
+{% endblock %}
+    else if (e.code === 'ArrowLeft') {
+        e.preventDefault();
+        const prevBtn = document.getElementById('prevBtn');
+        if (!prevBtn.disabled) {
+            goToPreviousQuestion();
+        }
+    }
+    else if (e.code === 'ArrowRight') {
+        e.preventDefault();
+        const nextBtn = document.getElementById('nextBtn');
+        if (!nextBtn.disabled) {
+            goToNextQuestion();
+        }
+    }
+    // Переход к следующему вопросу клавишей Space (после показа ответа)
+    else if (e.code === 'Space') {
+        e.preventDefault();
+        const nextBtn = document.getElementById('nextBtn');
+        if (!nextBtn.disabled) {
+            goToNextQuestion();
+        }
+    }
+    // Быстрый переход к вопросам по номерам (1-9)
+    else if (e.code.startsWith('Digit') && e.code !== 'Digit0') {
+        e.preventDefault();
+        const questionNumber = parseInt(e.code.replace('Digit', ''));
+        if (questionNumber <= testQuestions.length) {
+            goToQuestion(questionNumber - 1);
+        }
+    }
+});
+</script>
+{% endblock %}With('Digit') && e.code !== 'Digit0') {
+        e.preventDefault();
+        const questionNumber = parseInt(e.code.replace('Digit', ''));
+        if (questionNumber <= testQuestions.length) {
+            goToQuestion(questionNumber - 1);
+        }
+    }
+});
+</script>
+{% endblock %}With('Digit') && e.code !== 'Digit0') {
+        e.preventDefault();
+        const questionNumber = parseInt(e.code.replace('Digit', ''));
+        if (questionNumber <= testQuestions.length) {
+            goToQuestion(questionNumber - 1);
+        }
+    }
+});
+</script>
+{% endblock %}With('Digit') && e.code !== 'Digit0') {
+        e.preventDefault();
+        const questionNumber = parseInt(e.code.replace('Digit', ''));
+        if (questionNumber <= testQuestions.length) {
+            goToQuestion(questionNumber - 1);
+        }
+    }
+});
+</script>
+{% endblock %}With('Digit') && e.code !== 'Digit0') {
+        e.preventDefault();
+        const questionNumber = parseInt(e.code.replace('Digit', ''));
+        if (questionNumber <= testQuestions.length) {
+            goToQuestion(questionNumber - 1);
+        }
+    }
+});
+</script>
+{% endblock %}With('Digit') && e.code !== 'Digit0') {
+        e.preventDefault();
+        const questionNumber = parseInt(e.code.replace('Digit', ''));
+        if (questionNumber <= testQuestions.length) {
+            goToQuestion(questionNumber - 1);
+        }
+    }
+});
+</script>
+{% endblock %}With('Digit') && e.code !== 'Digit0') {
+        e.preventDefault();
+        const questionNumber = parseInt(e.code.replace('Digit', ''));
+        if (questionNumber <= testQuestions.length) {
+            goToQuestion(questionNumber - 1);
+        }
+    }
+});
+</script>
+{% endblock %}With('Digit') && e.code !== 'Digit0') {
+        e.preventDefault();
+        const questionNumber = parseInt(e.code.replace('Digit', ''));
+        if (questionNumber <= testQuestions.length) {
+            goToQuestion(questionNumber - 1);
+        }
+    }
+});
+</script>
+{% endblock %}With('Digit') && e.code !== 'Digit0') {
+        e.preventDefault();
+        const questionNumber = parseInt(e.code.replace('Digit', ''));
+        if (questionNumber <= testQuestions.length) {
+            goToQuestion(questionNumber - 1);
+        }
+    }
+});
+</script>
+{% endblock %}With('Digit') && e.code !== 'Digit0') {
+        e.preventDefault();
+        const questionNumber = parseInt(e.code.replace('Digit', ''));
+        if (questionNumber <= testQuestions.length) {
+            goToQuestion(questionNumber - 1);
+        }
+    }
+});
+</script>
+{% endblock %}With('Digit') && e.code !== 'Digit0') {
+        e.preventDefault();
+        const questionNumber = parseInt(e.code.replace('Digit', ''));
+        if (questionNumber <= testQuestions.length) {
+            goToQuestion(questionNumber - 1);
+        }
+    }
+});
+</script>
+{% endblock %}With('Digit') && e.code !== 'Digit0') {
+        e.preventDefault();
+        const questionNumber = parseInt(e.code.replace('Digit', ''));
+        if (questionNumber <= testQuestions.length) {
+            goToQuestion(questionNumber - 1);
+        }
+    }
+});
+</script>
+{% endblock %}With('Digit') && e.code !== 'Digit0') {
+        e.preventDefault();
+        const questionNumber = parseInt(e.code.replace('Digit', ''));
+        if (questionNumber <= testQuestions.length) {
+            goToQuestion(questionNumber - 1);
+        }
+    }
+});
+</script>
+{% endblock %}With('Digit') && e.code !== 'Digit0') {
+        e.preventDefault();
+        const questionNumber = parseInt(e.code.replace('Digit', ''));
+        if (questionNumber <= testQuestions.length) {
+            goToQuestion(questionNumber - 1);
+        }
+    }
+});
+</script>
+{% endblock %}With('Digit') && e.code !== 'Digit0') {
+        e.preventDefault();
+        const questionNumber = parseInt(e.code.replace('Digit', ''));
+        if (questionNumber <= testQuestions.length) {
+            goToQuestion(questionNumber - 1);
+        }
+    }
+});
+</script>
+{% endblock %}With('Digit') && e.code !== 'Digit0') {
+        e.preventDefault();
+        const questionNumber = parseInt(e.code.replace('Digit', ''));
+        if (questionNumber <= testQuestions.length) {
+            goToQuestion(questionNumber - 1);
+        }
+    }
+});
+</script>
+{% endblock %}With('Digit') && e.code !== 'Digit0') {
+        e.preventDefault();
+        const questionNumber = parseInt(e.code.replace('Digit', ''));
+        if (questionNumber <= testQuestions.length) {
+            goToQuestion(questionNumber - 1);
+        }
+    }
+});
+</script>
+{% endblock %}With('Digit') && e.code !== 'Digit0') {
+        e.preventDefault();
+        const questionNumber = parseInt(e.code.replace('Digit', ''));
+        if (questionNumber <= testQuestions.length) {
+            goToQuestion(questionNumber - 1);
+        }
+    }
+});
+</script>
+{% endblock %}With('Digit') && e.code !== 'Digit0') {
+        e.preventDefault();
+        const questionNumber = parseInt(e.code.replace('Digit', ''));
+        if (questionNumber <= testQuestions.length) {
+            goToQuestion(questionNumber - 1);
+        }
+    }
+});
+</script>
+{% endblock %}With('Digit') && e.code !== 'Digit0') {
+        e.preventDefault();
+        const questionNumber = parseInt(e.code.replace('Digit', ''));
+        if (questionNumber <= testQuestions.length) {
+            goToQuestion(questionNumber - 1);
+        }
+    }
+});With('Digit') && e.code !== 'Digit0') {
+        e.preventDefault();
+        const questionNumber = parseInt(e.code.replace('Digit', ''));
+        if (questionNumber <= testQuestions.length) {
+            goToQuestion(questionNumber - 1);
+        }
+    }
+});
+</script>
+{% endblock %}Wi
+th('Digit') && e.code !== 'Digit0') {
+        e.preventDefault();
+        const questionNumber = parseInt(e.code.replace('Digit', ''));
+        if (questionNumber <= testQuestions.length) {
+            goToQuestion(questionNumber - 1);
+        }
+    }
+});
+</script>
+{% endblock %}   
+ else if (e.code === 'ArrowLeft') {
+        e.preventDefault();
+        const prevBtn = document.getElementById('prevBtn');
+        if (!prevBtn.disabled) {
+            goToPreviousQuestion();
+        }
+    }
+    else if (e.code === 'ArrowRight') {
+        e.preventDefault();
+        const nextBtn = document.getElementById('nextBtn');
+        if (!nextBtn.disabled) {
+            goToNextQuestion();
+        }
+    }
+    // Переход к следующему вопросу клавишей Space (после показа ответа)
+    else if (e.code === 'Space') {
+        e.preventDefault();
+        const nextBtn = document.getElementById('nextBtn');
+        if (!nextBtn.disabled) {
+            goToNextQuestion();
+        }
+    }
+    // Быстрый переход к вопросам по номерам (1-9)
+    else if (e.code.startsWith('Digit') && e.code !== 'Digit0') {
+        e.preventDefault();
+        const questionNumber = parseInt(e.code.replace('Digit', ''));
+        if (questionNumber <= testQuestions.length) {
+            goToQuestion(questionNumber - 1);
+        }
+    }
+});
+</script>
+{% endblock %}

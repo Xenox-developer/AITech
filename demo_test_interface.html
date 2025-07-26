@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Режим теста - Демо</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .test-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .test-progress {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .progress-bar-container {
+            background: #e9ecef;
+            border-radius: 10px;
+            height: 20px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .progress-bar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100%;
+            transition: width 0.3s ease;
+            border-radius: 10px;
+            width: 20%;
+        }
+
+        .flashcard-test {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            overflow: hidden;
+            min-height: 400px;
+            position: relative;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 20px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .card-number {
+            color: #667eea;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .difficulty-badge {
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .difficulty-1 { background: #d4edda; color: #155724; }
+        .difficulty-2 { background: #fff3cd; color: #856404; }
+        .difficulty-3 { background: #f8d7da; color: #721c24; }
+
+        .card-content {
+            padding: 30px;
+            text-align: center;
+        }
+
+        .question {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .answer {
+            font-size: 1.1rem;
+            color: #495057;
+            line-height: 1.7;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            display: none;
+        }
+
+        .card-actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .btn-show-answer {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-show-answer:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            color: white;
+        }
+
+        .feedback-buttons {
+            display: none;
+            gap: 15px;
+        }
+
+        .btn-correct {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            border: none;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-correct:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+            color: white;
+        }
+
+        .btn-incorrect {
+            background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
+            border: none;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-incorrect:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(220, 53, 69, 0.4);
+            color: white;
+        }
+
+        .test-stats {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .mastery-level {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .mastery-new { background: #e9ecef; color: #495057; }
+        .mastery-learning { background: #fff3cd; color: #856404; }
+        .mastery-mastered { background: #d4edda; color: #155724; }
+
+        .demo-notice {
+            background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+            color: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <!-- Уведомление о демо -->
+        <div class="demo-notice">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Демонстрация режима теста</strong> - Интерактивная версия доступна в полном приложении
+        </div>
+
+        <!-- Заголовок теста -->
+        <div class="test-header">
+            <h1><i class="fas fa-brain me-2"></i>Режим теста</h1>
+            <p class="mb-0">Основы машинного обучения</p>
+        </div>
+
+        <!-- Прогресс теста -->
+        <div class="test-progress">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span><strong>Прогресс:</strong> <span id="currentCard">1</span> из 5</span>
+                <span id="progressPercent">20%</span>
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+        </div>
+
+        <!-- Статистика -->
+        <div class="test-stats">
+            <h5><i class="fas fa-chart-line me-2"></i>Статистика сессии</h5>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-number" id="correctCount">0</span>
+                    <span class="stat-label">Правильно</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="incorrectCount">0</span>
+                    <span class="stat-label">Неправильно</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="accuracyRate">0%</span>
+                    <span class="stat-label">Точность</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="masteredCount">0</span>
+                    <span class="stat-label">Изучено</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Карточка для тестирования -->
+        <div class="flashcard-test" id="testCard">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="card-number">Карточка <span id="cardNumber">1</span></span>
+                    <div>
+                        <span class="difficulty-badge difficulty-1">Легко</span>
+                        <span class="mastery-level mastery-new ms-2">Новая</span>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mt-2" style="font-size: 0.9rem; color: #6c757d;">
+                    <span>Правильных ответов подряд: <strong>0</strong></span>
+                    <span>Коэффициент сложности: <strong>2.5</strong></span>
+                </div>
+            </div>
+            
+            <div class="card-content">
+                <div class="question" id="questionText">
+                    Что такое машинное обучение?
+                </div>
+                
+                <div class="answer" id="answerText">
+                    Машинное обучение — это раздел искусственного интеллекта, который позволяет компьютерам обучаться и принимать решения на основе данных без явного программирования для каждой конкретной задачи.
+                </div>
+                
+                <div class="card-actions">
+                    <button class="btn btn-show-answer" id="showAnswerBtn" onclick="showAnswer()">
+                        <i class="fas fa-eye me-2"></i>Показать ответ
+                    </button>
+                    
+                    <div class="feedback-buttons" id="feedbackButtons">
+                        <button class="btn btn-correct" onclick="submitAnswer(true)">
+                            <i class="fas fa-check me-2"></i>Знаю
+                        </button>
+                        <button class="btn btn-incorrect" onclick="submitAnswer(false)">
+                            <i class="fas fa-times me-2"></i>Не знаю
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Информация о функциях -->
+        <div class="alert alert-info">
+            <h6><i class="fas fa-keyboard me-2"></i>Горячие клавиши:</h6>
+            <ul class="mb-0">
+                <li><kbd>Пробел</kbd> - Показать ответ</li>
+                <li><kbd>→</kbd> или <kbd>Y</kbd> - Знаю</li>
+                <li><kbd>←</kbd> или <kbd>N</kbd> - Не знаю</li>
+            </ul>
+        </div>
+
+        <div class="alert alert-success">
+            <h6><i class="fas fa-magic me-2"></i>Возможности режима теста:</h6>
+            <ul class="mb-0">
+                <li>Интервальное повторение (алгоритм SM-2)</li>
+                <li>Адаптивная сложность карточек</li>
+                <li>Отслеживание прогресса обучения</li>
+                <li>Статистика и аналитика</li>
+                <li>Горячие клавиши для быстрого ответа</li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Демонстрационные данные
+        const demoCards = [
+            {
+                question: "Что такое машинное обучение?",
+                answer: "Машинное обучение — это раздел искусственного интеллекта, который позволяет компьютерам обучаться и принимать решения на основе данных без явного программирования для каждой конкретной задачи.",
+                difficulty: 1
+            },
+            {
+                question: "Какие основные типы машинного обучения существуют?",
+                answer: "Основные типы: 1) Обучение с учителем (supervised learning), 2) Обучение без учителя (unsupervised learning), 3) Обучение с подкреплением (reinforcement learning).",
+                difficulty: 2
+            },
+            {
+                question: "Что такое переобучение (overfitting)?",
+                answer: "Переобучение — это ситуация, когда модель слишком хорошо запоминает обучающие данные, включая шум, что приводит к плохой работе на новых данных.",
+                difficulty: 2
+            }
+        ];
+
+        let currentCardIndex = 0;
+        let correctCount = 0;
+        let incorrectCount = 0;
+
+        // Показать ответ
+        function showAnswer() {
+            document.getElementById('answerText').style.display = 'block';
+            document.getElementById('showAnswerBtn').style.display = 'none';
+            document.getElementById('feedbackButtons').style.display = 'flex';
+        }
+
+        // Отправить ответ
+        function submitAnswer(isCorrect) {
+            if (isCorrect) {
+                correctCount++;
+            } else {
+                incorrectCount++;
+            }
+            
+            updateStats();
+            
+            // Переход к следующей карточке
+            setTimeout(() => {
+                currentCardIndex++;
+                if (currentCardIndex < demoCards.length) {
+                    loadCard(currentCardIndex);
+                    updateProgress();
+                } else {
+                    showCompletion();
+                }
+            }, 1000);
+        }
+
+        // Загрузить карточку
+        function loadCard(index) {
+            const card = demoCards[index];
+            document.getElementById('questionText').textContent = card.question;
+            document.getElementById('answerText').textContent = card.answer;
+            document.getElementById('cardNumber').textContent = index + 1;
+            
+            // Сброс состояния
+            document.getElementById('answerText').style.display = 'none';
+            document.getElementById('showAnswerBtn').style.display = 'block';
+            document.getElementById('feedbackButtons').style.display = 'none';
+            
+            // Обновление сложности
+            const difficultyBadge = document.querySelector('.difficulty-badge');
+            difficultyBadge.className = `difficulty-badge difficulty-${card.difficulty}`;
+            difficultyBadge.textContent = card.difficulty === 1 ? 'Легко' : card.difficulty === 2 ? 'Средне' : 'Сложно';
+        }
+
+        // Обновить прогресс
+        function updateProgress() {
+            const progress = ((currentCardIndex + 1) / demoCards.length) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+            document.getElementById('progressPercent').textContent = Math.round(progress) + '%';
+            document.getElementById('currentCard').textContent = currentCardIndex + 1;
+        }
+
+        // Обновить статистику
+        function updateStats() {
+            document.getElementById('correctCount').textContent = correctCount;
+            document.getElementById('incorrectCount').textContent = incorrectCount;
+            
+            const total = correctCount + incorrectCount;
+            const accuracy = total > 0 ? Math.round((correctCount / total) * 100) : 0;
+            document.getElementById('accuracyRate').textContent = accuracy + '%';
+        }
+
+        // Показать завершение
+        function showCompletion() {
+            document.getElementById('testCard').innerHTML = `
+                <div class="card-content">
+                    <div style="text-align: center; padding: 40px;">
+                        <i class="fas fa-trophy" style="font-size: 4rem; color: #ffc107; margin-bottom: 20px;"></i>
+                        <h2>Демо завершено!</h2>
+                        <p class="lead">В полной версии вы можете продолжить изучение с интервальным повторением</p>
+                        <div class="mt-4">
+                            <button class="btn btn-primary btn-lg" onclick="location.reload()">
+                                <i class="fas fa-redo me-2"></i>Начать заново
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Горячие клавиши
+        document.addEventListener('keydown', function(e) {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                const showBtn = document.getElementById('showAnswerBtn');
+                if (showBtn && showBtn.style.display !== 'none') {
+                    showAnswer();
+                }
+            } else if (e.code === 'ArrowRight' || e.code === 'KeyY') {
+                e.preventDefault();
+                const feedbackButtons = document.getElementById('feedbackButtons');
+                if (feedbackButtons && feedbackButtons.style.display === 'flex') {
+                    submitAnswer(true);
+                }
+            } else if (e.code === 'ArrowLeft' || e.code === 'KeyN') {
+                e.preventDefault();
+                const feedbackButtons = document.getElementById('feedbackButtons');
+                if (feedbackButtons && feedbackButtons.style.display === 'flex') {
+                    submitAnswer(false);
+                }
+            }
+        });
+    </script>
+</body>
+</html>

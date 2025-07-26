@@ -1,7 +1,7 @@
 import os
 import json
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import Flask, render_template, request, redirect, url_for, flash, send_file, jsonify, session
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename
@@ -209,6 +209,14 @@ def init_db():
         # Колонка уже существует
         pass
     
+    # Добавляем колонку test_questions_json если её нет (миграция)
+    try:
+        c.execute('ALTER TABLE result ADD COLUMN test_questions_json TEXT')
+        logger.info("Added test_questions_json column to result table")
+    except sqlite3.OperationalError:
+        # Колонка уже существует
+        pass
+    
     # Таблица прогресса пользователя
     c.execute('''
         CREATE TABLE IF NOT EXISTS user_progress (
@@ -282,6 +290,16 @@ def save_result(filename, file_type, analysis_result, page_info=None):
     # Получаем полный текст для чата
     full_text = analysis_result.get('full_text', '')
     
+    # Генерируем тестовые вопросы заранее
+    logger.info("Генерируем тестовые вопросы...")
+    test_questions = generate_test_questions({
+        'full_text': full_text,
+        'summary': analysis_result['summary'],
+        'topics_data': analysis_result['topics_data']
+    })
+    test_questions_json = json.dumps(test_questions, ensure_ascii=False)
+    logger.info(f"Сгенерировано {len(test_questions)} тестовых вопросов")
+    
     # Получаем ID текущего пользователя (если авторизован)
     user_id = current_user.id if current_user.is_authenticated else None
     
@@ -289,13 +307,13 @@ def save_result(filename, file_type, analysis_result, page_info=None):
         INSERT INTO result (
             filename, file_type, topics_json, summary, flashcards_json,
             mind_map_json, study_plan_json, quality_json,
-            video_segments_json, key_moments_json, full_text, user_id
+            video_segments_json, key_moments_json, full_text, user_id, test_questions_json
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ''', (
         filename, file_type, topics_json, analysis_result['summary'], 
         flashcards_json, mind_map_json, study_plan_json, quality_json,
-        video_segments_json, key_moments_json, full_text, user_id
+        video_segments_json, key_moments_json, full_text, user_id, test_questions_json
     ))
     
     result_id = c.lastrowid
@@ -312,7 +330,7 @@ def get_result(result_id, check_access=True):
     c.execute('''
         SELECT filename, file_type, topics_json, summary, flashcards_json,
                mind_map_json, study_plan_json, quality_json,
-               video_segments_json, key_moments_json, full_text, created_at, user_id
+               video_segments_json, key_moments_json, full_text, created_at, user_id, test_questions_json
         FROM result WHERE id = ?
     ''', (result_id,))
     
@@ -339,7 +357,8 @@ def get_result(result_id, check_access=True):
             'key_moments': json.loads(row[9]),
             'full_text': row[10] or '',
             'created_at': row[11],
-            'user_id': row[12]
+            'user_id': row[12],
+            'test_questions': json.loads(row[13]) if row[13] else []
         }
         
         # Извлекаем информацию о страницах из mind_map (если она там сохранена)
@@ -665,6 +684,412 @@ def my_results():
     }
     
     return render_template('my_results.html', results=results, pagination=pagination)
+
+def generate_test_questions(result_data):
+    """Генерирует тестовые вопросы с вариантами ответов на основе материала"""
+    try:
+        from openai import OpenAI
+        client = OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
+        
+        # Получаем текст материала
+        full_text = result_data.get('full_text', '')
+        summary = result_data.get('summary', '')
+        topics_data = result_data.get('topics_data', {})
+        
+        # Формируем контекст для генерации вопросов
+        context = f"""
+        Резюме материала: {summary}
+        
+        Полный текст: {full_text[:3000]}...
+        
+        Основные темы: {json.dumps(topics_data, ensure_ascii=False)}
+        """
+        
+        prompt = f"""
+        На основе предоставленного учебного материала создай 25 тестовых вопросов разной сложности.
+        
+        Материал:
+        {context}
+        
+        Требования к вопросам:
+        1. 8 легких вопросов (базовые определения и факты)
+        2. 12 средних вопросов (понимание концепций и связей)
+        3. 5 сложных вопросов (анализ и применение знаний)
+        
+        Каждый вопрос должен иметь:
+        - Четкую формулировку на русском языке
+        - 4 варианта ответа (A, B, C, D)
+        - Только один правильный ответ
+        - Подробное объяснение правильного ответа
+        - Все варианты должны быть правдоподобными
+        
+        Верни результат в формате JSON:
+        {{
+            "questions": [
+                {{
+                    "id": 1,
+                    "question": "Текст вопроса",
+                    "options": {{
+                        "A": "Вариант A",
+                        "B": "Вариант B", 
+                        "C": "Вариант C",
+                        "D": "Вариант D"
+                    }},
+                    "correct_answer": "A",
+                    "explanation": "Подробное объяснение правильного ответа",
+                    "difficulty": 1,
+                    "topic": "Название темы"
+                }}
+            ]
+        }}
+        
+        Сложность: 1 = легко, 2 = средне, 3 = сложно
+        """
+        
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "Ты эксперт по созданию образовательных тестов. Создавай качественные вопросы для проверки знаний."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7,
+            max_tokens=4000
+        )
+        
+        # Парсим ответ
+        response_text = response.choices[0].message.content
+        
+        # Извлекаем JSON из ответа
+        import re
+        json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+        if json_match:
+            json_text = json_match.group()
+            try:
+                questions_data = json.loads(json_text)
+                return questions_data.get('questions', [])
+            except json.JSONDecodeError as e:
+                logger.error(f"Ошибка парсинга JSON: {e}")
+                logger.info("Пытаемся исправить JSON...")
+                
+                # Пытаемся исправить распространенные ошибки JSON
+                try:
+                    # Исправляем отсутствующие запятые между объектами
+                    fixed_json = re.sub(r'}\s*{', '},{', json_text)
+                    # Исправляем отсутствующие запятые после строк
+                    fixed_json = re.sub(r'"\s*\n\s*"', '",\n"', fixed_json)
+                    # Исправляем отсутствующие запятые после чисел
+                    fixed_json = re.sub(r'(\d)\s*\n\s*"', r'\1,\n"', fixed_json)
+                    
+                    questions_data = json.loads(fixed_json)
+                    logger.info("JSON успешно исправлен")
+                    return questions_data.get('questions', [])
+                except json.JSONDecodeError:
+                    logger.error("Не удалось исправить JSON, используем демонстрационные вопросы")
+                    return get_demo_questions()
+        else:
+            logger.error("Не удалось извлечь JSON из ответа GPT")
+            return get_demo_questions()
+            
+    except Exception as e:
+        logger.error(f"Ошибка генерации тестовых вопросов: {str(e)}")
+        # Возвращаем демонстрационные вопросы в случае ошибки
+        return get_demo_questions()
+
+def get_demo_questions():
+    """Возвращает демонстрационные вопросы для тестирования"""
+    return [
+        {
+            "id": 1,
+            "question": "Что такое машинное обучение?",
+            "options": {
+                "A": "Способность машин физически обучаться новым движениям",
+                "B": "Раздел ИИ, позволяющий компьютерам обучаться на данных",
+                "C": "Процесс обучения людей работе с машинами",
+                "D": "Автоматическое обновление программного обеспечения"
+            },
+            "correct_answer": "B",
+            "explanation": "Машинное обучение — это раздел искусственного интеллекта, который позволяет компьютерам обучаться и принимать решения на основе данных без явного программирования.",
+            "difficulty": 1,
+            "topic": "Основы ML"
+        },
+        {
+            "id": 2,
+            "question": "Какие основные типы машинного обучения существуют?",
+            "options": {
+                "A": "Быстрое, медленное и среднее обучение",
+                "B": "Обучение с учителем, без учителя и с подкреплением",
+                "C": "Линейное, нелинейное и циклическое обучение",
+                "D": "Простое, сложное и экспертное обучение"
+            },
+            "correct_answer": "B",
+            "explanation": "Основные типы: supervised learning (с учителем), unsupervised learning (без учителя) и reinforcement learning (с подкреплением).",
+            "difficulty": 2,
+            "topic": "Типы обучения"
+        },
+        {
+            "id": 3,
+            "question": "Что происходит при переобучении модели?",
+            "options": {
+                "A": "Модель работает слишком быстро",
+                "B": "Модель потребляет много памяти",
+                "C": "Модель слишком хорошо запоминает обучающие данные",
+                "D": "Модель обучается дольше обычного"
+            },
+            "correct_answer": "C",
+            "explanation": "При переобучении модель слишком хорошо запоминает обучающие данные, включая шум, что ухудшает её работу на новых данных.",
+            "difficulty": 2,
+            "topic": "Проблемы обучения"
+        },
+        {
+            "id": 4,
+            "question": "Что такое нейронная сеть?",
+            "options": {
+                "A": "Сеть компьютеров для обработки данных",
+                "B": "Математическая модель, имитирующая работу нейронов мозга",
+                "C": "Программа для создания графиков",
+                "D": "База данных для хранения информации"
+            },
+            "correct_answer": "B",
+            "explanation": "Нейронная сеть — это математическая модель, построенная по принципу организации и функционирования биологических нейронных сетей.",
+            "difficulty": 1,
+            "topic": "Нейронные сети"
+        },
+        {
+            "id": 5,
+            "question": "Что такое градиентный спуск?",
+            "options": {
+                "A": "Метод физических упражнений",
+                "B": "Алгоритм оптимизации для минимизации функции потерь",
+                "C": "Способ сжатия данных",
+                "D": "Техника визуализации данных"
+            },
+            "correct_answer": "B",
+            "explanation": "Градиентный спуск — это итерационный алгоритм оптимизации, используемый для минимизации функции потерь путем движения в направлении наибольшего убывания градиента.",
+            "difficulty": 2,
+            "topic": "Оптимизация"
+        },
+        {
+            "id": 6,
+            "question": "Что означает термин 'Big Data'?",
+            "options": {
+                "A": "Большие файлы на компьютере",
+                "B": "Наборы данных большого объема, скорости и разнообразия",
+                "C": "Дорогое программное обеспечение",
+                "D": "Быстрый интернет"
+            },
+            "correct_answer": "B",
+            "explanation": "Big Data характеризуется тремя V: Volume (объем), Velocity (скорость) и Variety (разнообразие) данных, которые сложно обрабатывать традиционными методами.",
+            "difficulty": 1,
+            "topic": "Big Data"
+        },
+        {
+            "id": 7,
+            "question": "Что такое кросс-валидация?",
+            "options": {
+                "A": "Проверка правописания в коде",
+                "B": "Метод оценки качества модели на разных подвыборках данных",
+                "C": "Способ шифрования данных",
+                "D": "Техника сжатия изображений"
+            },
+            "correct_answer": "B",
+            "explanation": "Кросс-валидация — это метод оценки обобщающей способности модели путем разделения данных на несколько частей и тестирования модели на каждой из них.",
+            "difficulty": 2,
+            "topic": "Валидация модели"
+        },
+        {
+            "id": 8,
+            "question": "Что такое признак (feature) в машинном обучении?",
+            "options": {
+                "A": "Ошибка в программе",
+                "B": "Индивидуальная измеримая характеристика объекта",
+                "C": "Тип алгоритма",
+                "D": "Результат работы модели"
+            },
+            "correct_answer": "B",
+            "explanation": "Признак — это индивидуальная измеримая характеристика или свойство наблюдаемого объекта, используемая в качестве входных данных для модели.",
+            "difficulty": 1,
+            "topic": "Признаки"
+        }
+    ]
+
+@app.route('/test/<int:result_id>')
+def test_mode(result_id):
+    """Режим тестирования с предварительно сгенерированными вопросами"""
+    result_data = get_result(result_id, check_access=True)
+    if not result_data:
+        flash('Результат не найден или нет доступа', 'danger')
+        return redirect(url_for('index'))
+    
+    # Получаем предварительно сгенерированные тестовые вопросы
+    test_questions = result_data.get('test_questions', [])
+    
+    # Если вопросов нет, генерируем их сейчас (для старых результатов)
+    if not test_questions:
+        logger.info("Тестовые вопросы не найдены, генерируем...")
+        test_questions = generate_test_questions(result_data)
+        
+        if test_questions:
+            # Сохраняем сгенерированные вопросы в базу данных
+            conn = sqlite3.connect('ai_study.db')
+            c = conn.cursor()
+            test_questions_json = json.dumps(test_questions, ensure_ascii=False)
+            c.execute('UPDATE result SET test_questions_json = ? WHERE id = ?', 
+                     (test_questions_json, result_id))
+            conn.commit()
+            conn.close()
+            logger.info(f"Сохранено {len(test_questions)} тестовых вопросов")
+        else:
+            flash('Не удалось сгенерировать тестовые вопросы', 'warning')
+            return redirect(url_for('result', result_id=result_id))
+    
+    # Получаем прогресс пользователя
+    conn = sqlite3.connect('ai_study.db')
+    c = conn.cursor()
+    
+    progress_data = {}
+    if current_user.is_authenticated:
+        c.execute('''
+            SELECT flashcard_id, consecutive_correct, ease_factor, next_review
+            FROM user_progress 
+            WHERE result_id = ? AND user_id = ?
+        ''', (result_id, current_user.id))
+        
+        for row in c.fetchall():
+            progress_data[row[0]] = {
+                'consecutive_correct': row[1],
+                'ease_factor': row[2],
+                'next_review': row[3]
+            }
+    
+    conn.close()
+    
+    # Добавляем прогресс к вопросам
+    for i, question in enumerate(test_questions):
+        question['id'] = i
+        if i in progress_data:
+            question['progress'] = progress_data[i]
+        else:
+            question['progress'] = {
+                'consecutive_correct': 0,
+                'ease_factor': 2.5,
+                'next_review': None
+            }
+    
+    return render_template('test_mode.html', 
+                         result_data=result_data, 
+                         test_questions=test_questions,
+                         result_id=result_id)
+
+@app.route('/test/<int:result_id>/answer', methods=['POST'])
+def submit_test_answer(result_id):
+    """Обработка ответа в режиме теста"""
+    if not current_user.is_authenticated:
+        return jsonify({'error': 'Необходима авторизация'}), 401
+    
+    data = request.get_json()
+    flashcard_id = data.get('flashcard_id')
+    is_correct = data.get('is_correct', False)
+    
+    if flashcard_id is None:
+        return jsonify({'error': 'Не указан ID карточки'}), 400
+    
+    # Обновляем прогресс пользователя
+    conn = sqlite3.connect('ai_study.db')
+    c = conn.cursor()
+    
+    # Получаем текущий прогресс
+    c.execute('''
+        SELECT consecutive_correct, ease_factor, next_review
+        FROM user_progress 
+        WHERE result_id = ? AND flashcard_id = ? AND user_id = ?
+    ''', (result_id, flashcard_id, current_user.id))
+    
+    row = c.fetchone()
+    
+    if row:
+        consecutive_correct, ease_factor, next_review = row
+    else:
+        consecutive_correct = 0
+        ease_factor = 2.5
+        next_review = None
+    
+    # Алгоритм интервального повторения (упрощенный SM-2)
+    if is_correct:
+        consecutive_correct += 1
+        if consecutive_correct == 1:
+            interval = 1  # 1 день
+        elif consecutive_correct == 2:
+            interval = 6  # 6 дней
+        else:
+            interval = int((consecutive_correct - 1) * ease_factor)
+        
+        # Корректируем ease_factor
+        ease_factor = max(1.3, ease_factor + (0.1 - (5 - 4) * (0.08 + (5 - 4) * 0.02)))
+    else:
+        consecutive_correct = 0
+        interval = 1
+        ease_factor = max(1.3, ease_factor - 0.2)
+    
+    # Вычисляем следующую дату повторения
+    next_review_date = datetime.now() + timedelta(days=interval)
+    
+    # Сохраняем или обновляем прогресс
+    c.execute('''
+        INSERT OR REPLACE INTO user_progress 
+        (result_id, flashcard_id, user_id, last_review, next_review, ease_factor, consecutive_correct)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    ''', (result_id, flashcard_id, current_user.id, datetime.now(), 
+          next_review_date, ease_factor, consecutive_correct))
+    
+    conn.commit()
+    conn.close()
+    
+    return jsonify({
+        'success': True,
+        'consecutive_correct': consecutive_correct,
+        'next_review': next_review_date.strftime('%Y-%m-%d'),
+        'ease_factor': round(ease_factor, 2)
+    })
+
+@app.route('/test/<int:result_id>/stats')
+def test_stats(result_id):
+    """Статистика тестирования"""
+    if not current_user.is_authenticated:
+        return jsonify({'error': 'Необходима авторизация'}), 401
+    
+    conn = sqlite3.connect('ai_study.db')
+    c = conn.cursor()
+    
+    # Общая статистика по результату
+    c.execute('''
+        SELECT 
+            COUNT(*) as total_cards,
+            SUM(CASE WHEN consecutive_correct >= 3 THEN 1 ELSE 0 END) as mastered_cards,
+            AVG(consecutive_correct) as avg_correct,
+            AVG(ease_factor) as avg_ease
+        FROM user_progress 
+        WHERE result_id = ? AND user_id = ?
+    ''', (result_id, current_user.id))
+    
+    stats = c.fetchone()
+    conn.close()
+    
+    if stats and stats[0] > 0:
+        return jsonify({
+            'total_cards': stats[0],
+            'mastered_cards': stats[1] or 0,
+            'mastery_percentage': round((stats[1] or 0) / stats[0] * 100, 1),
+            'avg_correct': round(stats[2] or 0, 1),
+            'avg_ease': round(stats[3] or 2.5, 2)
+        })
+    else:
+        return jsonify({
+            'total_cards': 0,
+            'mastered_cards': 0,
+            'mastery_percentage': 0,
+            'avg_correct': 0,
+            'avg_ease': 2.5
+        })
 
 @app.route('/')
 def index():
@@ -1334,6 +1759,8 @@ def download_flashcards(result_id):
         logger.error(f"Error downloading flashcards for result {result_id}: {str(e)}")
         flash('Ошибка при скачивании файла', 'danger')
         return redirect(url_for('my_results'))
+
+
 
 @app.errorhandler(413)
 def request_entity_too_large(e):
