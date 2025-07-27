@@ -63,6 +63,1865 @@
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     }
 
+    /* Enhanced Flashcard Statistics Styles */
+    .flashcards-stats {
+        margin-bottom: 2rem;
+    }
+
+    .stat-card-modern {
+        background: white;
+        border-radius: 20px;
+        padding: 25px 20px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        position: relative;
+        overflow: hidden;
+        border: 2px solid transparent;
+        height: 140px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .stat-card-modern:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    .stat-card-modern::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--card-gradient));
+        border-radius: 20px 20px 0 0;
+    }
+
+    .stat-icon-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 50px;
+        height: 50px;
+        border-radius: 15px;
+        background: linear-gradient(135deg, var(--card-gradient));
+        margin-bottom: 15px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        transition: all 0.3s ease;
+    }
+
+    .stat-card-modern:hover .stat-icon-wrapper {
+        transform: rotate(10deg) scale(1.1);
+        box-shadow: 0 12px 25px rgba(0, 0, 0, 0.2);
+    }
+
+    .stat-icon {
+        font-size: 1.5rem;
+        color: white;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+    }
+
+    .stat-content {
+        flex-grow: 1;
+    }
+
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: #2c3e50;
+        line-height: 1;
+        margin-bottom: 5px;
+        background: linear-gradient(135deg, var(--card-gradient));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 10px;
+    }
+
+    .stat-progress {
+        height: 6px;
+        background: #f1f5f9;
+        border-radius: 10px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .progress-bar {
+        height: 100%;
+        border-radius: 10px;
+        background: linear-gradient(90deg, var(--card-gradient));
+        transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .progress-bar::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+        animation: shimmer 2s infinite;
+    }
+
+    @keyframes shimmer {
+        0% { left: -100%; }
+        100% { left: 100%; }
+    }
+
+    /* Individual card color schemes */
+    .mastered-card {
+        --card-gradient: #10b981, #059669;
+        border-color: rgba(16, 185, 129, 0.2);
+    }
+
+    .mastered-card:hover {
+        border-color: #10b981;
+        box-shadow: 0 20px 40px rgba(16, 185, 129, 0.2);
+    }
+
+    .review-card {
+        --card-gradient: #f59e0b, #d97706;
+        border-color: rgba(245, 158, 11, 0.2);
+    }
+
+    .review-card:hover {
+        border-color: #f59e0b;
+        box-shadow: 0 20px 40px rgba(245, 158, 11, 0.2);
+    }
+
+    .new-card {
+        --card-gradient: #06b6d4, #0891b2;
+        border-color: rgba(6, 182, 212, 0.2);
+    }
+
+    .new-card:hover {
+        border-color: #06b6d4;
+        box-shadow: 0 20px 40px rgba(6, 182, 212, 0.2);
+    }
+
+    .progress-card {
+        --card-gradient: #6366f1, #4f46e5;
+        border-color: rgba(99, 102, 241, 0.2);
+    }
+
+    .progress-card:hover {
+        border-color: #6366f1;
+        box-shadow: 0 20px 40px rgba(99, 102, 241, 0.2);
+    }
+
+    /* Responsive design for stats */
+    @media (max-width: 768px) {
+        .stat-card-modern {
+            height: 120px;
+            padding: 20px 15px;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+        }
+
+        .stat-icon-wrapper {
+            width: 40px;
+            height: 40px;
+            margin-bottom: 10px;
+        }
+
+        .stat-icon {
+            font-size: 1.2rem;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .flashcards-stats .row {
+            gap: 15px;
+        }
+
+        .stat-card-modern {
+            height: 100px;
+            padding: 15px 12px;
+        }
+
+        .stat-number {
+            font-size: 1.8rem;
+        }
+
+        .stat-label {
+            font-size: 0.65rem;
+        }
+    }
+
+    /* Enhanced Flashcards Controls Styles */
+    .flashcards-controls-modern {
+        background: white;
+        border-radius: 20px;
+        padding: 25px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+        margin-bottom: 2rem;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    /* Search Section */
+    .search-section {
+        margin-bottom: 20px;
+    }
+
+    .search-container {
+        display: flex;
+        justify-content: center;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
+    .search-input-wrapper {
+        position: relative;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        background: #f8f9fa;
+        border-radius: 25px;
+        padding: 0 20px;
+        box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+
+    .search-input-wrapper:focus-within {
+        background: white;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1), 0 4px 20px rgba(0, 0, 0, 0.1);
+        border-color: #6366f1;
+        transform: translateY(-2px);
+    }
+
+    .search-icon {
+        color: #9ca3af;
+        font-size: 1.1rem;
+        margin-right: 12px;
+        transition: color 0.3s ease;
+    }
+
+    .search-input-wrapper:focus-within .search-icon {
+        color: #6366f1;
+    }
+
+    .search-input {
+        flex: 1;
+        border: none;
+        background: transparent;
+        padding: 15px 0;
+        font-size: 1rem;
+        color: #374151;
+        outline: none;
+        font-weight: 500;
+    }
+
+    .search-input::placeholder {
+        color: #9ca3af;
+        font-weight: 400;
+    }
+
+    .search-clear-btn {
+        background: none;
+        border: none;
+        color: #9ca3af;
+        font-size: 1rem;
+        cursor: pointer;
+        padding: 5px;
+        border-radius: 50%;
+        transition: all 0.3s ease;
+        margin-left: 8px;
+    }
+
+    .search-clear-btn:hover {
+        background: #f3f4f6;
+        color: #6b7280;
+        transform: scale(1.1);
+    }
+
+    /* Filters Section */
+    .filters-section {
+        border-top: 1px solid #f1f5f9;
+        padding-top: 20px;
+    }
+
+    .filters-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+
+    .filter-group {
+        flex: 1;
+        min-width: 300px;
+    }
+
+    .filter-pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .filter-pill {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 16px;
+        background: #f8fafc;
+        border: 2px solid #e2e8f0;
+        border-radius: 25px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: #64748b;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .filter-pill::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+        transition: left 0.5s ease;
+    }
+
+    .filter-pill:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        border-color: #cbd5e1;
+    }
+
+    .filter-pill:hover::before {
+        left: 100%;
+    }
+
+    .filter-pill.active {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        border-color: #6366f1;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3);
+    }
+
+    .filter-pill.active:hover {
+        background: linear-gradient(135deg, #5b21b6 0%, #7c3aed 100%);
+        box-shadow: 0 12px 30px rgba(99, 102, 241, 0.4);
+    }
+
+    .filter-pill i {
+        font-size: 1rem;
+        transition: transform 0.3s ease;
+    }
+
+    .filter-pill:hover i {
+        transform: scale(1.1);
+    }
+
+    .filter-pill.active i {
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+    }
+
+    /* Control Group */
+    .control-group {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .sort-dropdown {
+        position: relative;
+    }
+
+    .sort-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 18px;
+        background: white;
+        border: 2px solid #e2e8f0;
+        border-radius: 15px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: #64748b;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        min-width: 140px;
+        justify-content: space-between;
+    }
+
+    .sort-btn:hover {
+        border-color: #cbd5e1;
+        background: #f8fafc;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .sort-btn:focus {
+        outline: none;
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    .dropdown-menu {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+        padding: 8px;
+        margin-top: 8px;
+        min-width: 200px;
+    }
+
+    .dropdown-item {
+        border-radius: 10px;
+        padding: 10px 15px;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+    }
+
+    .dropdown-item:hover {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        color: white;
+        transform: translateX(5px);
+    }
+
+    .view-controls {
+        display: flex;
+        gap: 6px;
+    }
+
+    .view-btn {
+        width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: white;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        color: #64748b;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 1rem;
+    }
+
+    .view-btn:hover {
+        border-color: #6366f1;
+        color: #6366f1;
+        background: #f8fafc;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(99, 102, 241, 0.2);
+    }
+
+    .view-btn:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+    }
+
+    /* Results Counter */
+    .results-counter {
+        margin-top: 20px;
+        padding-top: 15px;
+        border-top: 1px solid #f1f5f9;
+        text-align: center;
+    }
+
+    .counter-text {
+        font-size: 0.9rem;
+        color: #64748b;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+    }
+
+    .counter-text i {
+        color: #6366f1;
+    }
+
+    /* Responsive Design for Controls */
+    @media (max-width: 1024px) {
+        .filters-row {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 15px;
+        }
+
+        .filter-group {
+            min-width: auto;
+        }
+
+        .control-group {
+            justify-content: space-between;
+            width: 100%;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .flashcards-controls-modern {
+            padding: 20px;
+            border-radius: 15px;
+        }
+
+        .search-container {
+            max-width: none;
+        }
+
+        .search-input-wrapper {
+            padding: 0 15px;
+        }
+
+        .search-input {
+            padding: 12px 0;
+            font-size: 0.95rem;
+        }
+
+        .filter-pills {
+            justify-content: center;
+        }
+
+        .filter-pill {
+            padding: 8px 12px;
+            font-size: 0.85rem;
+        }
+
+        .filter-pill span {
+            display: none;
+        }
+
+        .filter-pill i {
+            margin: 0;
+        }
+
+        .control-group {
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .sort-btn {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .view-controls {
+            justify-content: center;
+            width: 100%;
+        }
+
+        .view-btn {
+            flex: 1;
+            max-width: 60px;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .flashcards-controls-modern {
+            padding: 15px;
+            margin-bottom: 1.5rem;
+        }
+
+        .search-section {
+            margin-bottom: 15px;
+        }
+
+        .filters-section {
+            padding-top: 15px;
+        }
+
+        .filter-pill {
+            padding: 6px 10px;
+            font-size: 0.8rem;
+        }
+
+        .sort-btn {
+            padding: 10px 15px;
+            font-size: 0.85rem;
+        }
+
+        .view-btn {
+            width: 40px;
+            height: 40px;
+            font-size: 0.9rem;
+        }
+
+        .results-counter {
+            margin-top: 15px;
+            padding-top: 12px;
+        }
+
+        .counter-text {
+            font-size: 0.85rem;
+        }
+    }
+
+    /* Animation for filter changes */
+    @keyframes filterChange {
+        0% {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .flashcards-container {
+        animation: filterChange 0.3s ease-out;
+    }
+
+    /* Enhanced Interactive Buttons Styles */
+    .btn-interactive-study,
+    .btn-test-mode {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 18px 25px;
+        border-radius: 20px;
+        text-decoration: none;
+        color: white;
+        font-weight: 600;
+        font-size: 1rem;
+        border: none;
+        cursor: pointer;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        min-width: 280px;
+        backdrop-filter: blur(10px);
+    }
+
+    .btn-interactive-study {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: 2px solid rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-test-mode {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        border: 2px solid rgba(17, 153, 142, 0.3);
+    }
+
+    .btn-interactive-study:hover,
+    .btn-test-mode:hover {
+        transform: translateY(-5px) scale(1.02);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-interactive-study:hover {
+        background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+        border-color: #667eea;
+    }
+
+    .btn-test-mode:hover {
+        background: linear-gradient(135deg, #0f7b6c 0%, #2dd4bf 100%);
+        border-color: #11998e;
+    }
+
+    .btn-interactive-study:active,
+    .btn-test-mode:active {
+        transform: translateY(-2px) scale(0.98);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-icon-wrapper {
+        position: relative;
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 15px;
+        backdrop-filter: blur(10px);
+        box-shadow: inset 0 2px 10px rgba(255, 255, 255, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    .btn-interactive-study:hover .btn-icon-wrapper,
+    .btn-test-mode:hover .btn-icon-wrapper {
+        background: rgba(255, 255, 255, 0.3);
+        transform: rotate(10deg) scale(1.1);
+        box-shadow: inset 0 2px 15px rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-icon-wrapper i {
+        font-size: 1.5rem;
+        color: white;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+        transition: all 0.3s ease;
+    }
+
+    .btn-sparkle,
+    .btn-pulse {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border-radius: 15px;
+        pointer-events: none;
+    }
+
+    .btn-sparkle {
+        background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.4) 0%, transparent 50%);
+        animation: sparkle 2s ease-in-out infinite;
+    }
+
+    .btn-pulse {
+        background: radial-gradient(circle at center, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+        animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes sparkle {
+        0%, 100% {
+            opacity: 0;
+            transform: scale(0.8) rotate(0deg);
+        }
+        50% {
+            opacity: 1;
+            transform: scale(1.2) rotate(180deg);
+        }
+    }
+
+    @keyframes pulse {
+        0%, 100% {
+            opacity: 0.3;
+            transform: scale(1);
+        }
+        50% {
+            opacity: 0.8;
+            transform: scale(1.1);
+        }
+    }
+
+    .btn-content {
+        flex: 1;
+        text-align: left;
+    }
+
+    .btn-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 4px;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        line-height: 1.2;
+    }
+
+    .btn-subtitle {
+        font-size: 0.85rem;
+        opacity: 0.9;
+        font-weight: 400;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        line-height: 1.3;
+    }
+
+    .btn-badge {
+        position: absolute;
+        top: 1px;
+        right: 4px;
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+        color: white;
+        font-size: 0.7rem;
+        font-weight: 800;
+        padding: 4px 8px;
+        border-radius: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        box-shadow: 
+            0 4px 15px rgba(255, 107, 107, 0.5),
+            0 2px 8px rgba(0, 0, 0, 0.3);
+        animation: badgeBounce 2s ease-in-out infinite;
+        border: 2px solid rgba(255, 255, 255, 1);
+        min-width: 48px;
+        text-align: center;
+        white-space: nowrap;
+        z-index: 25;
+        line-height: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 24px;
+    }
+
+    @keyframes badgeBounce {
+        0%, 100% {
+            transform: scale(1) rotate(-3deg);
+        }
+        50% {
+            transform: scale(1.1) rotate(3deg);
+        }
+    }
+
+    .secondary-buttons {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .btn-secondary {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 18px;
+        background: white;
+        border: 2px solid #e2e8f0;
+        border-radius: 15px;
+        color: #64748b;
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .btn-secondary:hover {
+        background: #f8fafc;
+        border-color: #cbd5e1;
+        color: #475569;
+        text-decoration: none;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-secondary:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Responsive Design for Enhanced Buttons */
+    @media (max-width: 1024px) {
+        .btn-interactive-study,
+        .btn-test-mode {
+            min-width: 250px;
+            padding: 16px 20px;
+        }
+
+        .btn-title {
+            font-size: 1rem;
+        }
+
+        .btn-subtitle {
+            font-size: 0.8rem;
+        }
+
+        .btn-icon-wrapper {
+            width: 45px;
+            height: 45px;
+        }
+
+        .btn-icon-wrapper i {
+            font-size: 1.3rem;
+        }
+
+        .btn-badge {
+            top: -12px;
+            right: -12px;
+            font-size: 0.75rem;
+            padding: 6px 10px;
+            min-width: 55px;
+            height: 28px;
+            border-radius: 16px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .btn-interactive-study,
+        .btn-test-mode {
+            min-width: 220px;
+            padding: 14px 18px;
+            flex-direction: column;
+            text-align: center;
+            gap: 12px;
+        }
+
+        .btn-content {
+            text-align: center;
+        }
+
+        .btn-title {
+            font-size: 0.95rem;
+        }
+
+        .btn-subtitle {
+            font-size: 0.75rem;
+        }
+
+        .btn-icon-wrapper {
+            width: 40px;
+            height: 40px;
+        }
+
+        .btn-icon-wrapper i {
+            font-size: 1.2rem;
+        }
+
+        .secondary-buttons {
+            width: 100%;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .btn-secondary {
+            flex: 1;
+            justify-content: center;
+            min-width: 120px;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .btn-interactive-study,
+        .btn-test-mode {
+            min-width: 200px;
+            padding: 12px 15px;
+            gap: 10px;
+        }
+
+        .btn-title {
+            font-size: 0.9rem;
+        }
+
+        .btn-subtitle {
+            font-size: 0.7rem;
+        }
+
+        .btn-icon-wrapper {
+            width: 35px;
+            height: 35px;
+        }
+
+        .btn-icon-wrapper i {
+            font-size: 1.1rem;
+        }
+
+        .btn-badge {
+            font-size: 0.7rem;
+            padding: 5px 9px;
+            top: -10px;
+            right: -10px;
+            min-width: 50px;
+            height: 26px;
+            border-radius: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.6);
+        }
+
+        .secondary-buttons {
+            flex-direction: column;
+            width: 100%;
+            gap: 8px;
+        }
+
+        .btn-secondary {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+    /* Enhanced Button Layout Styles */
+    .buttons-layout {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        align-items: center;
+        width: 100%;
+    }
+
+    .primary-buttons-row {
+        display: flex;
+        gap: 20px;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+        width: 100%;
+    }
+
+    .secondary-buttons-row {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    /* Enhanced Primary Buttons */
+    .btn-interactive-study,
+    .btn-test-mode {
+        flex: 0 0 auto;
+        min-width: 320px;
+        max-width: 380px;
+        padding: 20px 28px;
+        border-radius: 22px;
+        font-size: 1.05rem;
+    }
+
+    /* Enhanced Secondary Buttons */
+    .btn-secondary-enhanced {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 20px;
+        background: rgba(255, 255, 255, 0.9);
+        border: 2px solid rgba(99, 102, 241, 0.2);
+        border-radius: 18px;
+        color: #6366f1;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.95rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 4px 15px rgba(99, 102, 241, 0.1);
+        backdrop-filter: blur(10px);
+        min-width: 140px;
+        justify-content: center;
+    }
+
+    .btn-secondary-enhanced:hover {
+        background: rgba(99, 102, 241, 0.05);
+        border-color: #6366f1;
+        color: #4f46e5;
+        text-decoration: none;
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(99, 102, 241, 0.2);
+    }
+
+    .btn-secondary-enhanced:active {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(99, 102, 241, 0.15);
+    }
+
+    .btn-secondary-enhanced i {
+        font-size: 1.1rem;
+        transition: transform 0.3s ease;
+    }
+
+    .btn-secondary-enhanced:hover i {
+        transform: scale(1.1);
+    }
+
+    /* Responsive Design for Enhanced Layout */
+    @media (max-width: 1200px) {
+        .btn-interactive-study,
+        .btn-test-mode {
+            min-width: 280px;
+            max-width: 320px;
+            padding: 18px 24px;
+        }
+    }
+
+    @media (max-width: 992px) {
+        .primary-buttons-row {
+            gap: 15px;
+        }
+
+        .btn-interactive-study,
+        .btn-test-mode {
+            min-width: 260px;
+            max-width: 300px;
+            padding: 16px 22px;
+        }
+
+        .secondary-buttons-row {
+            gap: 10px;
+        }
+
+        .btn-secondary-enhanced {
+            min-width: 130px;
+            padding: 12px 18px;
+            font-size: 0.9rem;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .buttons-layout {
+            gap: 18px;
+        }
+
+        .primary-buttons-row {
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+        }
+
+        .btn-interactive-study,
+        .btn-test-mode {
+            width: 100%;
+            max-width: none;
+            min-width: auto;
+            padding: 16px 20px;
+            flex-direction: row;
+            text-align: left;
+            gap: 15px;
+        }
+
+        .btn-content {
+            text-align: left;
+        }
+
+        .secondary-buttons-row {
+            width: 100%;
+            justify-content: space-between;
+        }
+
+        .btn-secondary-enhanced {
+            flex: 1;
+            min-width: auto;
+            max-width: 48%;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .buttons-layout {
+            gap: 15px;
+        }
+
+        .btn-interactive-study,
+        .btn-test-mode {
+            padding: 14px 18px;
+            font-size: 1rem;
+        }
+
+        .btn-title {
+            font-size: 1rem;
+        }
+
+        .btn-subtitle {
+            font-size: 0.8rem;
+        }
+
+        .secondary-buttons-row {
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .btn-secondary-enhanced {
+            width: 100%;
+            max-width: none;
+            padding: 12px 16px;
+        }
+    }
+
+    /* Header Actions Section Updates */
+    .header-actions-section {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        margin-top: 10px;
+    }
+
+    /* Animation for button appearance */
+    @keyframes buttonSlideIn {
+        0% {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .primary-buttons-row .btn-interactive-study {
+        animation: buttonSlideIn 0.6s ease-out 0.1s both;
+    }
+
+    .primary-buttons-row .btn-test-mode {
+        animation: buttonSlideIn 0.6s ease-out 0.2s both;
+    }
+
+    .secondary-buttons-row .btn-secondary-enhanced:first-child {
+        animation: buttonSlideIn 0.6s ease-out 0.3s both;
+    }
+
+    .secondary-buttons-row .btn-secondary-enhanced:last-child {
+        animation: buttonSlideIn 0.6s ease-out 0.4s both;
+    }
+
+    /* Enhanced Flashcards Header Styles */
+    .flashcards-header-modern {
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 50%, #e2e8f0 100%);
+        border-radius: 30px;
+        padding: 35px;
+        margin-bottom: 2.5rem;
+        box-shadow: 
+            0 20px 60px rgba(0, 0, 0, 0.08),
+            0 8px 25px rgba(99, 102, 241, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        position: relative;
+        overflow: hidden;
+        backdrop-filter: blur(20px);
+    }
+
+    .flashcards-header-modern::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: 
+            radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.15) 0%, transparent 40%),
+            radial-gradient(circle at 85% 85%, rgba(139, 92, 246, 0.15) 0%, transparent 40%),
+            radial-gradient(circle at 50% 50%, rgba(236, 72, 153, 0.08) 0%, transparent 60%);
+        pointer-events: none;
+        z-index: 1;
+        animation: backgroundShift 8s ease-in-out infinite;
+    }
+
+    @keyframes backgroundShift {
+        0%, 100% {
+            opacity: 1;
+            transform: scale(1) rotate(0deg);
+        }
+        50% {
+            opacity: 0.8;
+            transform: scale(1.05) rotate(2deg);
+        }
+    }
+
+    .flashcards-header-modern::after {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: conic-gradient(from 0deg, transparent, rgba(99, 102, 241, 0.03), transparent, rgba(139, 92, 246, 0.03), transparent);
+        animation: rotate 20s linear infinite;
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    @keyframes rotate {
+        0% {
+            transform: rotate(0deg);
+        }
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+    .header-top-section {
+        position: relative;
+        z-index: 2;
+        margin-bottom: 25px;
+    }
+
+    .header-title-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .title-icon-container {
+        position: relative;
+        width: 80px;
+        height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+        border-radius: 25px;
+        box-shadow: 
+            0 15px 40px rgba(99, 102, 241, 0.4),
+            0 5px 15px rgba(139, 92, 246, 0.3),
+            inset 0 2px 0 rgba(255, 255, 255, 0.3);
+        transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        border: 3px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .title-icon-container:hover {
+        transform: rotate(15deg) scale(1.15);
+        box-shadow: 
+            0 20px 50px rgba(99, 102, 241, 0.5),
+            0 10px 25px rgba(139, 92, 246, 0.4),
+            0 0 30px rgba(236, 72, 153, 0.3);
+    }
+
+    .title-icon {
+        font-size: 2rem;
+        color: white;
+        filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+        transition: all 0.3s ease;
+    }
+
+    .icon-glow {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border-radius: 20px;
+        background: radial-gradient(circle at center, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+        animation: iconGlow 3s ease-in-out infinite;
+        pointer-events: none;
+    }
+
+    @keyframes iconGlow {
+        0%, 100% {
+            opacity: 0.3;
+            transform: scale(1);
+        }
+        50% {
+            opacity: 0.8;
+            transform: scale(1.1);
+        }
+    }
+
+    .title-content {
+        flex: 1;
+        max-width: 600px;
+    }
+
+    .main-title {
+        font-size: 2.8rem;
+        font-weight: 900;
+        background: linear-gradient(135deg, #1e293b 0%, #475569 50%, #6366f1 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 15px;
+        position: relative;
+        line-height: 1.1;
+        text-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        filter: drop-shadow(0 2px 4px rgba(99, 102, 241, 0.2));
+        animation: titleShine 4s ease-in-out infinite;
+    }
+
+    @keyframes titleShine {
+        0%, 100% {
+            filter: drop-shadow(0 2px 4px rgba(99, 102, 241, 0.2));
+        }
+        50% {
+            filter: drop-shadow(0 4px 8px rgba(99, 102, 241, 0.4));
+        }
+    }
+
+    .title-underline {
+        height: 6px;
+        background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 30%, #ec4899 70%, #f59e0b 100%);
+        border-radius: 3px;
+        margin: 12px auto 0;
+        width: 85%;
+        animation: underlineGlow 3s ease-in-out infinite;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .title-underline::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+        animation: underlineShimmer 2s ease-in-out infinite;
+    }
+
+    @keyframes underlineShimmer {
+        0% { left: -100%; }
+        100% { left: 100%; }
+    }
+
+    @keyframes underlineGlow {
+        0%, 100% {
+            box-shadow: 0 0 10px rgba(99, 102, 241, 0.3);
+            transform: scaleX(1);
+        }
+        50% {
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.6);
+            transform: scaleX(1.05);
+        }
+    }
+
+    .cards-counter {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 12px 20px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .counter-number {
+        font-size: 1.8rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        position: relative;
+        animation: numberPulse 3s ease-in-out infinite;
+    }
+
+    @keyframes numberPulse {
+        0%, 100% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.05);
+        }
+    }
+
+    .counter-label {
+        font-size: 1rem;
+        color: #64748b;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .counter-pulse {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        border-radius: 20px;
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+        animation: counterPulse 3s ease-in-out infinite;
+        pointer-events: none;
+    }
+
+    @keyframes counterPulse {
+        0%, 100% {
+            opacity: 0;
+            transform: scale(1);
+        }
+        50% {
+            opacity: 1;
+            transform: scale(1.05);
+        }
+    }
+
+    .header-actions-section {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+
+    /* Floating particles effect */
+    .flashcards-header-modern .floating-particle {
+        position: absolute;
+        width: 4px;
+        height: 4px;
+        background: linear-gradient(45deg, #6366f1, #8b5cf6);
+        border-radius: 50%;
+        opacity: 0.6;
+        animation: float 6s ease-in-out infinite;
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    .floating-particle:nth-child(1) {
+        top: 20%;
+        left: 10%;
+        animation-delay: 0s;
+    }
+
+    .floating-particle:nth-child(2) {
+        top: 60%;
+        left: 80%;
+        animation-delay: 2s;
+    }
+
+    .floating-particle:nth-child(3) {
+        top: 80%;
+        left: 20%;
+        animation-delay: 4s;
+    }
+
+    @keyframes float {
+        0%, 100% {
+            transform: translateY(0px) rotate(0deg);
+            opacity: 0.6;
+        }
+        50% {
+            transform: translateY(-20px) rotate(180deg);
+            opacity: 1;
+        }
+    }
+
+    /* Enhanced glass morphism effect */
+    .flashcards-header-modern {
+        backdrop-filter: blur(25px);
+        -webkit-backdrop-filter: blur(25px);
+        background: 
+            linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.8) 50%, rgba(226, 232, 240, 0.7) 100%),
+            radial-gradient(circle at 30% 30%, rgba(99, 102, 241, 0.05) 0%, transparent 50%),
+            radial-gradient(circle at 70% 70%, rgba(139, 92, 246, 0.05) 0%, transparent 50%);
+    }
+
+    /* Responsive Design for Enhanced Header */
+    @media (max-width: 1024px) {
+        .flashcards-header-modern {
+            padding: 25px;
+        }
+
+        .header-title-wrapper {
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .title-icon-container {
+            width: 60px;
+            height: 60px;
+        }
+
+        .title-icon {
+            font-size: 1.8rem;
+        }
+
+        .main-title {
+            font-size: 2.2rem;
+        }
+
+        .counter-number {
+            font-size: 1.6rem;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .flashcards-header-modern {
+            padding: 20px;
+            border-radius: 20px;
+        }
+
+        .header-title-wrapper {
+            gap: 12px;
+        }
+
+        .title-icon-container {
+            width: 50px;
+            height: 50px;
+        }
+
+        .title-icon {
+            font-size: 1.5rem;
+        }
+
+        .main-title {
+            font-size: 1.8rem;
+        }
+
+        .counter-number {
+            font-size: 1.4rem;
+        }
+
+        .counter-label {
+            font-size: 0.9rem;
+        }
+
+        .cards-counter {
+            padding: 10px 16px;
+        }
+
+        .header-actions-section {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 15px;
+        }
+
+        .header-actions-section .d-flex {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 12px !important;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .flashcards-header-modern {
+            padding: 15px;
+            margin-bottom: 1.5rem;
+        }
+
+        .header-top-section {
+            margin-bottom: 20px;
+        }
+
+        .title-icon-container {
+            width: 45px;
+            height: 45px;
+            border-radius: 15px;
+        }
+
+        .title-icon {
+            font-size: 1.3rem;
+        }
+
+        .main-title {
+            font-size: 1.5rem;
+        }
+
+        .counter-number {
+            font-size: 1.2rem;
+        }
+
+        .counter-label {
+            font-size: 0.8rem;
+        }
+
+        .cards-counter {
+            padding: 8px 12px;
+            border-radius: 15px;
+        }
+
+        .title-underline {
+            width: 90%;
+        }
+    }
+
+    /* Animation for header appearance */
+    @keyframes headerFadeIn {
+        0% {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .flashcards-header-modern {
+        animation: headerFadeIn 0.6s ease-out;
+    }
+
+    /* Additional premium effects */
+    .flashcards-header-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 
+            0 25px 70px rgba(0, 0, 0, 0.12),
+            0 10px 30px rgba(99, 102, 241, 0.15),
+            inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    }
+
+    .flashcards-header-modern:hover .title-underline {
+        animation-duration: 1.5s;
+    }
+
+    .flashcards-header-modern:hover .counter-pulse {
+        animation-duration: 2s;
+    }
+
+    .counter-label {
+        font-size: 1rem;
+        color: #64748b;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .counter-pulse {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        border-radius: 20px;
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+        animation: counterPulse 3s ease-in-out infinite;
+        pointer-events: none;
+    }
+
+    @keyframes counterPulse {
+        0%, 100% {
+            opacity: 0;
+            transform: scale(1);
+        }
+        50% {
+            opacity: 1;
+            transform: scale(1.05);
+        }
+    }
+
+    .header-actions-section {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+
+    /* Responsive Design for Enhanced Header */
+    @media (max-width: 1024px) {
+        .flashcards-header-modern {
+            padding: 25px;
+        }
+
+        .header-title-wrapper {
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .title-icon-container {
+            width: 60px;
+            height: 60px;
+        }
+
+        .title-icon {
+            font-size: 1.8rem;
+        }
+
+        .main-title {
+            font-size: 2.2rem;
+        }
+
+        .counter-number {
+            font-size: 1.6rem;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .flashcards-header-modern {
+            padding: 20px;
+            border-radius: 20px;
+        }
+
+        .header-title-wrapper {
+            gap: 12px;
+        }
+
+        .title-icon-container {
+            width: 50px;
+            height: 50px;
+        }
+
+        .title-icon {
+            font-size: 1.5rem;
+        }
+
+        .main-title {
+            font-size: 1.8rem;
+        }
+
+        .counter-number {
+            font-size: 1.4rem;
+        }
+
+        .counter-label {
+            font-size: 0.9rem;
+        }
+
+        .cards-counter {
+            padding: 10px 16px;
+        }
+
+        .header-actions-section {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 15px;
+        }
+
+        .header-actions-section .d-flex {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 12px !important;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .flashcards-header-modern {
+            padding: 15px;
+            margin-bottom: 1.5rem;
+        }
+
+        .header-top-section {
+            margin-bottom: 20px;
+        }
+
+        .title-icon-container {
+            width: 45px;
+            height: 45px;
+            border-radius: 15px;
+        }
+
+        .title-icon {
+            font-size: 1.3rem;
+        }
+
+        .main-title {
+            font-size: 1.5rem;
+        }
+
+        .counter-number {
+            font-size: 1.2rem;
+        }
+
+        .counter-label {
+            font-size: 0.8rem;
+        }
+
+        .cards-counter {
+            padding: 8px 12px;
+            border-radius: 15px;
+        }
+
+        .title-underline {
+            width: 90%;
+        }
+    }
+
+    /* Animation for header appearance */
+    @keyframes headerFadeIn {
+        0% {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .flashcards-header-modern {
+        animation: headerFadeIn 0.6s ease-out;
+    }
+
     .flashcard-header {
         background: #f8f9fa;
         padding: 15px 20px;
@@ -2031,117 +3890,228 @@
         <!-- Enhanced Flashcards Tab -->
         <div class="tab-pane fade" id="flashcards" role="tabpanel">
             <!-- Header with Statistics -->
-            <div class="flashcards-header mb-4">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h4>
-                        <i class="fas fa-layer-group me-2"></i>Умные флеш-карты
-                        <small class="text-muted">({{ flashcards|length }} карт)</small>
-                    </h4>
-                    <div class="d-flex gap-2">
-                        <button class="btn btn-primary btn-sm" onclick="startInteractiveStudy()">
-                            <i class="fas fa-play me-1"></i>Интерактивное изучение
-                        </button>
-                        <a href="{{ url_for('test_mode', result_id=result_id) }}" class="btn btn-info btn-sm" title="Тестовые вопросы уже готовы!">
-                            <i class="fas fa-question-circle me-1"></i>Режим теста
-                        </a>
-                        <button class="btn btn-warning btn-sm" onclick="showCreateCardModal()">
-                            <i class="fas fa-plus me-1"></i>Создать карту
-                        </button>
-                        <a href="{{ url_for('download_flashcards', result_id=result_id) }}"
-                            class="btn btn-success btn-sm">
-                            <i class="fas fa-download me-1"></i>Экспорт
-                        </a>
+            <div class="flashcards-header-modern mb-4">
+                <!-- Enhanced Header Section -->
+                <div class="header-top-section">
+                    <!-- Floating Particles -->
+                    <div class="floating-particle"></div>
+                    <div class="floating-particle"></div>
+                    <div class="floating-particle"></div>
+                    
+                    <div class="header-title-wrapper">
+                        <div class="title-icon-container">
+                            <i class="fas fa-layer-group title-icon"></i>
+                            <div class="icon-glow"></div>
+                        </div>
+                        <div class="title-content">
+                            <h3 class="main-title">
+                                🧠 Умные флеш-карты
+                                <div class="title-underline"></div>
+                            </h3>
+                            <div class="cards-counter">
+                                <span class="counter-number">{{ flashcards|length }}</span>
+                                <span class="counter-label">карт готово к изучению</span>
+                                <div class="counter-pulse"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Progress Statistics -->
-                <div class="flashcards-stats mb-3">
-                    <div class="row">
-                        <div class="col-md-3">
-                            <div class="stat-card text-center p-3 bg-success text-white rounded">
-                                <div class="stat-number" id="masteredCount">0</div>
-                                <div class="stat-label">Изучено</div>
+                <!-- Action Buttons Section -->
+                <div class="header-actions-section">
+                    <div class="buttons-layout">
+                        <!-- Primary Action Buttons -->
+                        <div class="primary-buttons-row">
+                            <!-- Interactive Study Button -->
+                            <button class="btn-interactive-study" onclick="startInteractiveStudy()">
+                                <div class="btn-icon-wrapper">
+                                    <i class="fas fa-play"></i>
+                                    <div class="btn-sparkle"></div>
+                                </div>
+                                <div class="btn-content">
+                                    <div class="btn-title">🎯 Интерактивное изучение</div>
+                                    <div class="btn-subtitle">Умный режим с адаптацией</div>
+                                </div>
+                                <div class="btn-badge">SMART</div>
+                            </button>
+
+                            <!-- Test Mode Button -->
+                            <a href="{{ url_for('test_mode', result_id=result_id) }}" class="btn-test-mode" title="Готовые тестовые вопросы ждут вас!">
+                                <div class="btn-icon-wrapper">
+                                    <i class="fas fa-brain"></i>
+                                    <div class="btn-pulse"></div>
+                                </div>
+                                <div class="btn-content">
+                                    <div class="btn-title">🧠 Режим теста</div>
+                                    <div class="btn-subtitle">Проверь свои знания</div>
+                                </div>
+                                <div class="btn-badge">HOT</div>
+                            </a>
+                        </div>
+
+                        <!-- Secondary Action Buttons -->
+                        <div class="secondary-buttons-row">
+                            <button class="btn-secondary-enhanced" onclick="showCreateCardModal()">
+                                <i class="fas fa-plus"></i>
+                                <span>Создать карту</span>
+                            </button>
+                            <a href="{{ url_for('download_flashcards', result_id=result_id) }}" class="btn-secondary-enhanced">
+                                <i class="fas fa-download"></i>
+                                <span>Экспорт</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Enhanced Progress Statistics -->
+                <div class="flashcards-stats mb-4">
+                    <div class="row g-3">
+                        <div class="col-md-3 col-sm-6">
+                            <div class="stat-card-modern mastered-card">
+                                <div class="stat-icon-wrapper">
+                                    <i class="fas fa-check-circle stat-icon"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-number" id="masteredCount">0</div>
+                                    <div class="stat-label">ИЗУЧЕНО</div>
+                                </div>
+                                <div class="stat-progress">
+                                    <div class="progress-bar mastered-progress" style="width: 0%"></div>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-md-3">
-                            <div class="stat-card text-center p-3 bg-warning text-white rounded">
-                                <div class="stat-number" id="reviewCount">0</div>
-                                <div class="stat-label">На повторение</div>
+                        <div class="col-md-3 col-sm-6">
+                            <div class="stat-card-modern review-card">
+                                <div class="stat-icon-wrapper">
+                                    <i class="fas fa-redo-alt stat-icon"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-number" id="reviewCount">0</div>
+                                    <div class="stat-label">НА ПОВТОРЕНИЕ</div>
+                                </div>
+                                <div class="stat-progress">
+                                    <div class="progress-bar review-progress" style="width: 0%"></div>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-md-3">
-                            <div class="stat-card text-center p-3 bg-info text-white rounded">
-                                <div class="stat-number" id="newCount">{{ flashcards|length }}</div>
-                                <div class="stat-label">Новые</div>
+                        <div class="col-md-3 col-sm-6">
+                            <div class="stat-card-modern new-card">
+                                <div class="stat-icon-wrapper">
+                                    <i class="fas fa-plus-circle stat-icon"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-number" id="newCount">{{ flashcards|length }}</div>
+                                    <div class="stat-label">НОВЫЕ</div>
+                                </div>
+                                <div class="stat-progress">
+                                    <div class="progress-bar new-progress" style="width: 100%"></div>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-md-3">
-                            <div class="stat-card text-center p-3 bg-primary text-white rounded">
-                                <div class="stat-number" id="progressPercent">0%</div>
-                                <div class="stat-label">Прогресс</div>
+                        <div class="col-md-3 col-sm-6">
+                            <div class="stat-card-modern progress-card">
+                                <div class="stat-icon-wrapper">
+                                    <i class="fas fa-chart-line stat-icon"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-number" id="progressPercent">0%</div>
+                                    <div class="stat-label">ПРОГРЕСС</div>
+                                </div>
+                                <div class="stat-progress">
+                                    <div class="progress-bar overall-progress" style="width: 0%"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Enhanced Controls -->
-            <div class="flashcards-controls mb-4">
-                <div class="row">
-                    <div class="col-md-8">
-                        <!-- Search and Filters -->
-                        <div class="d-flex flex-wrap gap-2 align-items-center">
-                            <!-- Search -->
-                            <div class="input-group" style="width: 250px;">
-                                <input type="text" class="form-control form-control-sm" placeholder="Поиск по картам..."
-                                    id="flashcardSearch">
-                                <button class="btn btn-outline-secondary btn-sm" type="button"
-                                    onclick="searchFlashcards()">
-                                    <i class="fas fa-search"></i>
+            <!-- Enhanced Modern Controls -->
+            <div class="flashcards-controls-modern mb-4">
+                <!-- Search Section -->
+                <div class="search-section mb-3">
+                    <div class="search-container">
+                        <div class="search-input-wrapper">
+                            <i class="fas fa-search search-icon"></i>
+                            <input type="text" class="search-input" placeholder="Поиск по картам..." id="flashcardSearch">
+                            <button class="search-clear-btn" onclick="clearSearch()" style="display: none;">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filters Section -->
+                <div class="filters-section">
+                    <div class="filters-row">
+                        <!-- Type Filters -->
+                        <div class="filter-group">
+                            <div class="filter-pills">
+                                <button class="filter-pill active" onclick="filterCards('all')" data-filter="all">
+                                    <i class="fas fa-th-large"></i>
+                                    <span>Все</span>
                                 </button>
+                                <button class="filter-pill" onclick="filterCards('definition')" data-filter="definition">
+                                    <i class="fas fa-book"></i>
+                                    <span>Определения</span>
+                                </button>
+                                <button class="filter-pill" onclick="filterCards('concept')" data-filter="concept">
+                                    <i class="fas fa-lightbulb"></i>
+                                    <span>Концепции</span>
+                                </button>
+                                <button class="filter-pill" onclick="filterCards('application')" data-filter="application">
+                                    <i class="fas fa-cogs"></i>
+                                    <span>Применение</span>
+                                </button>
+                                <button class="filter-pill" onclick="filterCards('comparison')" data-filter="comparison">
+                                    <i class="fas fa-balance-scale"></i>
+                                    <span>Сравнение</span>
+                                </button>
+                                <button class="filter-pill" onclick="filterCards('problem')" data-filter="problem">
+                                    <i class="fas fa-puzzle-piece"></i>
+                                    <span>Задачи</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Sort and View Controls -->
+                        <div class="control-group">
+                            <div class="sort-dropdown">
+                                <button class="sort-btn dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-sort"></i>
+                                    <span>По сложности</span>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#" onclick="sortCards('difficulty')">
+                                        <i class="fas fa-sort-amount-up me-2"></i>По сложности
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="sortCards('type')">
+                                        <i class="fas fa-tags me-2"></i>По типу
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="sortCards('progress')">
+                                        <i class="fas fa-chart-line me-2"></i>По прогрессу
+                                    </a></li>
+                                </ul>
                             </div>
 
-                            <!-- Type Filters -->
-                            <div class="btn-group btn-group-sm" role="group">
-                                <button class="btn btn-outline-secondary active" onclick="filterCards('all')"
-                                    data-filter="all">Все</button>
-                                <button class="btn btn-outline-success" onclick="filterCards('definition')"
-                                    data-filter="definition">Определения</button>
-                                <button class="btn btn-outline-info" onclick="filterCards('concept')"
-                                    data-filter="concept">Концепции</button>
-                                <button class="btn btn-outline-warning" onclick="filterCards('application')"
-                                    data-filter="application">Применение</button>
-                                <button class="btn btn-outline-danger" onclick="filterCards('comparison')"
-                                    data-filter="comparison">Сравнение</button>
-                                <button class="btn btn-outline-primary" onclick="filterCards('problem')"
-                                    data-filter="problem">Задачи</button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <!-- View Controls -->
-                        <div class="d-flex gap-2 justify-content-end">
-                            <div class="btn-group btn-group-sm" role="group">
-                                <button class="btn btn-outline-secondary" onclick="sortCards('difficulty')">
-                                    <i class="fas fa-sort-amount-up me-1"></i>По сложности
+                            <div class="view-controls">
+                                <button class="view-btn" onclick="expandAll()" title="Развернуть все">
+                                    <i class="fas fa-expand-alt"></i>
                                 </button>
-                                <button class="btn btn-outline-secondary" onclick="sortCards('type')">
-                                    <i class="fas fa-tags me-1"></i>По типу
-                                </button>
-                                <button class="btn btn-outline-secondary" onclick="sortCards('progress')">
-                                    <i class="fas fa-chart-line me-1"></i>По прогрессу
-                                </button>
-                            </div>
-                            <div class="btn-group btn-group-sm" role="group">
-                                <button class="btn btn-outline-success" onclick="expandAll()">
-                                    <i class="fas fa-expand me-1"></i>Развернуть
-                                </button>
-                                <button class="btn btn-outline-warning" onclick="collapseAll()">
-                                    <i class="fas fa-compress me-1"></i>Свернуть
+                                <button class="view-btn" onclick="collapseAll()" title="Свернуть все">
+                                    <i class="fas fa-compress-alt"></i>
                                 </button>
                             </div>
                         </div>
                     </div>
+                </div>
+
+                <!-- Results Counter -->
+                <div class="results-counter">
+                    <span class="counter-text">
+                        <i class="fas fa-layer-group me-1"></i>
+                        Показано: <span id="visibleCardsCount">{{ flashcards|length }}</span> из {{ flashcards|length }} карт
+                    </span>
                 </div>
             </div>
 
