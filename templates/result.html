@@ -2359,6 +2359,9 @@
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h4 class="mb-0"><i class="fas fa-project-diagram me-2"></i>Интерактивная ментальная карта</h4>
                 <div>
+                    <button class="btn btn-outline-info btn-sm me-2" onclick="initMindMap()">
+                        <i class="fas fa-sync-alt me-1"></i>Перезагрузить
+                    </button>
                     <button class="btn btn-outline-secondary btn-sm me-2" onclick="resetMindMapView()">
                         <i class="fas fa-expand-arrows-alt me-1"></i>Сбросить вид
                     </button>
@@ -3634,31 +3637,75 @@
     let mindMapLinks = [];
 
     function initMindMap() {
+        console.log('🗺️ Initializing mind map...');
+        
         // Show loading
         document.getElementById('mindMapLoading').style.display = 'block';
 
         fetch(`/api/mind_map/{{ result_id }}`)
-            .then(response => response.json())
+            .then(response => {
+                console.log('📡 Mind map API response status:', response.status);
+                return response.json();
+            })
             .then(data => {
+                console.log('📊 Mind map data received:', data);
                 mindMapData = data;
                 document.getElementById('mindMapLoading').style.display = 'none';
+                
+                // Проверяем структуру данных
+                if (!data || !data.branches) {
+                    console.error('❌ Invalid mind map data structure:', data);
+                    document.getElementById('mindMapLoading').innerHTML =
+                        '<div class="text-warning"><i class="fas fa-exclamation-triangle"></i> Нет данных для mind map</div>';
+                    return;
+                }
+                
+                console.log('✅ Drawing mind map with', data.branches.length, 'branches');
                 drawModernMindMap();
             })
             .catch(error => {
-                console.error('Error loading mind map:', error);
+                console.error('❌ Error loading mind map:', error);
                 document.getElementById('mindMapLoading').innerHTML =
-                    '<div class="text-danger"><i class="fas fa-exclamation-triangle"></i> Ошибка загрузки</div>';
+                    '<div class="text-danger"><i class="fas fa-exclamation-triangle"></i> Ошибка загрузки: ' + error.message + '</div>';
             });
     }
 
     function drawModernMindMap() {
-        if (!mindMapData || !mindMapData.branches) return;
+        console.log('🎨 Starting to draw mind map...');
+        
+        // Проверяем наличие D3
+        if (typeof d3 === 'undefined') {
+            console.error('❌ D3.js library not loaded');
+            document.getElementById('mindMapLoading').innerHTML =
+                '<div class="text-danger"><i class="fas fa-exclamation-triangle"></i> D3.js не загружен</div>';
+            return;
+        }
+        
+        if (!mindMapData || !mindMapData.branches) {
+            console.error('❌ No mind map data or branches');
+            return;
+        }
 
+        console.log('📊 Mind map data:', mindMapData);
+        
         const svg = d3.select('#mindMapSvg');
+        if (svg.empty()) {
+            console.error('❌ SVG element not found');
+            return;
+        }
+        
         svg.selectAll('*').remove(); // Clear previous content
 
-        const width = document.getElementById('mindMapSvg').clientWidth;
+        const svgElement = document.getElementById('mindMapSvg');
+        if (!svgElement) {
+            console.error('❌ SVG DOM element not found');
+            return;
+        }
+        
+        const width = svgElement.clientWidth || 800;
         const height = 500;
+        
+        console.log('📐 SVG dimensions:', width, 'x', height);
 
         // Prepare data
         prepareGraphData();
@@ -6284,4 +6331,35 @@
     });
 
 </script>
-{% endblock %}
+{% endblock %}    //
+ Инициализация при загрузке страницы
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('🚀 Page loaded, initializing components...');
+        
+        // Инициализируем mind-map при переключении на вкладку
+        const mindmapTab = document.getElementById('mindmap-tab');
+        if (mindmapTab) {
+            mindmapTab.addEventListener('shown.bs.tab', function() {
+                console.log('🗺️ Mind map tab activated');
+                if (!mindMapData) {
+                    initMindMap();
+                }
+            });
+            
+            // Если вкладка mind-map уже активна при загрузке
+            if (mindmapTab.classList.contains('active')) {
+                console.log('🗺️ Mind map tab is already active, initializing...');
+                setTimeout(initMindMap, 100);
+            }
+        }
+        
+        // Инициализируем чат при переключении на вкладку
+        const chatTab = document.getElementById('chat-tab');
+        if (chatTab) {
+            chatTab.addEventListener('shown.bs.tab', function() {
+                if (chatHistory.length === 0) {
+                    loadChatHistory();
+                }
+            });
+        }
+    });
