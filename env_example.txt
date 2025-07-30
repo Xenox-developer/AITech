@@ -1,0 +1,17 @@
+# OpenAI API key for GPT-4 (required)
+OPENAI_API_KEY=your_key
+
+# Maximum upload file size in MB (default: 200)
+MAX_UPLOAD_MB=200
+
+# Flask environment (development/production)
+FLASK_ENV=development
+
+# Secret key for Flask sessions (generate a random one for production)
+SECRET_KEY=dev-secret-key-change-in-production
+
+# Optional: Database path (default: ai_study.db in project root)
+# DATABASE_PATH=/path/to/database/ai_study.db
+
+# Optional: Upload folder path (default: uploads/ in project root)
+# UPLOAD_FOLDER=/path/to/uploads
