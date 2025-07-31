@@ -7,8 +7,10 @@ venv/
 env/
 .env
 *.db
+*.db.backup.*
 uploads/*
 !uploads/.gitkeep
+migrations/__pycache__/
 .DS_Store
 *.log
 .idea/

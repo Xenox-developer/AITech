@@ -11,6 +11,9 @@ pdfminer.six
 PyPDF2
 pdfplumber
 
+# PowerPoint Processing
+python-pptx
+
 # Audio/Video Processing
 whisperx
 openai-whisper

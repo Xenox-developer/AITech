@@ -7,6 +7,7 @@ from flask_login import LoginManager, login_user, logout_user, login_required, c
 from werkzeug.utils import secure_filename
 from usage_tracking import usage_tracker
 from auth import User, init_auth_db, generate_password_hash, check_password_hash
+from migration_manager import run_migrations
 import logging
 from pathlib import Path
 import yt_dlp
@@ -44,7 +45,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Допустимые форматы файла
-ALLOWED_EXTENSIONS = {'pdf', 'mp4', 'mov', 'mkv'}
+ALLOWED_EXTENSIONS = {'pdf', 'pptx', 'mp4', 'mov', 'mkv'}
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -169,6 +170,12 @@ def download_video_from_url(url, upload_folder):
 
 def init_db():
     """Инициализация БД SQLite"""
+    # Запускаем миграции перед инициализацией
+    try:
+        run_migrations()
+    except Exception as e:
+        logger.warning(f"Migration error (continuing): {e}")
+    
     conn = sqlite3.connect('ai_study.db')
     c = conn.cursor()
     
@@ -637,24 +644,40 @@ def update_profile():
 def my_results():
     """Мои результаты"""
     page = request.args.get('page', 1, type=int)
+    file_filter = request.args.get('filter', '')
     per_page = 10
     
     conn = sqlite3.connect('ai_study.db')
     c = conn.cursor()
     
-    # Получаем общее количество результатов
-    c.execute('SELECT COUNT(*) FROM result WHERE user_id = ?', (current_user.id,))
+    # Строим SQL запрос с учетом фильтра
+    base_where = 'WHERE user_id = ?'
+    params = [current_user.id]
+    
+    if file_filter:
+        if file_filter == 'pdf':
+            base_where += ' AND file_type = ?'
+            params.append('.pdf')
+        elif file_filter == 'pptx':
+            base_where += ' AND file_type = ?'
+            params.append('.pptx')
+        elif file_filter == 'video':
+            base_where += ' AND file_type IN (?, ?, ?)'
+            params.extend(['.mp4', '.mov', '.mkv'])
+    
+    # Получаем общее количество результатов с учетом фильтра
+    c.execute(f'SELECT COUNT(*) FROM result {base_where}', params)
     total = c.fetchone()[0]
     
-    # Получаем результаты с пагинацией
+    # Получаем результаты с пагинацией и фильтрацией
     offset = (page - 1) * per_page
-    c.execute('''
+    c.execute(f'''
         SELECT id, filename, file_type, created_at
         FROM result 
-        WHERE user_id = ?
+        {base_where}
         ORDER BY created_at DESC
         LIMIT ? OFFSET ?
-    ''', (current_user.id, per_page, offset))
+    ''', params + [per_page, offset])
     
     results = []
     for row in c.fetchall():
@@ -1193,7 +1216,7 @@ def upload_file():
         
         # Проверка формата файла
         if not allowed_file(file.filename):
-            flash('Формат не поддерживается. Используйте PDF, MP4, MOV или MKV', 'danger')
+            flash('Формат не поддерживается. Используйте PDF, PPTX, MP4, MOV или MKV', 'danger')
             return redirect(url_for('index'))
         
         # Сохранение файла
@@ -1205,26 +1228,30 @@ def upload_file():
         
         logger.info(f"File uploaded: {filename}")
         
-        # Получение диапазона страниц (только для PDF)
+        # Получение диапазона страниц/слайдов (для PDF и PPTX)
         page_range = None
         file_type = Path(filename).suffix.lower()
-        if file_type == '.pdf':
+        if file_type in ['.pdf', '.pptx']:
             page_range = request.form.get('page_range', '').strip()
             if not page_range:
                 page_range = '1-20'  # По умолчанию
-            logger.info(f"Page range specified: {page_range}")
+            if file_type == '.pdf':
+                logger.info(f"PDF page range specified: {page_range}")
+            else:
+                logger.info(f"PowerPoint slide range specified: {page_range}")
         
         # Обработка файла
         try:
             from ml import process_file
             analysis_result = process_file(filepath, filename, page_range=page_range)
             
-            # Подготовка информации о страницах
+            # Подготовка информации о страницах/слайдах
             page_info = None
-            if file_type == '.pdf' and page_range:
+            if file_type in ['.pdf', '.pptx'] and page_range:
                 page_info = {
                     'page_range': page_range,
-                    'processed_at': datetime.now().isoformat()
+                    'processed_at': datetime.now().isoformat(),
+                    'file_type': file_type
                 }
             
             # Сохранение результата в БД

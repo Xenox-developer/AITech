@@ -163,6 +163,10 @@
         background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
     }
     
+    .result-icon.pptx {
+        background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+    }
+    
     .result-icon.video {
         background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
     }
@@ -425,6 +429,9 @@
                         <button class="filter-btn" onclick="filterResults('pdf')">
                             <i class="fas fa-file-pdf me-1"></i>PDF
                         </button>
+                        <button class="filter-btn" onclick="filterResults('pptx')">
+                            <i class="fas fa-file-powerpoint me-1"></i>PowerPoint
+                        </button>
                         <button class="filter-btn" onclick="filterResults('video')">
                             <i class="fas fa-video me-1"></i>Видео
                         </button>
@@ -436,8 +443,8 @@
             <div id="results-container">
                 {% for result in all_results %}
                 <div class="result-item" data-type="{{ result.file_type }}">
-                    <div class="result-icon {{ 'pdf' if result.file_type == '.pdf' else 'video' }}">
-                        <i class="fas fa-{{ 'file-pdf' if result.file_type == '.pdf' else 'video' }}"></i>
+                    <div class="result-icon {{ 'pdf' if result.file_type == '.pdf' else ('pptx' if result.file_type == '.pptx' else 'video') }}">
+                        <i class="fas fa-{{ 'file-pdf' if result.file_type == '.pdf' else ('file-powerpoint' if result.file_type == '.pptx' else 'video') }}"></i>
                     </div>
                     <div class="result-info">
                         <div class="result-name">{{ result.filename }}</div>
@@ -575,6 +582,8 @@ function filterResults(type) {
         if (type === 'all') {
             result.classList.remove('hidden');
         } else if (type === 'pdf' && resultType === '.pdf') {
+            result.classList.remove('hidden');
+        } else if (type === 'pptx' && resultType === '.pptx') {
             result.classList.remove('hidden');
         } else if (type === 'video' && (resultType === '.mp4' || resultType === '.mov' || resultType === '.mkv')) {
             result.classList.remove('hidden');

@@ -14,6 +14,9 @@ load_dotenv()
 # Обработка PDF
 from pdfminer.high_level import extract_text
 
+# Обработка PowerPoint
+from pptx import Presentation
+
 # Обработка видео/аудио
 import whisperx
 import torch
@@ -94,6 +97,139 @@ def extract_text_from_pdf(filepath: str) -> str:
     except Exception as e:
         logger.error(f"Error extracting text from PDF: {str(e)}")
         raise
+
+def extract_text_from_pptx(filepath: str) -> str:
+    """Извлечение текста из PowerPoint файлов (.pptx)"""
+    try:
+        logger.info(f"Extracting text from PowerPoint: {filepath}")
+        
+        # Открываем презентацию
+        presentation = Presentation(filepath)
+        
+        # Собираем весь текст
+        full_text = []
+        slide_count = len(presentation.slides)
+        
+        logger.info(f"PowerPoint has {slide_count} slides")
+        
+        for slide_num, slide in enumerate(presentation.slides, 1):
+            slide_text = []
+            
+            # Извлекаем текст из всех текстовых элементов слайда
+            for shape in slide.shapes:
+                if hasattr(shape, "text") and shape.text.strip():
+                    slide_text.append(shape.text.strip())
+                
+                # Обрабатываем таблицы
+                if shape.has_table:
+                    table_text = []
+                    for row in shape.table.rows:
+                        row_text = []
+                        for cell in row.cells:
+                            if cell.text.strip():
+                                row_text.append(cell.text.strip())
+                        if row_text:
+                            table_text.append(" | ".join(row_text))
+                    if table_text:
+                        slide_text.append("\n".join(table_text))
+            
+            # Добавляем текст слайда с разделителем
+            if slide_text:
+                slide_content = f"\n--- Слайд {slide_num} ---\n" + "\n".join(slide_text)
+                full_text.append(slide_content)
+        
+        # Объединяем весь текст
+        extracted_text = "\n\n".join(full_text)
+        
+        # Ограничиваем размер текста для стабильной обработки
+        max_chars = 128000
+        if len(extracted_text) > max_chars:
+            logger.info(f"PowerPoint text too long ({len(extracted_text)} chars), truncating to {max_chars}")
+            extracted_text = extracted_text[:max_chars] + "\n\n[Текст обрезан для оптимизации обработки]"
+        
+        logger.info(f"Extracted {len(extracted_text)} characters from {slide_count} slides")
+        
+        if not extracted_text.strip():
+            logger.warning("No text found in PowerPoint presentation")
+            return "Презентация не содержит текстового контента для анализа."
+        
+        return extracted_text.strip()
+        
+    except Exception as e:
+        logger.error(f"Error extracting text from PowerPoint: {str(e)}")
+        raise Exception(f"Не удалось извлечь текст из PowerPoint файла: {str(e)}")
+
+def extract_text_from_pptx_with_slides(filepath: str, slide_range: str = None) -> str:
+    """Извлечение текста из PowerPoint с выбором слайдов"""
+    try:
+        logger.info(f"Extracting text from PowerPoint with slide selection: {filepath}")
+        
+        # Открываем презентацию
+        presentation = Presentation(filepath)
+        slide_count = len(presentation.slides)
+        
+        logger.info(f"PowerPoint has {slide_count} slides")
+        
+        # Определяем слайды для извлечения
+        if slide_range:
+            slides_to_extract = parse_page_range(slide_range, slide_count)
+            if not slides_to_extract:
+                slides_to_extract = list(range(1, min(slide_count + 1, 21)))  # Максимум 20 слайдов
+        else:
+            # Если диапазон не указан, берем все слайды (с ограничением)
+            slides_to_extract = list(range(1, min(slide_count + 1, 21)))
+        
+        logger.info(f"Extracting slides: {slides_to_extract}")
+        
+        # Собираем текст с выбранных слайдов
+        full_text = []
+        
+        for slide_num in slides_to_extract:
+            if slide_num > slide_count:
+                continue
+                
+            slide = presentation.slides[slide_num - 1]  # 0-based индекс
+            slide_text = []
+            
+            # Извлекаем текст из всех текстовых элементов слайда
+            for shape in slide.shapes:
+                if hasattr(shape, "text") and shape.text.strip():
+                    slide_text.append(shape.text.strip())
+                
+                # Обрабатываем таблицы
+                if shape.has_table:
+                    table_text = []
+                    for row in shape.table.rows:
+                        row_text = []
+                        for cell in row.cells:
+                            if cell.text.strip():
+                                row_text.append(cell.text.strip())
+                        if row_text:
+                            table_text.append(" | ".join(row_text))
+                    if table_text:
+                        slide_text.append("\n".join(table_text))
+            
+            # Добавляем текст слайда с разделителем
+            if slide_text:
+                slide_content = f"\n--- Слайд {slide_num} ---\n" + "\n".join(slide_text)
+                full_text.append(slide_content)
+        
+        # Объединяем весь текст
+        extracted_text = "\n\n".join(full_text)
+        
+        logger.info(f"Extracted {len(extracted_text)} characters from {len(slides_to_extract)} slides")
+        
+        if not extracted_text.strip():
+            logger.warning("No text found in selected PowerPoint slides")
+            return "Выбранные слайды не содержат текстового контента для анализа."
+        
+        return extracted_text.strip()
+        
+    except Exception as e:
+        logger.error(f"Error extracting text from PowerPoint slides: {str(e)}")
+        # Fallback к обычному извлечению
+        logger.info("Falling back to full PowerPoint extraction")
+        return extract_text_from_pptx(filepath)
 
 def parse_page_range(page_range: str, max_pages: int = None) -> List[int]:
     """Парсинг диапазона страниц"""
@@ -476,7 +612,7 @@ def extract_topics_with_gpt(text: str) -> Dict[str, Any]:
       "summary": "Объяснение темы своими словами (2-3 предложения)",
       "subtopics": ["Подтема 1", "Подтема 2"],
       "key_concepts": ["Ключевое понятие 1", "Ключевое понятие 2"],
-      "complexity": "basic/intermediate/advanced",
+      "complexity": "базовый/средний/сложный",
       "examples": ["Конкретный пример применения"],
       "why_important": "Почему эта тема важна для понимания материала"
     }
@@ -486,7 +622,7 @@ def extract_topics_with_gpt(text: str) -> Dict[str, Any]:
       {
         "from": "Тема 1",
         "to": "Тема 2", 
-        "type": "causes/requires/similar/contrast/part_of",
+        "type": "вызывает/требует/похож/контраст/часть от",
         "description": "Краткое описание связи"
       }
     ]
@@ -553,7 +689,7 @@ def extract_topics_fallback(text: str) -> Dict[str, Any]:
                     "summary": "Документ слишком короткий для детального анализа",
                     "subtopics": [],
                     "key_concepts": [],
-                    "complexity": "basic",
+                    "complexity": "базовый",
                     "examples": [],
                     "why_important": "Основное содержание документа"
                 }],
@@ -643,7 +779,7 @@ def extract_topics_fallback(text: str) -> Dict[str, Any]:
                 "summary": "Не удалось извлечь темы из документа",
                 "subtopics": [],
                 "key_concepts": [],
-                "complexity": "basic",
+                "complexity": "базовый",
                 "examples": [],
                 "why_important": "Требуется ручной анализ"
             }],
@@ -879,11 +1015,11 @@ def extract_smart_relationships(topics: List[Dict], text: str) -> List[Dict]:
         topic_keywords[i] = keywords
     
     relationship_patterns = {
-        'causes': ['приводит к', 'вызывает', 'влияет на', 'определяет'],
-        'requires': ['требует', 'необходим', 'нужен для', 'основан на'],
-        'part_of': ['часть', 'включает', 'состоит из', 'содержит'],
-        'contrast': ['в отличие от', 'напротив', 'однако', 'но'],
-        'similar': ['похож', 'аналогично', 'также как', 'подобно']
+        'вызывает': ['приводит к', 'вызывает', 'влияет на', 'определяет'],
+        'требует': ['требует', 'необходим', 'нужен для', 'основан на'],
+        'часть от': ['часть', 'включает', 'состоит из', 'содержит'],
+        'контраст': ['в отличие от', 'напротив', 'однако', 'но'],
+        'похож': ['похож', 'аналогично', 'также как', 'подобно']
     }
     
     sentences = sent_tokenize(text.lower())
@@ -900,11 +1036,20 @@ def extract_smart_relationships(topics: List[Dict], text: str) -> List[Dict]:
                 if t1_found and t2_found:
                     for rel_type, patterns in relationship_patterns.items():
                         if any(pattern in sent for pattern in patterns):
+                            # Создаем понятное описание связи на русском языке
+                            description_map = {
+                                'вызывает': f"{topic1['title']} приводит к {topic2['title']}",
+                                'требует': f"{topic1['title']} требует {topic2['title']}",
+                                'часть от': f"{topic1['title']} является частью {topic2['title']}",
+                                'контраст': f"{topic1['title']} контрастирует с {topic2['title']}",
+                                'похож': f"{topic1['title']} похож на {topic2['title']}"
+                            }
+                            
                             relationships.append({
                                 "from": topic1['title'],
                                 "to": topic2['title'],
                                 "type": rel_type,
-                                "description": f"{topic1['title']} {rel_type} {topic2['title']}"
+                                "description": description_map.get(rel_type, f"{topic1['title']} связан с {topic2['title']}")
                             })
                             break
                     
@@ -924,9 +1069,9 @@ def extract_learning_objectives(topics: List[Dict]) -> List[str]:
     for topic in topics[:5]:
         verb = objective_verbs[len(objectives) % len(objective_verbs)]
         
-        if topic['complexity'] == 'basic':
+        if topic['complexity'] == 'базовый':
             objective = f"{verb} основные понятия {topic['title'].lower()}"
-        elif topic['complexity'] == 'intermediate':
+        elif topic['complexity'] == 'средний':
             objective = f"{verb} и применять {topic['title'].lower()}"
         else:
             objective = f"{verb} и решать сложные задачи по теме {topic['title'].lower()}"
@@ -1004,12 +1149,12 @@ def determine_complexity(text: str) -> str:
     sentences = sent_tokenize(text)
     avg_sentence_length = np.mean([len(word_tokenize(s)) for s in sentences]) if sentences else 0
     
-    if advanced_count > 2 or formula_count > 5 or avg_sentence_length > 25:
-        return "advanced"
-    elif intermediate_count > 2 or formula_count > 2 or avg_sentence_length > 20:
-        return "intermediate"
+    if advanced_count > 0 or formula_count > 3 or avg_sentence_length > 25:
+        return "сложный"
+    elif intermediate_count > 0 or formula_count > 1 or avg_sentence_length > 15:
+        return "средний"
     else:
-        return "basic"
+        return "базовый"
 
 def generate_summary(text: str) -> str:
     """Суммаризация с GPT с оптимизацией для длинных видео"""
@@ -1411,11 +1556,11 @@ def _analyze_material_complexity(topics: List[Dict], flashcards: List[Dict], tex
     """Анализ сложности материала"""
     
     # Анализ тем по сложности
-    complexity_distribution = {"basic": 0, "intermediate": 0, "advanced": 0}
+    complexity_distribution = {"базовый": 0, "средний": 0, "сложный": 0}
     topic_depths = []
     
     for topic in topics:
-        complexity = topic.get('complexity', 'basic')
+        complexity = topic.get('complexity', 'базовый')
         complexity_distribution[complexity] += 1
         
         # Оценка глубины темы
@@ -1435,7 +1580,7 @@ def _analyze_material_complexity(topics: List[Dict], flashcards: List[Dict], tex
     volume_factor = min(2.0, text_length / 10000)  # Нормализация по объему
     
     # Общая оценка сложности
-    complexity_weights = {"basic": 1, "intermediate": 2, "advanced": 3}
+    complexity_weights = {"базовый": 1, "средний": 2, "сложный": 3}
     weighted_complexity = sum(complexity_distribution[k] * v for k, v in complexity_weights.items())
     total_topics = sum(complexity_distribution.values())
     overall_difficulty = weighted_complexity / max(total_topics, 1)
@@ -1503,7 +1648,7 @@ def _create_learning_sequence(topics: List[Dict], analysis: Dict) -> Dict:
     
     # Сортировка тем по сложности и зависимостям
     sorted_topics = sorted(topics, key=lambda t: (
-        {"basic": 1, "intermediate": 2, "advanced": 3}.get(t.get('complexity', 'basic'), 2),
+        {"базовый": 1, "средний": 2, "сложный": 3}.get(t.get('complexity', 'базовый'), 2),
         -len(t.get('key_concepts', [])),  # больше концепций = изучаем раньше
         len(t.get('title', ''))  # короткие названия обычно базовые
     ))
@@ -1549,7 +1694,7 @@ def _generate_study_sessions(sequence: Dict, flashcards: List[Dict], config: Dic
         
         # Выбор тем для сессии
         topic_index = (session_num - 1) % len(topics_pool) if topics_pool else 0
-        current_topic = topics_pool[topic_index] if topics_pool else {"title": "Общее изучение", "complexity": "basic"}
+        current_topic = topics_pool[topic_index] if topics_pool else {"title": "Общее изучение", "complexity": "базовый"}
         
         # Выбор флеш-карт
         start_card = (session_num - 1) * cards_per_session
@@ -1575,7 +1720,7 @@ def _generate_study_sessions(sequence: Dict, flashcards: List[Dict], config: Dic
             "exercises": _generate_session_exercises(current_topic, phase),
             "learning_objectives": _generate_session_objectives(current_topic, phase),
             "success_criteria": _generate_success_criteria(current_topic, end_card - start_card),
-            "estimated_difficulty": current_topic.get("complexity", "basic"),
+            "estimated_difficulty": current_topic.get("complexity", "базовый"),
             "activities": _generate_session_activities(current_topic, phase, session_duration)
         }
         
@@ -1770,7 +1915,7 @@ def _generate_fallback_study_plan() -> Dict:
             "topics": ["Изучение материала"],
             "focus": "Изучение основного материала",
             "exercises": ["Прочитать материал", "Сделать заметки", "Повторить ключевые моменты"],
-            "main_topic": {"title": "Изучение материала", "complexity": "basic"},
+            "main_topic": {"title": "Изучение материала", "complexity": "базовый"},
             "phase_name": "Основы",
             "flashcards_count": 0,
             "activities": []
@@ -1864,6 +2009,17 @@ def process_file(filepath: str, filename: str, page_range: str = None) -> Dict[s
         
         if file_ext == '.pdf':
             text = extract_text_from_pdf_with_pages(filepath, page_range)
+            video_data = None
+        elif file_ext == '.pptx':
+            # Обработка PowerPoint файлов
+            if page_range:
+                # Если указан диапазон слайдов, используем его
+                text = extract_text_from_pptx_with_slides(filepath, page_range)
+                logger.info(f"📊 PowerPoint processed with slide range: {page_range}")
+            else:
+                # Обычное извлечение всех слайдов
+                text = extract_text_from_pptx(filepath)
+                logger.info("📊 PowerPoint processed (all slides)")
             video_data = None
         elif file_ext in ['.mp4', '.mov', '.mkv']:
             # Используем ПОЛНУЮ обработку видео без оптимизации для лучшего качества
@@ -2193,7 +2349,7 @@ def extract_topics_fast(text: str) -> Dict[str, Any]:
       "title": "Название темы",
       "summary": "Краткое описание",
       "key_concepts": ["концепт1", "концепт2"],
-      "complexity": "basic/intermediate/advanced"
+      "complexity": "базовый/средний/сложный"
     }
   ],
   "learning_objectives": ["цель1", "цель2"]
@@ -2249,7 +2405,7 @@ def extract_topics_ultra_fast(text: str) -> Dict[str, Any]:
                     "summary": f"Тема связанная с {word}",
                     "subtopics": [],
                     "key_concepts": [word],
-                    "complexity": "basic",
+                    "complexity": "базовый",
                     "examples": [],
                     "why_important": f"Часто упоминается в тексте ({freq} раз)"
                 })
@@ -2260,7 +2416,7 @@ def extract_topics_ultra_fast(text: str) -> Dict[str, Any]:
                 "summary": "Содержание видео",
                 "subtopics": [],
                 "key_concepts": [],
-                "complexity": "basic",
+                "complexity": "базовый",
                 "examples": [],
                 "why_important": "Основное содержание"
             }]
@@ -2280,7 +2436,7 @@ def extract_topics_ultra_fast(text: str) -> Dict[str, Any]:
                 "summary": "Содержание видео",
                 "subtopics": [],
                 "key_concepts": [],
-                "complexity": "basic",
+                "complexity": "базовый",
                 "examples": [],
                 "why_important": "Основное содержание"
             }],
@@ -2458,7 +2614,7 @@ def create_fallback_flashcards(topics: List[Dict]) -> List[Dict]:
                 "q": f"Что такое {topic.get('title', 'тема')}?",
                 "a": topic.get('summary', 'Информация недоступна'),
                 "hint": "Основное определение темы",
-                "difficulty": 1 if topic.get('complexity') == 'basic' else 2,
+                "difficulty": 1 if topic.get('complexity') == 'базовый' else 2,
                 "related_topics": [topic.get('title', 'тема')],
                 "memory_hook": f"Запомните ключевую идею: {topic.get('title', 'тема')}",
                 "common_mistakes": "Не путайте с другими темами",
@@ -2517,7 +2673,7 @@ def create_fallback_flashcards(topics: List[Dict]) -> List[Dict]:
         logger.error(f"Error creating fallback flashcards: {e}")
         # Минимальный набор карт
         return [{
-            "type": "basic",
+            "type": "definition",
             "q": "Что было изучено в материале?",
             "a": "Материал содержит важную информацию",
             "hint": "Основная информация",

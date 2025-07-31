@@ -131,3 +131,30 @@ prod:
 	@echo "${GREEN}Production deployment started${RESET}"
 	@echo "Nginx: http://localhost"
 	@echo "App: http://localhost:5000"
+
+## Настройка локального окружения
+setup:
+	./setup.sh
+	@echo "${GREEN}Local environment setup completed${RESET}"
+
+## Проверка статуса миграций
+migrate-status:
+	python migration_manager.py status
+
+## Применение миграций
+migrate:
+	python migration_manager.py migrate
+	@echo "${GREEN}Migrations applied${RESET}"
+
+## Резервное копирование базы данных
+db-backup:
+	cp ai_study.db ai_study.db.backup.$$(date +%Y%m%d_%H%M%S)
+	@echo "${GREEN}Database backup created${RESET}"
+
+## Проверка схемы базы данных
+db-schema:
+	sqlite3 ai_study.db ".schema"
+
+## Проверка таблиц базы данных
+db-tables:
+	sqlite3 ai_study.db ".tables"

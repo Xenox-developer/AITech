@@ -108,6 +108,10 @@
         background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
     }
     
+    .result-icon.pptx {
+        background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+    }
+    
     .result-icon.video {
         background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
     }
@@ -315,13 +319,16 @@
             </div>
             
             <div class="filter-buttons">
-                <a href="{{ url_for('my_results') }}" class="filter-btn active">
+                <a href="{{ url_for('my_results') }}" class="filter-btn {{ 'active' if not request.args.get('filter') else '' }}">
                     <i class="fas fa-list me-1"></i>Все
                 </a>
-                <a href="{{ url_for('my_results', filter='pdf') }}" class="filter-btn">
+                <a href="{{ url_for('my_results', filter='pdf') }}" class="filter-btn {{ 'active' if request.args.get('filter') == 'pdf' else '' }}">
                     <i class="fas fa-file-pdf me-1"></i>PDF
                 </a>
-                <a href="{{ url_for('my_results', filter='video') }}" class="filter-btn">
+                <a href="{{ url_for('my_results', filter='pptx') }}" class="filter-btn {{ 'active' if request.args.get('filter') == 'pptx' else '' }}">
+                    <i class="fas fa-file-powerpoint me-1"></i>PowerPoint
+                </a>
+                <a href="{{ url_for('my_results', filter='video') }}" class="filter-btn {{ 'active' if request.args.get('filter') == 'video' else '' }}">
                     <i class="fas fa-video me-1"></i>Видео
                 </a>
             </div>
@@ -332,8 +339,8 @@
             {% for result in results %}
             <div class="result-card">
                 <div class="result-header">
-                    <div class="result-icon {{ 'pdf' if result.file_type == '.pdf' else 'video' }}">
-                        <i class="fas fa-{{ 'file-pdf' if result.file_type == '.pdf' else 'video' }}"></i>
+                    <div class="result-icon {{ 'pdf' if result.file_type == '.pdf' else ('pptx' if result.file_type == '.pptx' else 'video') }}">
+                        <i class="fas fa-{{ 'file-pdf' if result.file_type == '.pdf' else ('file-powerpoint' if result.file_type == '.pptx' else 'video') }}"></i>
                     </div>
                     <div class="result-info">
                         <div class="result-name">{{ result.filename }}</div>
@@ -367,7 +374,7 @@
             {% if pagination.total > pagination.per_page %}
             <div class="pagination">
                 {% if pagination.has_prev %}
-                    <a href="{{ url_for('my_results', page=pagination.prev_num) }}" class="pagination-btn">
+                    <a href="{{ url_for('my_results', page=pagination.prev_num, filter=request.args.get('filter')) }}" class="pagination-btn">
                         <i class="fas fa-chevron-left"></i>
                     </a>
                 {% else %}
@@ -381,7 +388,7 @@
                 </div>
                 
                 {% if pagination.has_next %}
-                    <a href="{{ url_for('my_results', page=pagination.next_num) }}" class="pagination-btn">
+                    <a href="{{ url_for('my_results', page=pagination.next_num, filter=request.args.get('filter')) }}" class="pagination-btn">
                         <i class="fas fa-chevron-right"></i>
                     </a>
                 {% else %}
