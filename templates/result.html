@@ -4,6 +4,55 @@
 
 {% block extra_styles %}
 <style>
+    /* Равномерное распределение вкладок */
+    #resultTabs {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+    }
+
+    #resultTabs .nav-item {
+        flex: 1;
+        text-align: center;
+    }
+
+    #resultTabs .nav-link {
+        width: 100%;
+        text-align: center;
+        white-space: nowrap;
+        padding: 12px 8px;
+        font-size: 0.9rem;
+        border-radius: 25px;
+        transition: all 0.3s ease;
+    }
+
+    /* Адаптивность для мобильных устройств */
+    @media (max-width: 768px) {
+        #resultTabs .nav-link {
+            font-size: 0.8rem;
+            padding: 10px 6px;
+        }
+        
+        #resultTabs .nav-link i {
+            display: block;
+            margin-bottom: 4px;
+            margin-right: 0 !important;
+        }
+        
+        #resultTabs .nav-link .badge {
+            display: block;
+            margin-top: 2px;
+            margin-left: 0 !important;
+        }
+    }
+
+    @media (max-width: 576px) {
+        #resultTabs .nav-link {
+            font-size: 0.7rem;
+            padding: 8px 4px;
+        }
+    }
+
     .quality-badge {
         display: inline-block;
         padding: 10px 20px;
@@ -2158,177 +2207,712 @@
         margin-bottom: 10px;
     }
 
-    .mind-map-container {
-        background: #f8f9fa;
-        border-radius: 10px;
-        padding: 20px;
-        min-height: 400px;
-        position: relative;
+    /* Enhanced Mind Map Styles */
+    .mind-map-header-modern {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 20px;
+        padding: 25px;
+        color: white;
+        box-shadow: 0 8px 30px rgba(102, 126, 234, 0.3);
+        margin-bottom: 25px;
     }
 
-    .mind-map-modern {
-        background: white;
-        border-radius: 15px;
-        padding: 20px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    }
-
-    .mind-map-controls {
+    .mind-map-header-modern .header-content {
         display: flex;
         justify-content: space-between;
         align-items: center;
         flex-wrap: wrap;
-        gap: 10px;
+        gap: 20px;
     }
 
-    .mind-map-svg-container {
+    .mind-map-header-modern .header-title-section {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .mind-map-header-modern .title-icon-container {
+        width: 60px;
+        height: 60px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         position: relative;
-        border-radius: 15px;
-        overflow: hidden;
-        box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.1);
+        backdrop-filter: blur(10px);
     }
 
-    .mind-map-svg-container::before {
-        content: '';
+    .mind-map-header-modern .title-icon {
+        font-size: 2rem;
+        color: white;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+    }
+
+    .mind-map-header-modern .icon-glow {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border-radius: 18px;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+        animation: iconGlow 2s ease-in-out infinite alternate;
+    }
+
+    .mind-map-header-modern .main-title {
+        font-size: 2.2rem;
+        font-weight: 700;
+        margin: 0;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .mind-map-header-modern .title-underline {
+        width: 60px;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.8);
+        border-radius: 2px;
+        margin-top: 8px;
+    }
+
+    .mind-map-header-modern .subtitle {
+        margin: 8px 0 0 0;
+        opacity: 0.9;
+        font-size: 1rem;
+    }
+
+    .mind-map-header-modern .header-actions {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .btn-action-modern {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 18px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+        cursor: pointer;
+    }
+
+    .btn-action-modern:hover {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: rgba(255, 255, 255, 0.5);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-action-modern.primary {
+        background: rgba(16, 185, 129, 0.2);
+        border-color: rgba(16, 185, 129, 0.4);
+    }
+
+    .btn-action-modern.secondary {
+        background: rgba(245, 158, 11, 0.2);
+        border-color: rgba(245, 158, 11, 0.4);
+    }
+
+    .btn-action-modern.success {
+        background: rgba(34, 197, 94, 0.2);
+        border-color: rgba(34, 197, 94, 0.4);
+    }
+
+    /* Mind Map Container */
+    .mind-map-container-modern {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+
+    /* Controls Panel */
+    .mind-map-controls-panel {
+        background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+        border-bottom: 1px solid #e2e8f0;
+        padding: 25px;
+    }
+
+    .controls-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 30px;
+        align-items: flex-start;
+    }
+
+    .control-group {
+        flex: 1;
+        min-width: 250px;
+    }
+
+    .control-label {
+        display: flex;
+        align-items: center;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 12px;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Layout Buttons */
+    .layout-buttons {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .layout-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        padding: 12px 16px;
+        background: white;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        color: #64748b;
+        font-size: 0.8rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        min-width: 80px;
+    }
+
+    .layout-btn:hover {
+        border-color: #6366f1;
+        color: #6366f1;
+        background: #f8fafc;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(99, 102, 241, 0.2);
+    }
+
+    .layout-btn.active {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        border-color: #6366f1;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3);
+    }
+
+    .layout-btn i {
+        font-size: 1.2rem;
+    }
+
+    /* Search and Filter Container */
+    .search-filter-container {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .search-input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+        background: white;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 0 16px;
+        transition: all 0.3s ease;
+    }
+
+    .search-input-wrapper:focus-within {
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    .search-input-wrapper .search-icon {
+        color: #9ca3af;
+        margin-right: 12px;
+    }
+
+    .search-input-wrapper .search-input {
+        flex: 1;
+        border: none;
+        background: transparent;
+        padding: 12px 0;
+        font-size: 0.9rem;
+        color: #374151;
+        outline: none;
+    }
+
+    .search-input-wrapper .search-clear-btn {
+        background: none;
+        border: none;
+        color: #9ca3af;
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 4px;
+        transition: all 0.3s ease;
+    }
+
+    .search-input-wrapper .search-clear-btn:hover {
+        background: #f3f4f6;
+        color: #6b7280;
+    }
+
+    /* Filter Buttons */
+    .filter-buttons {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .filter-btn {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 14px;
+        background: white;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        color: #64748b;
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .filter-btn:hover {
+        border-color: #6366f1;
+        color: #6366f1;
+        background: #f8fafc;
+    }
+
+    .filter-btn.active {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        border-color: #6366f1;
+        color: white;
+        box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+    }
+
+    /* View Options */
+    .view-options {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .view-option-btn {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 14px;
+        background: white;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        color: #64748b;
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .view-option-btn:hover {
+        border-color: #6366f1;
+        color: #6366f1;
+        background: #f8fafc;
+    }
+
+    .view-option-btn.active {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border-color: #10b981;
+        color: white;
+        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    }
+
+    /* Statistics Panel */
+    .mind-map-stats {
+        display: flex;
+        gap: 20px;
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid #e2e8f0;
+    }
+
+    .mind-map-stats .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 16px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e2e8f0;
+    }
+
+    .mind-map-stats .stat-icon {
+        color: #6366f1;
+        font-size: 1.1rem;
+    }
+
+    .mind-map-stats .stat-value {
+        font-weight: 700;
+        color: #1f2937;
+        font-size: 1.1rem;
+    }
+
+    .mind-map-stats .stat-label {
+        color: #6b7280;
+        font-size: 0.85rem;
+    }
+
+    /* Visualization Area */
+    .mind-map-visualization {
+        position: relative;
+        min-height: 600px;
+        background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+    }
+
+    .visualization-container {
+        position: relative;
+        width: 100%;
+        height: 600px;
+        overflow: hidden;
+    }
+
+    /* Loading State */
+    .mind-map-loading {
         position: absolute;
         top: 0;
         left: 0;
         right: 0;
         bottom: 0;
-        background:
-            radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3), transparent 50%),
-            radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3), transparent 50%),
-            radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.3), transparent 50%);
-        pointer-events: none;
-        z-index: 1;
-    }
-
-    #mindMapSvg {
-        position: relative;
-        z-index: 2;
-        background: rgba(255, 255, 255, 0.9);
-        backdrop-filter: blur(10px);
-    }
-
-    /* Mind Map Node Styles */
-    .mind-node {
-        transition: all 0.3s ease;
-    }
-
-    .mind-node:hover {
-        filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.3));
-    }
-
-    .mind-node circle {
-        transition: all 0.3s ease;
-    }
-
-    .mind-node text {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        font-weight: 500;
-        pointer-events: none;
-    }
-
-    .mind-link {
-        transition: all 0.3s ease;
-    }
-
-    .mind-link:hover {
-        stroke-width: 4 !important;
-        opacity: 1 !important;
-    }
-
-    /* Node Details Panel */
-    #nodeDetailsPanel {
-        animation: slideUp 0.3s ease-out;
-    }
-
-    @keyframes slideUp {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    @keyframes slideDown {
-        from {
-            opacity: 0;
-            max-height: 0;
-            transform: translateY(-10px);
-        }
-
-        to {
-            opacity: 1;
-            max-height: 1000px;
-            transform: translateY(0);
-        }
-    }
-
-    @keyframes slideUpHide {
-        from {
-            opacity: 1;
-            max-height: 1000px;
-            transform: translateY(0);
-        }
-
-        to {
-            opacity: 0;
-            max-height: 0;
-            transform: translateY(-10px);
-        }
-    }
-
-    #nodeDetailsPanel .card {
-        border: none;
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-        border-radius: 15px;
-    }
-
-    #nodeDetailsPanel .card-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border-radius: 15px 15px 0 0 !important;
-        border: none;
-    }
-
-    /* Loading Animation */
-    #mindMapLoading {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.95);
         z-index: 10;
     }
 
-    #mindMapLoading .spinner-border {
-        width: 3rem;
-        height: 3rem;
-        border-width: 0.3em;
+    .loading-content {
+        text-align: center;
+        color: #6b7280;
+    }
+
+    .loading-spinner {
+        position: relative;
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 20px;
+    }
+
+    .spinner-ring {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border: 3px solid transparent;
+        border-top: 3px solid #6366f1;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    .spinner-ring:nth-child(2) {
+        width: 60px;
+        height: 60px;
+        top: 10px;
+        left: 10px;
+        border-top-color: #8b5cf6;
+        animation-duration: 1.5s;
+        animation-direction: reverse;
+    }
+
+    .spinner-ring:nth-child(3) {
+        width: 40px;
+        height: 40px;
+        top: 20px;
+        left: 20px;
+        border-top-color: #a855f7;
+        animation-duration: 2s;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* SVG Styles */
+    .mind-map-svg {
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(circle at 30% 30%, rgba(99, 102, 241, 0.05) 0%, transparent 50%),
+                    radial-gradient(circle at 70% 70%, rgba(139, 92, 246, 0.05) 0%, transparent 50%);
+    }
+
+    /* Zoom Controls */
+    .zoom-controls {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        z-index: 5;
+    }
+
+    .zoom-btn {
+        width: 40px;
+        height: 40px;
+        background: white;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        color: #64748b;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .zoom-btn:hover {
+        border-color: #6366f1;
+        color: #6366f1;
+        background: #f8fafc;
+        transform: scale(1.05);
+    }
+
+    /* Minimap */
+    .mind-map-minimap {
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+        width: 150px;
+        height: 100px;
+        background: rgba(255, 255, 255, 0.9);
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        backdrop-filter: blur(10px);
+        z-index: 5;
+    }
+
+    .minimap-viewport {
+        position: absolute;
+        border: 2px solid #6366f1;
+        background: rgba(99, 102, 241, 0.1);
+        cursor: move;
+    }
+
+    /* Node Details Panel */
+    .node-details-panel {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        width: 300px;
+        max-height: 400px;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+        z-index: 10;
+        overflow: hidden;
+    }
+
+    .panel-header {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        color: white;
+        padding: 15px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .panel-title {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    .panel-close-btn {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 1.2rem;
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 4px;
+        transition: all 0.3s ease;
+    }
+
+    .panel-close-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .panel-content {
+        padding: 20px;
+        max-height: 320px;
+        overflow-y: auto;
+    }
+
+    /* Legend */
+    .mind-map-legend {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        margin-top: 20px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e2e8f0;
+    }
+
+    .mind-map-legend h6 {
+        margin: 0 0 15px 0;
+        color: #374151;
+        font-weight: 600;
+    }
+
+    .legend-items {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.85rem;
+        color: #6b7280;
+    }
+
+    .legend-color {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        border: 2px solid white;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .legend-color.main-topic {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    }
+
+    .legend-color.subtopic {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    }
+
+    .legend-color.concept {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    }
+
+    .legend-line {
+        width: 20px;
+        height: 3px;
+        border-radius: 2px;
+    }
+
+    .legend-line.strong {
+        background: #6366f1;
+    }
+
+    .legend-line.weak {
+        background: #d1d5db;
     }
 
     /* Responsive Design */
-    @media (max-width: 768px) {
-        .mind-map-controls {
+    @media (max-width: 1024px) {
+        .controls-row {
             flex-direction: column;
-            align-items: stretch;
+            gap: 20px;
         }
 
-        .mind-map-controls .btn-group {
+        .control-group {
+            min-width: auto;
+        }
+
+        .mind-map-stats {
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .mind-map-header-modern .header-content {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .mind-map-header-modern .header-title-section {
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .mind-map-controls-panel {
+            padding: 20px;
+        }
+
+        .layout-buttons,
+        .filter-buttons,
+        .view-options {
+            justify-content: center;
+        }
+
+        .visualization-container {
+            height: 500px;
+        }
+
+        .node-details-panel {
+            position: relative;
             width: 100%;
+            margin-top: 20px;
         }
 
-        .mind-map-controls .btn-group .btn {
-            flex: 1;
+        .zoom-controls {
+            flex-direction: row;
+            top: auto;
+            bottom: 20px;
+            left: 20px;
+            right: auto;
         }
 
-        .mind-map-svg-container {
-            margin: 0 -10px;
+        .mind-map-minimap {
+            display: none;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .mind-map-header-modern {
+            padding: 20px;
         }
 
-        #mindMapSvg {
-            width: 100%;
+        .mind-map-header-modern .main-title {
+            font-size: 1.8rem;
+        }
+
+        .mind-map-controls-panel {
+            padding: 15px;
+        }
+
+        .layout-btn,
+        .filter-btn,
+        .view-option-btn {
+            padding: 6px 10px;
+            font-size: 0.8rem;
+        }
+
+        .layout-btn span,
+        .filter-btn span,
+        .view-option-btn span {
+            display: none;
+        }
+
+        .visualization-container {
             height: 400px;
+        }
+
+        .mind-map-stats {
+            justify-content: center;
+        }
+
+        .mind-map-stats .stat-item {
+            padding: 8px 12px;
         }
     }
 
@@ -2356,8 +2940,37 @@
         transform: rotate(-90deg);
     }
 
-    .nav-pills .nav-link.active {
+    /* Navigation tabs with gradient background */
+    #resultTabs {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        padding: 15px;
+        box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+    }
+
+    .nav-pills .nav-link {
+        color: white !important;
+        font-weight: 600;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        transition: all 0.3s ease;
+        border: 1px solid transparent;
+    }
+
+    .nav-pills .nav-link:hover {
+        color: white !important;
+        background-color: rgba(255, 255, 255, 0.2);
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+        transform: translateY(-2px);
+    }
+
+    .nav-pills .nav-link.active {
+        background: rgba(255, 255, 255, 0.3) !important;
+        color: white !important;
+        font-weight: 700;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        transform: translateY(-2px);
     }
 
     /* Enhanced Summary Styles */
@@ -2397,7 +3010,7 @@
     }
 
     .summary-content-enhanced h3 {
-        color: #4a5568;
+        color: #2d3748;
         font-size: 1.25rem;
         font-weight: 500;
         margin: 20px 0 12px 0;
@@ -2589,7 +3202,7 @@
     }
 
     .concept-description {
-        color: #4a5568;
+        color: #2d3748;
         line-height: 1.6;
     }
 
@@ -2731,7 +3344,7 @@
 
     .study-stats .stat-label {
         font-size: 0.9rem;
-        color: #6c757d;
+        color: #495057;
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
@@ -2830,7 +3443,7 @@
     }
 
     .timeline-date {
-        color: #6c757d;
+        color: #495057;
         font-size: 0.8rem;
     }
 
@@ -2906,7 +3519,7 @@
         gap: 15px;
         margin-top: 8px;
         font-size: 0.85rem;
-        color: #6c757d;
+        color: #495057;
     }
 
     .session-meta span {
@@ -3020,7 +3633,7 @@
 
     .activity-description {
         font-size: 0.9rem;
-        color: #6c757d;
+        color: #495057;
         line-height: 1.4;
     }
 
@@ -3145,7 +3758,7 @@
     .milestone-content p {
         margin-bottom: 5px;
         font-size: 0.9rem;
-        color: #6c757d;
+        color: #495057;
     }
 
     /* Success Metrics */
@@ -3213,7 +3826,7 @@
     .feature-list li {
         padding: 5px 0;
         font-size: 0.85rem;
-        color: #6c757d;
+        color: #495057;
     }
 
     /* Responsive Design for Study Plan */
@@ -4783,44 +5396,37 @@
     <ul class="nav nav-pills mb-4" id="resultTabs" role="tablist">
         <li class="nav-item" role="presentation">
             <button class="nav-link active" id="topics-tab" data-bs-toggle="tab" data-bs-target="#topics" type="button">
-                <i class="fas fa-sitemap me-2"></i>Темы и структура
+                <i class="fas fa-list me-2"></i>Темы и структура
             </button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="summary-tab" data-bs-toggle="tab" data-bs-target="#summary" type="button">
-                <i class="fas fa-file-text me-2"></i>Резюме
+                <i class="fas fa-file-alt me-2"></i>Резюме
             </button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="flashcards-tab" data-bs-toggle="tab" data-bs-target="#flashcards"
                 type="button">
-                <i class="fas fa-layer-group me-2"></i>Флеш-карты
+                <i class="fas fa-clone me-2"></i>Флеш-карты
                 <span class="badge bg-danger ms-1">{{ flashcards|length }}</span>
             </button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="mindmap-tab" data-bs-toggle="tab" data-bs-target="#mindmap" type="button">
-                <i class="fas fa-project-diagram me-2"></i>Mind Map
+                <i class="fas fa-share-alt me-2"></i>Mind Map
             </button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="studyplan-tab" data-bs-toggle="tab" data-bs-target="#studyplan" type="button">
-                <i class="fas fa-calendar-check me-2"></i>План обучения
+                <i class="fas fa-graduation-cap me-2"></i>План обучения
             </button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="chat-tab" data-bs-toggle="tab" data-bs-target="#chat" type="button">
-                <i class="fas fa-comments me-2"></i>Чат с лекцией
+                <i class="fas fa-robot me-2"></i>Чат с лекцией
                 <span class="badge bg-success ms-1">AI</span>
             </button>
         </li>
-        {% if key_moments %}
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="video-tab" data-bs-toggle="tab" data-bs-target="#video" type="button">
-                <i class="fas fa-video me-2"></i>Видео
-            </button>
-        </li>
-        {% endif %}
     </ul>
 
     <!-- Tab Content -->
@@ -5847,28 +6453,7 @@
             </div>
         </div>
 
-        <!-- Video Tab (if applicable) -->
-        {% if key_moments %}
-        <div class="tab-pane fade" id="video" role="tabpanel">
-            <h4 class="mb-3"><i class="fas fa-video me-2"></i>Анализ видео</h4>
 
-            <div class="video-timeline">
-                <h5 class="mb-3">🎯 Ключевые моменты</h5>
-                {% for moment in key_moments %}
-                <div class="key-moment" onclick="seekToTime('{{ moment.time }}')">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <i class="fas fa-play-circle me-2"></i>
-                            <strong>{{ (moment.time // 60)|int }}:{{ '%02d'|format(moment.time % 60|int) }}</strong>
-                            - {{ moment.description }}
-                        </div>
-                        <i class="fas fa-chevron-right"></i>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
 
         <!-- Enhanced Chat Tab -->
         <div class="tab-pane fade" id="chat" role="tabpanel">
@@ -6743,65 +7328,78 @@
     function drawModernMindMap() {
         console.log('🎨 Starting to draw mind map...');
         
-        // Проверяем наличие D3
-        if (typeof d3 === 'undefined') {
-            console.error('❌ D3.js library not loaded');
+        try {
+            // Проверяем наличие D3
+            if (typeof d3 === 'undefined') {
+                console.error('❌ D3.js library not loaded');
+                document.getElementById('mindMapLoading').innerHTML =
+                    '<div class="text-danger"><i class="fas fa-exclamation-triangle"></i> D3.js не загружен</div>';
+                return;
+            }
+            
+            if (!mindMapData || !mindMapData.branches) {
+                console.error('❌ No mind map data or branches');
+                document.getElementById('mindMapLoading').innerHTML =
+                    '<div class="text-warning"><i class="fas fa-exclamation-triangle"></i> Нет данных для mind map</div>';
+                return;
+            }
+
+            console.log('📊 Mind map data:', mindMapData);
+            
+            const svg = d3.select('#mindMapSvg');
+            if (svg.empty()) {
+                console.error('❌ SVG element not found');
+                document.getElementById('mindMapLoading').innerHTML =
+                    '<div class="text-danger"><i class="fas fa-exclamation-triangle"></i> SVG элемент не найден</div>';
+                return;
+            }
+            
+            svg.selectAll('*').remove(); // Clear previous content
+
+            const svgElement = document.getElementById('mindMapSvg');
+            if (!svgElement) {
+                console.error('❌ SVG DOM element not found');
+                return;
+            }
+            
+            const width = svgElement.clientWidth || 800;
+            const height = 500;
+            
+            console.log('📐 SVG dimensions:', width, 'x', height);
+
+            // Prepare data
+            prepareGraphData();
+
+            // Update statistics
+            updateMindMapStats();
+
+            // Create main group with zoom capability
+            const g = svg.append('g').attr('class', 'mind-map-group');
+
+            // Add zoom behavior
+            const zoom = d3.zoom()
+                .scaleExtent([0.3, 3])
+                .on('zoom', (event) => {
+                    g.attr('transform', event.transform);
+                });
+
+            svg.call(zoom);
+
+            // Draw based on layout
+            if (currentLayout === 'radial') {
+                drawRadialLayout(g, width, height);
+            } else if (currentLayout === 'tree') {
+                drawTreeLayout(g, width, height);
+            } else {
+                drawForceLayout(g, width, height);
+            }
+            
+            console.log('✅ Mind map drawn successfully');
+            
+        } catch (error) {
+            console.error('❌ Error drawing mind map:', error);
             document.getElementById('mindMapLoading').innerHTML =
-                '<div class="text-danger"><i class="fas fa-exclamation-triangle"></i> D3.js не загружен</div>';
-            return;
-        }
-        
-        if (!mindMapData || !mindMapData.branches) {
-            console.error('❌ No mind map data or branches');
-            return;
-        }
-
-        console.log('📊 Mind map data:', mindMapData);
-        
-        const svg = d3.select('#mindMapSvg');
-        if (svg.empty()) {
-            console.error('❌ SVG element not found');
-            return;
-        }
-        
-        svg.selectAll('*').remove(); // Clear previous content
-
-        const svgElement = document.getElementById('mindMapSvg');
-        if (!svgElement) {
-            console.error('❌ SVG DOM element not found');
-            return;
-        }
-        
-        const width = svgElement.clientWidth || 800;
-        const height = 500;
-        
-        console.log('📐 SVG dimensions:', width, 'x', height);
-
-        // Prepare data
-        prepareGraphData();
-
-        // Update statistics
-        updateMindMapStats();
-
-        // Create main group with zoom capability
-        const g = svg.append('g').attr('class', 'mind-map-group');
-
-        // Add zoom behavior
-        const zoom = d3.zoom()
-            .scaleExtent([0.3, 3])
-            .on('zoom', (event) => {
-                g.attr('transform', event.transform);
-            });
-
-        svg.call(zoom);
-
-        // Draw based on layout
-        if (currentLayout === 'radial') {
-            drawRadialLayout(g, width, height);
-        } else if (currentLayout === 'tree') {
-            drawTreeLayout(g, width, height);
-        } else {
-            drawForceLayout(g, width, height);
+                `<div class="text-danger"><i class="fas fa-exclamation-triangle"></i> Ошибка отрисовки: ${error.message}</div>`;
         }
     }
 
@@ -7195,23 +7793,68 @@
     }
 
     function setMindMapLayout(layout) {
+        console.log('🔄 Switching mind map layout to:', layout);
+        
         currentLayout = layout;
 
-        // Update active button
-        document.querySelectorAll('.mind-map-controls .btn').forEach(btn => {
+        // Update active button - найдем правильные кнопки макета
+        document.querySelectorAll('[onclick*="setMindMapLayout"]').forEach(btn => {
             btn.classList.remove('active');
         });
-        event.target.classList.add('active');
+        
+        // Найдем и активируем нужную кнопку
+        const targetButton = document.querySelector(`[onclick="setMindMapLayout('${layout}')"]`);
+        if (targetButton) {
+            targetButton.classList.add('active');
+        }
 
-        drawModernMindMap();
+        // Перерисовываем mind map с новым макетом
+        if (mindMapData && mindMapData.branches) {
+            drawModernMindMap();
+        } else {
+            console.warn('⚠️ No mind map data available for layout change');
+        }
     }
 
     function resetMindMapView() {
+        console.log('🔄 Resetting mind map view...');
+        
         const svg = d3.select('#mindMapSvg');
-        svg.transition().duration(750).call(
-            d3.zoom().transform,
-            d3.zoomIdentity
-        );
+        if (svg.empty()) {
+            console.error('❌ SVG element not found');
+            return;
+        }
+
+        try {
+            const zoom = d3.zoom()
+                .scaleExtent([0.3, 3])
+                .on('zoom', (event) => {
+                    const g = svg.select('.mind-map-group');
+                    if (!g.empty()) {
+                        g.attr('transform', event.transform);
+                    }
+                });
+
+            svg.call(zoom);
+            
+            svg.transition().duration(750).call(
+                zoom.transform,
+                d3.zoomIdentity
+            );
+            
+            // Сбросить активные кнопки размера на средний
+            document.querySelectorAll('[onclick*="adjustMindMapSize"]').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            const mediumButton = document.querySelector(`[onclick="adjustMindMapSize('medium')"]`);
+            if (mediumButton) {
+                mediumButton.classList.add('active');
+            }
+            
+            console.log('✅ Mind map view reset successfully');
+        } catch (error) {
+            console.error('❌ Error resetting mind map view:', error);
+        }
     }
 
     function downloadMindMap() {
@@ -7280,25 +7923,54 @@
     }
 
     function adjustMindMapSize(size) {
-        // Update active button
-        document.querySelectorAll('.mind-map-controls .btn-group:last-child .btn').forEach(btn => {
+        console.log('🔧 Adjusting mind map size to:', size);
+        
+        // Update active button - найдем правильные кнопки размера
+        document.querySelectorAll('[onclick*="adjustMindMapSize"]').forEach(btn => {
             btn.classList.remove('active');
         });
-        event.target.classList.add('active');
+        
+        // Найдем и активируем нужную кнопку
+        const targetButton = document.querySelector(`[onclick="adjustMindMapSize('${size}')"]`);
+        if (targetButton) {
+            targetButton.classList.add('active');
+        }
 
         const svg = d3.select('#mindMapSvg');
-        let scale;
+        if (svg.empty()) {
+            console.error('❌ SVG element not found');
+            return;
+        }
 
+        let scale;
         switch (size) {
             case 'small': scale = 0.7; break;
             case 'large': scale = 1.3; break;
             default: scale = 1; break;
         }
 
-        svg.transition().duration(500).call(
-            d3.zoom().transform,
-            d3.zoomIdentity.scale(scale)
-        );
+        console.log('📏 Applying scale:', scale);
+
+        // Проверим, есть ли zoom behavior
+        try {
+            const zoom = d3.zoom()
+                .scaleExtent([0.3, 3])
+                .on('zoom', (event) => {
+                    const g = svg.select('.mind-map-group');
+                    if (!g.empty()) {
+                        g.attr('transform', event.transform);
+                    }
+                });
+
+            svg.call(zoom);
+            
+            svg.transition().duration(500).call(
+                zoom.transform,
+                d3.zoomIdentity.scale(scale)
+            );
+        } catch (error) {
+            console.error('❌ Error adjusting mind map size:', error);
+        }
     }
 
     function focusOnNode(nodeId) {
@@ -7400,19 +8072,67 @@
     }
 
     function fitToScreen() {
+        console.log('📏 Fitting mind map to screen...');
+        
         const svg = d3.select('#mindMapSvg');
-        svg.transition().duration(750).call(
-            d3.zoom().transform,
-            d3.zoomIdentity.scale(0.8)
-        );
+        if (svg.empty()) {
+            console.error('❌ SVG element not found');
+            return;
+        }
+
+        try {
+            const zoom = d3.zoom()
+                .scaleExtent([0.3, 3])
+                .on('zoom', (event) => {
+                    const g = svg.select('.mind-map-group');
+                    if (!g.empty()) {
+                        g.attr('transform', event.transform);
+                    }
+                });
+
+            svg.call(zoom);
+            
+            svg.transition().duration(750).call(
+                zoom.transform,
+                d3.zoomIdentity.scale(0.8)
+            );
+            
+            console.log('✅ Mind map fitted to screen');
+        } catch (error) {
+            console.error('❌ Error fitting to screen:', error);
+        }
     }
 
     function centerView() {
+        console.log('🎯 Centering mind map view...');
+        
         const svg = d3.select('#mindMapSvg');
-        svg.transition().duration(750).call(
-            d3.zoom().transform,
-            d3.zoomIdentity
-        );
+        if (svg.empty()) {
+            console.error('❌ SVG element not found');
+            return;
+        }
+
+        try {
+            const zoom = d3.zoom()
+                .scaleExtent([0.3, 3])
+                .on('zoom', (event) => {
+                    const g = svg.select('.mind-map-group');
+                    if (!g.empty()) {
+                        g.attr('transform', event.transform);
+                    }
+                });
+
+            svg.call(zoom);
+            
+            svg.transition().duration(750).call(
+                zoom.transform,
+                d3.zoomIdentity
+            );
+            
+            console.log('✅ Mind map view centered');
+        } catch (error) {
+            console.error('❌ Error centering view:', error);
+        }
     }
 
     function updateMindMapStats() {
@@ -7984,7 +8704,7 @@
                 }
                 .session-start-info .info-label {
                     font-size: 0.9rem;
-                    color: #6c757d;
+                    color: #495057;
                     margin-bottom: 4px;
                 }
                 .session-start-info .info-value {
@@ -8158,6 +8878,11 @@
     // Initialize study plan when tab is shown
     document.getElementById('studyplan-tab').addEventListener('shown.bs.tab', function () {
         setTimeout(initStudyPlan, 100);
+    });
+
+    // Initialize mind map when tab is shown
+    document.getElementById('mindmap-tab').addEventListener('shown.bs.tab', function () {
+        setTimeout(initMindMap, 100);
     });
 
     // Add CSS animations for session interactions
@@ -9433,3 +10158,840 @@
             });
         }
     });
+
+    // ===== ENHANCED MIND MAP FUNCTIONALITY =====
+    
+    let mindMapData = null;
+    let mindMapSvg = null;
+    let mindMapSimulation = null;
+    let currentLayout = 'radial';
+    let mindMapNodes = [];
+    let mindMapLinks = [];
+    let mindMapZoom = null;
+    let selectedNode = null;
+
+    // Initialize Mind Map
+    function initMindMap() {
+        console.log('🧠 Initializing Enhanced Mind Map...');
+        
+        // Show loading state
+        showMindMapLoading(true);
+        
+        // Clear previous visualization
+        clearMindMapVisualization();
+        
+        // Prepare mind map data
+        prepareMindMapData();
+        
+        // Create visualization after short delay
+        setTimeout(() => {
+            createMindMapVisualization();
+            showMindMapLoading(false);
+        }, 1000);
+    }
+
+    function showMindMapLoading(show) {
+        const loading = document.getElementById('mindMapLoading');
+        if (loading) {
+            loading.style.display = show ? 'flex' : 'none';
+        }
+    }
+
+    function clearMindMapVisualization() {
+        const svg = d3.select('#mindMapSvg');
+        svg.selectAll('*').remove();
+        
+        // Reset zoom
+        if (mindMapZoom) {
+            mindMapZoom.transform(svg, d3.zoomIdentity);
+        }
+    }
+
+    function prepareMindMapData() {
+        console.log('📊 Preparing mind map data...');
+        
+        // Extract data from topics_data
+        const topicsData = {{ topics_data | tojsonfilter | safe }};
+        const mindMapRaw = {{ mind_map | tojsonfilter | safe }};
+        
+        mindMapNodes = [];
+        mindMapLinks = [];
+        
+        // Create central node
+        mindMapNodes.push({
+            id: 'center',
+            name: 'Основные концепции',
+            type: 'center',
+            level: 0,
+            size: 40,
+            color: '#6366f1',
+            description: 'Центральная тема материала'
+        });
+        
+        // Add main topics as primary nodes
+        if (topicsData && typeof topicsData === 'object') {
+            Object.entries(topicsData).forEach(([topicName, topicData], index) => {
+                const nodeId = `topic_${index}`;
+                
+                mindMapNodes.push({
+                    id: nodeId,
+                    name: topicName,
+                    type: 'main-topic',
+                    level: 1,
+                    size: 30,
+                    color: '#10b981',
+                    description: topicData.summary || 'Основная тема',
+                    subtopics: topicData.subtopics || [],
+                    concepts: topicData.key_concepts || [],
+                    complexity: topicData.complexity || 'средний'
+                });
+                
+                // Link to center
+                mindMapLinks.push({
+                    source: 'center',
+                    target: nodeId,
+                    strength: 1.0,
+                    type: 'primary'
+                });
+                
+                // Add subtopics
+                if (topicData.subtopics && Array.isArray(topicData.subtopics)) {
+                    topicData.subtopics.forEach((subtopic, subIndex) => {
+                        const subNodeId = `${nodeId}_sub_${subIndex}`;
+                        
+                        mindMapNodes.push({
+                            id: subNodeId,
+                            name: subtopic,
+                            type: 'subtopic',
+                            level: 2,
+                            size: 20,
+                            color: '#f59e0b',
+                            description: `Подтема: ${subtopic}`,
+                            parent: nodeId
+                        });
+                        
+                        mindMapLinks.push({
+                            source: nodeId,
+                            target: subNodeId,
+                            strength: 0.8,
+                            type: 'secondary'
+                        });
+                    });
+                }
+                
+                // Add key concepts
+                if (topicData.key_concepts && Array.isArray(topicData.key_concepts)) {
+                    topicData.key_concepts.forEach((concept, conceptIndex) => {
+                        const conceptNodeId = `${nodeId}_concept_${conceptIndex}`;
+                        
+                        mindMapNodes.push({
+                            id: conceptNodeId,
+                            name: concept,
+                            type: 'concept',
+                            level: 2,
+                            size: 15,
+                            color: '#8b5cf6',
+                            description: `Ключевая концепция: ${concept}`,
+                            parent: nodeId
+                        });
+                        
+                        mindMapLinks.push({
+                            source: nodeId,
+                            target: conceptNodeId,
+                            strength: 0.6,
+                            type: 'concept'
+                        });
+                    });
+                }
+            });
+        }
+        
+        // Add relationships from mind_map data
+        if (mindMapRaw && mindMapRaw.concept_map && mindMapRaw.concept_map.relationships) {
+            mindMapRaw.concept_map.relationships.forEach((rel, relIndex) => {
+                // Find or create nodes for relationship
+                const fromNodeId = findOrCreateRelationshipNode(rel.from, relIndex);
+                const toNodeId = findOrCreateRelationshipNode(rel.to, relIndex);
+                
+                if (fromNodeId && toNodeId && fromNodeId !== toNodeId) {
+                    mindMapLinks.push({
+                        source: fromNodeId,
+                        target: toNodeId,
+                        strength: 0.4,
+                        type: 'relationship',
+                        relationshipType: rel.type,
+                        description: rel.description
+                    });
+                }
+            });
+        }
+        
+        console.log(`📊 Mind map prepared: ${mindMapNodes.length} nodes, ${mindMapLinks.length} links`);
+        updateMindMapStats();
+    }
+
+    function findOrCreateRelationshipNode(nodeName, relIndex) {
+        // Try to find existing node by name
+        let existingNode = mindMapNodes.find(node => 
+            node.name.toLowerCase().includes(nodeName.toLowerCase()) ||
+            nodeName.toLowerCase().includes(node.name.toLowerCase())
+        );
+        
+        if (existingNode) {
+            return existingNode.id;
+        }
+        
+        // Create new relationship node
+        const nodeId = `rel_${relIndex}_${nodeName.replace(/\s+/g, '_')}`;
+        mindMapNodes.push({
+            id: nodeId,
+            name: nodeName,
+            type: 'relationship',
+            level: 3,
+            size: 12,
+            color: '#ef4444',
+            description: `Связанная концепция: ${nodeName}`
+        });
+        
+        return nodeId;
+    }
+
+    function createMindMapVisualization() {
+        console.log('🎨 Creating mind map visualization...');
+        
+        const container = document.getElementById('mindMapVisualization');
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+        
+        // Create SVG
+        const svg = d3.select('#mindMapSvg')
+            .attr('width', width)
+            .attr('height', height);
+        
+        // Setup zoom behavior
+        mindMapZoom = d3.zoom()
+            .scaleExtent([0.1, 4])
+            .on('zoom', (event) => {
+                svg.select('.mind-map-group').attr('transform', event.transform);
+            });
+        
+        svg.call(mindMapZoom);
+        
+        // Create main group
+        const g = svg.append('g').attr('class', 'mind-map-group');
+        
+        // Create links group
+        const linksGroup = g.append('g').attr('class', 'links');
+        
+        // Create nodes group
+        const nodesGroup = g.append('g').attr('class', 'nodes');
+        
+        // Setup force simulation based on layout
+        setupForceSimulation(width, height);
+        
+        // Create links
+        const links = linksGroup.selectAll('.mind-link')
+            .data(mindMapLinks)
+            .enter().append('line')
+            .attr('class', 'mind-link')
+            .attr('stroke', d => getLinkColor(d.type))
+            .attr('stroke-width', d => getLinkWidth(d.strength))
+            .attr('stroke-opacity', 0.6)
+            .attr('marker-end', 'url(#arrowhead)');
+        
+        // Create arrow markers
+        svg.append('defs').append('marker')
+            .attr('id', 'arrowhead')
+            .attr('viewBox', '0 -5 10 10')
+            .attr('refX', 15)
+            .attr('refY', 0)
+            .attr('markerWidth', 6)
+            .attr('markerHeight', 6)
+            .attr('orient', 'auto')
+            .append('path')
+            .attr('d', 'M0,-5L10,0L0,5')
+            .attr('fill', '#999');
+        
+        // Create nodes
+        const nodes = nodesGroup.selectAll('.mind-node')
+            .data(mindMapNodes)
+            .enter().append('g')
+            .attr('class', 'mind-node')
+            .style('cursor', 'pointer')
+            .call(d3.drag()
+                .on('start', dragStarted)
+                .on('drag', dragged)
+                .on('end', dragEnded))
+            .on('click', nodeClicked)
+            .on('mouseover', nodeMouseOver)
+            .on('mouseout', nodeMouseOut);
+        
+        // Add circles to nodes
+        nodes.append('circle')
+            .attr('r', d => d.size)
+            .attr('fill', d => d.color)
+            .attr('stroke', '#fff')
+            .attr('stroke-width', 2)
+            .style('filter', 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))');
+        
+        // Add labels to nodes
+        nodes.append('text')
+            .text(d => d.name)
+            .attr('text-anchor', 'middle')
+            .attr('dy', d => d.size + 20)
+            .attr('font-size', d => Math.max(10, d.size / 3))
+            .attr('font-weight', 'bold')
+            .attr('fill', '#374151')
+            .style('pointer-events', 'none')
+            .each(function(d) {
+                wrapText(d3.select(this), d.name, d.size * 2);
+            });
+        
+        // Update simulation
+        mindMapSimulation.nodes(mindMapNodes);
+        mindMapSimulation.force('link').links(mindMapLinks);
+        
+        // Simulation tick
+        mindMapSimulation.on('tick', () => {
+            links
+                .attr('x1', d => d.source.x)
+                .attr('y1', d => d.source.y)
+                .attr('x2', d => d.target.x)
+                .attr('y2', d => d.target.y);
+            
+            nodes.attr('transform', d => `translate(${d.x},${d.y})`);
+        });
+        
+        // Center the view
+        setTimeout(() => {
+            centerMindMapView();
+        }, 1000);
+    }
+
+    function setupForceSimulation(width, height) {
+        mindMapSimulation = d3.forceSimulation()
+            .force('link', d3.forceLink().id(d => d.id).distance(d => getLinkDistance(d)))
+            .force('charge', d3.forceManyBody().strength(d => getNodeCharge(d)))
+            .force('center', d3.forceCenter(width / 2, height / 2))
+            .force('collision', d3.forceCollide().radius(d => d.size + 5));
+        
+        // Adjust forces based on layout
+        switch (currentLayout) {
+            case 'radial':
+                mindMapSimulation.force('radial', d3.forceRadial(d => d.level * 100, width / 2, height / 2));
+                break;
+            case 'tree':
+                mindMapSimulation.force('x', d3.forceX(d => d.level * 150).strength(0.3));
+                mindMapSimulation.force('y', d3.forceY(height / 2).strength(0.1));
+                break;
+            case 'force':
+                // Default force layout
+                break;
+            case 'circular':
+                mindMapSimulation.force('radial', d3.forceRadial(200, width / 2, height / 2));
+                break;
+        }
+    }
+
+    function getLinkDistance(link) {
+        switch (link.type) {
+            case 'primary': return 80;
+            case 'secondary': return 60;
+            case 'concept': return 50;
+            case 'relationship': return 100;
+            default: return 70;
+        }
+    }
+
+    function getNodeCharge(node) {
+        switch (node.type) {
+            case 'center': return -800;
+            case 'main-topic': return -400;
+            case 'subtopic': return -200;
+            case 'concept': return -100;
+            case 'relationship': return -50;
+            default: return -100;
+        }
+    }
+
+    function getLinkColor(type) {
+        switch (type) {
+            case 'primary': return '#6366f1';
+            case 'secondary': return '#10b981';
+            case 'concept': return '#8b5cf6';
+            case 'relationship': return '#ef4444';
+            default: return '#9ca3af';
+        }
+    }
+
+    function getLinkWidth(strength) {
+        return Math.max(1, strength * 3);
+    }
+
+    // Node interaction handlers
+    function nodeClicked(event, d) {
+        event.stopPropagation();
+        selectedNode = d;
+        showNodeDetails(d);
+        highlightConnectedNodes(d);
+    }
+
+    function nodeMouseOver(event, d) {
+        // Highlight node
+        d3.select(event.currentTarget).select('circle')
+            .transition().duration(200)
+            .attr('r', d.size * 1.2)
+            .style('filter', 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))');
+        
+        // Show tooltip
+        showNodeTooltip(event, d);
+    }
+
+    function nodeMouseOut(event, d) {
+        // Reset node
+        d3.select(event.currentTarget).select('circle')
+            .transition().duration(200)
+            .attr('r', d.size)
+            .style('filter', 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))');
+        
+        // Hide tooltip
+        hideNodeTooltip();
+    }
+
+    function showNodeDetails(node) {
+        const panel = document.getElementById('nodeDetailsPanel');
+        const title = document.getElementById('nodeTitle');
+        const content = document.getElementById('nodeDetailsContent');
+        
+        if (!panel || !title || !content) return;
+        
+        title.textContent = node.name;
+        
+        let detailsHtml = `
+            <div class="node-detail-item">
+                <strong>Тип:</strong> ${getNodeTypeLabel(node.type)}
+            </div>
+            <div class="node-detail-item">
+                <strong>Уровень:</strong> ${node.level}
+            </div>
+            <div class="node-detail-item">
+                <strong>Описание:</strong> ${node.description}
+            </div>
+        `;
+        
+        if (node.subtopics && node.subtopics.length > 0) {
+            detailsHtml += `
+                <div class="node-detail-item">
+                    <strong>Подтемы:</strong>
+                    <ul class="mt-2">
+                        ${node.subtopics.map(sub => `<li>${sub}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+        }
+        
+        if (node.concepts && node.concepts.length > 0) {
+            detailsHtml += `
+                <div class="node-detail-item">
+                    <strong>Ключевые концепции:</strong>
+                    <ul class="mt-2">
+                        ${node.concepts.map(concept => `<li>${concept}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+        }
+        
+        if (node.complexity) {
+            detailsHtml += `
+                <div class="node-detail-item">
+                    <strong>Сложность:</strong> 
+                    <span class="complexity-badge complexity-${node.complexity}">${node.complexity}</span>
+                </div>
+            `;
+        }
+        
+        content.innerHTML = detailsHtml;
+        panel.style.display = 'block';
+    }
+
+    function hideNodeDetails() {
+        const panel = document.getElementById('nodeDetailsPanel');
+        if (panel) {
+            panel.style.display = 'none';
+        }
+        selectedNode = null;
+        unhighlightAllNodes();
+    }
+
+    function highlightConnectedNodes(node) {
+        // Reset all nodes
+        d3.selectAll('.mind-node circle').style('opacity', 0.3);
+        d3.selectAll('.mind-link').style('opacity', 0.1);
+        
+        // Highlight selected node
+        d3.selectAll('.mind-node').filter(d => d.id === node.id)
+            .select('circle').style('opacity', 1);
+        
+        // Highlight connected nodes and links
+        mindMapLinks.forEach(link => {
+            if (link.source.id === node.id || link.target.id === node.id) {
+                d3.selectAll('.mind-link').filter(d => d === link).style('opacity', 0.8);
+                d3.selectAll('.mind-node').filter(d => d.id === link.source.id || d.id === link.target.id)
+                    .select('circle').style('opacity', 1);
+            }
+        });
+    }
+
+    function unhighlightAllNodes() {
+        d3.selectAll('.mind-node circle').style('opacity', 1);
+        d3.selectAll('.mind-link').style('opacity', 0.6);
+    }
+
+    function showNodeTooltip(event, node) {
+        // Create or update tooltip
+        let tooltip = d3.select('body').select('.mind-map-tooltip');
+        if (tooltip.empty()) {
+            tooltip = d3.select('body').append('div')
+                .attr('class', 'mind-map-tooltip')
+                .style('position', 'absolute')
+                .style('background', 'rgba(0,0,0,0.8)')
+                .style('color', 'white')
+                .style('padding', '8px 12px')
+                .style('border-radius', '6px')
+                .style('font-size', '12px')
+                .style('pointer-events', 'none')
+                .style('z-index', '1000')
+                .style('opacity', 0);
+        }
+        
+        tooltip.html(`
+            <strong>${node.name}</strong><br>
+            ${node.description}
+        `)
+        .style('left', (event.pageX + 10) + 'px')
+        .style('top', (event.pageY - 10) + 'px')
+        .transition().duration(200)
+        .style('opacity', 1);
+    }
+
+    function hideNodeTooltip() {
+        d3.select('.mind-map-tooltip')
+            .transition().duration(200)
+            .style('opacity', 0);
+    }
+
+    function getNodeTypeLabel(type) {
+        switch (type) {
+            case 'center': return 'Центральная тема';
+            case 'main-topic': return 'Основная тема';
+            case 'subtopic': return 'Подтема';
+            case 'concept': return 'Концепция';
+            case 'relationship': return 'Связанная концепция';
+            default: return 'Узел';
+        }
+    }
+
+    // Drag handlers
+    function dragStarted(event, d) {
+        if (!event.active) mindMapSimulation.alphaTarget(0.3).restart();
+        d.fx = d.x;
+        d.fy = d.y;
+    }
+
+    function dragged(event, d) {
+        d.fx = event.x;
+        d.fy = event.y;
+    }
+
+    function dragEnded(event, d) {
+        if (!event.active) mindMapSimulation.alphaTarget(0);
+        d.fx = null;
+        d.fy = null;
+    }
+
+    // Layout controls
+    function setMindMapLayout(layout) {
+        console.log(`🔄 Switching to ${layout} layout`);
+        currentLayout = layout;
+        
+        // Update active button
+        document.querySelectorAll('.layout-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.querySelector(`[data-layout="${layout}"]`).classList.add('active');
+        
+        // Recreate visualization with new layout
+        if (mindMapNodes.length > 0) {
+            createMindMapVisualization();
+        }
+    }
+
+    // Search and filter functions
+    function filterMindMapNodes(filter) {
+        console.log(`🔍 Filtering nodes: ${filter}`);
+        
+        // Update active button
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.querySelector(`[data-filter="${filter}"]`).classList.add('active');
+        
+        // Apply filter
+        d3.selectAll('.mind-node').style('display', 'block');
+        d3.selectAll('.mind-link').style('display', 'block');
+        
+        if (filter !== 'all') {
+            d3.selectAll('.mind-node').filter(d => {
+                switch (filter) {
+                    case 'main': return d.type !== 'center' && d.type !== 'main-topic';
+                    case 'related': return d.type !== 'relationship';
+                    default: return false;
+                }
+            }).style('display', 'none');
+        }
+    }
+
+    function clearMindMapSearch() {
+        const searchInput = document.getElementById('mindMapSearch');
+        if (searchInput) {
+            searchInput.value = '';
+            document.querySelector('.search-clear-btn').style.display = 'none';
+        }
+        
+        // Show all nodes
+        d3.selectAll('.mind-node').style('opacity', 1);
+        d3.selectAll('.mind-link').style('opacity', 0.6);
+    }
+
+    // View controls
+    function toggleMindMapLabels() {
+        const btn = document.querySelector('[data-option="labels"]');
+        const isActive = btn.classList.contains('active');
+        
+        if (isActive) {
+            btn.classList.remove('active');
+            d3.selectAll('.mind-node text').style('display', 'none');
+        } else {
+            btn.classList.add('active');
+            d3.selectAll('.mind-node text').style('display', 'block');
+        }
+    }
+
+    function toggleMindMapConnections() {
+        const btn = document.querySelector('[data-option="connections"]');
+        const isActive = btn.classList.contains('active');
+        
+        if (isActive) {
+            btn.classList.remove('active');
+            d3.selectAll('.mind-link').style('display', 'none');
+        } else {
+            btn.classList.add('active');
+            d3.selectAll('.mind-link').style('display', 'block');
+        }
+    }
+
+    function toggleMindMapDetails() {
+        const btn = document.querySelector('[data-option="details"]');
+        const isActive = btn.classList.contains('active');
+        
+        if (isActive) {
+            btn.classList.remove('active');
+            hideNodeDetails();
+        } else {
+            btn.classList.add('active');
+            // Details will be shown on node click
+        }
+    }
+
+    // Zoom controls
+    function zoomMindMap(action) {
+        const svg = d3.select('#mindMapSvg');
+        const transition = svg.transition().duration(300);
+        
+        switch (action) {
+            case 'in':
+                svg.call(mindMapZoom.scaleBy, transition, 1.5);
+                break;
+            case 'out':
+                svg.call(mindMapZoom.scaleBy, transition, 1 / 1.5);
+                break;
+            case 'fit':
+                centerMindMapView();
+                break;
+        }
+    }
+
+    function centerMindMapView() {
+        const svg = d3.select('#mindMapSvg');
+        const container = document.getElementById('mindMapVisualization');
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+        
+        // Calculate bounds of all nodes
+        if (mindMapNodes.length === 0) return;
+        
+        const bounds = {
+            x: d3.extent(mindMapNodes, d => d.x),
+            y: d3.extent(mindMapNodes, d => d.y)
+        };
+        
+        const dx = bounds.x[1] - bounds.x[0];
+        const dy = bounds.y[1] - bounds.y[0];
+        const x = (bounds.x[0] + bounds.x[1]) / 2;
+        const y = (bounds.y[0] + bounds.y[1]) / 2;
+        
+        const scale = Math.min(width / dx, height / dy) * 0.8;
+        const translate = [width / 2 - scale * x, height / 2 - scale * y];
+        
+        svg.transition().duration(750).call(
+            mindMapZoom.transform,
+            d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale)
+        );
+    }
+
+    function resetMindMapView() {
+        const svg = d3.select('#mindMapSvg');
+        svg.transition().duration(500).call(
+            mindMapZoom.transform,
+            d3.zoomIdentity
+        );
+    }
+
+    // Export function
+    function downloadMindMap() {
+        const svg = document.getElementById('mindMapSvg');
+        const svgData = new XMLSerializer().serializeToString(svg);
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        
+        canvas.width = svg.clientWidth;
+        canvas.height = svg.clientHeight;
+        
+        img.onload = function() {
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0);
+            
+            const link = document.createElement('a');
+            link.download = 'mind-map.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        };
+        
+        img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+    }
+
+    // Update statistics
+    function updateMindMapStats() {
+        document.getElementById('nodeCount').textContent = mindMapNodes.length;
+        document.getElementById('connectionCount').textContent = mindMapLinks.length;
+        
+        const levels = [...new Set(mindMapNodes.map(n => n.level))].length;
+        document.getElementById('levelCount').textContent = levels;
+    }
+
+    // Text wrapping utility
+    function wrapText(text, content, width) {
+        const words = content.split(/\s+/);
+        if (words.length <= 2) return; // Don't wrap short text
+        
+        text.text(null);
+        
+        let line = [];
+        let lineNumber = 0;
+        const lineHeight = 1.1;
+        const y = text.attr('y') || 0;
+        const dy = parseFloat(text.attr('dy')) || 0;
+        
+        words.forEach(word => {
+            line.push(word);
+            const testLine = line.join(' ');
+            
+            if (testLine.length * 6 > width && line.length > 1) {
+                line.pop();
+                text.append('tspan')
+                    .attr('x', 0)
+                    .attr('y', y)
+                    .attr('dy', lineNumber * lineHeight + dy + 'em')
+                    .text(line.join(' '));
+                line = [word];
+                lineNumber++;
+            }
+        });
+        
+        text.append('tspan')
+            .attr('x', 0)
+            .attr('y', y)
+            .attr('dy', lineNumber * lineHeight + dy + 'em')
+            .text(line.join(' '));
+    }
+
+    // Search functionality
+    document.getElementById('mindMapSearch').addEventListener('input', function(e) {
+        const query = e.target.value.toLowerCase();
+        const clearBtn = document.querySelector('.search-clear-btn');
+        
+        if (query.length > 0) {
+            clearBtn.style.display = 'block';
+            
+            // Filter nodes based on search
+            d3.selectAll('.mind-node').style('opacity', d => {
+                return d.name.toLowerCase().includes(query) || 
+                       d.description.toLowerCase().includes(query) ? 1 : 0.2;
+            });
+        } else {
+            clearBtn.style.display = 'none';
+            d3.selectAll('.mind-node').style('opacity', 1);
+        }
+    });
+
+    // Add CSS for node details
+    const mindMapStyles = `
+        <style id="mindMapEnhancedStyles">
+            .node-detail-item {
+                margin-bottom: 12px;
+                padding-bottom: 8px;
+                border-bottom: 1px solid #f1f5f9;
+            }
+            
+            .node-detail-item:last-child {
+                border-bottom: none;
+                margin-bottom: 0;
+            }
+            
+            .complexity-badge {
+                padding: 2px 8px;
+                border-radius: 12px;
+                font-size: 0.75rem;
+                font-weight: 600;
+                text-transform: uppercase;
+            }
+            
+            .complexity-базовый {
+                background: #d1fae5;
+                color: #065f46;
+            }
+            
+            .complexity-средний {
+                background: #fef3c7;
+                color: #92400e;
+            }
+            
+            .complexity-сложный {
+                background: #fee2e2;
+                color: #991b1b;
+            }
+            
+            .mind-map-tooltip {
+                max-width: 200px;
+                word-wrap: break-word;
+            }
+        </style>
+    `;
+
+    if (!document.getElementById('mindMapEnhancedStyles')) {
+        document.head.insertAdjacentHTML('beforeend', mindMapStyles);
+    }
+
+    console.log('🧠 Enhanced Mind Map functionality loaded');

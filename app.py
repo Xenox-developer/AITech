@@ -708,6 +708,136 @@ def my_results():
     
     return render_template('my_results.html', results=results, pagination=pagination)
 
+def extract_questions_from_broken_json(json_text):
+    """Извлекает вопросы из поврежденного JSON с помощью регулярных выражений"""
+    import re
+    
+    logger.info("Пытаемся извлечь вопросы из поврежденного JSON...")
+    
+    questions = []
+    
+    try:
+        # Улучшенный паттерн для поиска вопросов
+        # Ищем блоки, которые содержат все необходимые поля
+        question_blocks = re.findall(
+            r'\{[^}]*?"id":\s*(\d+)[^}]*?"question":\s*"([^"]+)"[^}]*?"options":\s*\{([^}]+)\}[^}]*?"correct_answer":\s*"([^"]+)"[^}]*?"explanation":\s*"([^"]+)"[^}]*?\}',
+            json_text,
+            re.DOTALL
+        )
+        
+        for i, (question_id, question_text, options_str, correct_answer, explanation) in enumerate(question_blocks[:10]):
+            # Парсим опции
+            options = {}
+            option_pattern = r'"([A-D])":\s*"([^"]+)"'
+            option_matches = re.findall(option_pattern, options_str)
+            
+            for opt_key, opt_value in option_matches:
+                # Очищаем значение опции от лишних символов
+                clean_value = re.sub(r'[\\n\\r\\t]', ' ', opt_value).strip()
+                options[opt_key] = clean_value
+            
+            # Проверяем, что у нас есть все 4 опции
+            if len(options) == 4 and correct_answer in options:
+                questions.append({
+                    "id": int(question_id) if question_id.isdigit() else i + 1,
+                    "question": question_text.strip(),
+                    "options": options,
+                    "correct_answer": correct_answer,
+                    "explanation": explanation.strip(),
+                    "difficulty": 1 + (i % 3),  # Распределяем сложность 1-3
+                    "topic": "Материал"
+                })
+        
+        # Если не нашли полные блоки, пробуем более простой подход
+        if not questions:
+            logger.info("Пробуем альтернативный метод извлечения...")
+            
+            # Ищем отдельные компоненты
+            question_texts = re.findall(r'"question":\s*"([^"]+)"', json_text)
+            correct_answers = re.findall(r'"correct_answer":\s*"([A-D])"', json_text)
+            explanations = re.findall(r'"explanation":\s*"([^"]+)"', json_text)
+            
+            # Ищем блоки опций
+            options_blocks = re.findall(r'"options":\s*\{([^}]+)\}', json_text)
+            
+            min_length = min(len(question_texts), len(correct_answers), len(explanations), len(options_blocks))
+            
+            for i in range(min(min_length, 5)):  # Максимум 5 вопросов
+                # Парсим опции для этого вопроса
+                options = {}
+                option_matches = re.findall(r'"([A-D])":\s*"([^"]+)"', options_blocks[i])
+                
+                for opt_key, opt_value in option_matches:
+                    options[opt_key] = opt_value.strip()
+                
+                if len(options) == 4:
+                    questions.append({
+                        "id": i + 1,
+                        "question": question_texts[i].strip(),
+                        "options": options,
+                        "correct_answer": correct_answers[i],
+                        "explanation": explanations[i].strip(),
+                        "difficulty": 1 + (i % 3),
+                        "topic": "Материал"
+                    })
+        
+        logger.info(f"Извлечено {len(questions)} вопросов из поврежденного JSON")
+        return questions
+        
+    except Exception as e:
+        logger.error(f"Ошибка при извлечении вопросов: {e}")
+        return []
+
+def fix_json_syntax(json_text):
+    """Улучшенное исправление синтаксических ошибок JSON"""
+    import re
+    
+    logger.info("Пытаемся исправить JSON синтаксис...")
+    
+    # Сохраняем оригинал для отладки
+    original_length = len(json_text)
+    
+    # 1. Исправляем отсутствующие запятые между объектами в массиве
+    json_text = re.sub(r'}\s*\n\s*{', '},\n{', json_text)
+    
+    # 2. Исправляем отсутствующие запятые после строковых значений
+    json_text = re.sub(r'"\s*\n\s*"([a-zA-Z_]+)":', '",\n"\\1":', json_text)
+    
+    # 3. Исправляем отсутствующие запятые после чисел
+    json_text = re.sub(r'(\d)\s*\n\s*"([a-zA-Z_]+)":', r'\1,\n"\2":', json_text)
+    
+    # 4. Исправляем отсутствующие запятые после закрывающих скобок объектов
+    json_text = re.sub(r'}\s*\n\s*"([a-zA-Z_]+)":', r'},\n"\1":', json_text)
+    
+    # 5. Исправляем отсутствующие запятые после закрывающих скобок массивов
+    json_text = re.sub(r']\s*\n\s*"([a-zA-Z_]+)":', r'],\n"\1":', json_text)
+    
+    # 6. Убираем лишние запятые перед закрывающими скобками
+    json_text = re.sub(r',\s*}', '}', json_text)
+    json_text = re.sub(r',\s*]', ']', json_text)
+    
+    # 7. Исправляем неэкранированные кавычки в строках
+    # Ищем строки с неэкранированными кавычками и экранируем их
+    def fix_quotes_in_strings(match):
+        content = match.group(1)
+        # Экранируем кавычки внутри строки, но не те что уже экранированы
+        fixed_content = re.sub(r'(?<!\\)"', '\\"', content)
+        return f'"{fixed_content}"'
+    
+    # Применяем исправление кавычек к значениям строк
+    json_text = re.sub(r'"([^"]*(?:\\.[^"]*)*)"(?=\s*[,}:\]])', fix_quotes_in_strings, json_text)
+    
+    # 8. Убираем возможные дублирующиеся запятые
+    json_text = re.sub(r',+', ',', json_text)
+    
+    # 9. Исправляем пробелы вокруг двоеточий и запятых
+    json_text = re.sub(r'\s*:\s*', ': ', json_text)
+    json_text = re.sub(r'\s*,\s*', ', ', json_text)
+    
+    logger.info(f"JSON исправлен: {original_length} → {len(json_text)} символов")
+    
+    return json_text
+
 def generate_test_questions(result_data):
     """Генерирует тестовые вопросы с вариантами ответов на основе материала"""
     try:
@@ -819,67 +949,38 @@ def generate_test_questions(result_data):
         
         # Парсим ответ
         response_text = response.choices[0].message.content
+        logger.info(f"Получен ответ от GPT длиной {len(response_text)} символов")
         
         # Извлекаем JSON из ответа
         import re
         json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
         if json_match:
             json_text = json_match.group()
+            logger.info(f"Извлечен JSON длиной {len(json_text)} символов")
+            
             try:
                 questions_data = json.loads(json_text)
-                return questions_data.get('questions', [])
+                questions = questions_data.get('questions', [])
+                logger.info(f"JSON успешно распарсен, найдено {len(questions)} вопросов")
+                return questions
             except json.JSONDecodeError as e:
                 logger.error(f"Ошибка парсинга JSON: {e}")
                 logger.info("Пытаемся исправить JSON...")
                 
-                # Пытаемся исправить распространенные ошибки JSON
+                # Улучшенное исправление JSON
                 try:
-                    # Исправляем отсутствующие запятые между объектами
-                    fixed_json = re.sub(r'}\s*{', '},{', json_text)
-                    # Исправляем отсутствующие запятые после строк
-                    fixed_json = re.sub(r'"\s*\n\s*"', '",\n"', fixed_json)
-                    # Исправляем отсутствующие запятые после чисел
-                    fixed_json = re.sub(r'(\d)\s*\n\s*"', r'\1,\n"', fixed_json)
-                    # Исправляем отсутствующие запятые после закрывающих скобок
-                    fixed_json = re.sub(r'}\s*\n\s*"', '},\n"', fixed_json)
-                    # Исправляем отсутствующие запятые в массивах
-                    fixed_json = re.sub(r'}\s*\n\s*{', '},\n{', fixed_json)
-                    
+                    fixed_json = fix_json_syntax(json_text)
                     questions_data = json.loads(fixed_json)
-                    logger.info("JSON успешно исправлен")
-                    return questions_data.get('questions', [])
+                    questions = questions_data.get('questions', [])
+                    logger.info(f"JSON успешно исправлен, найдено {len(questions)} вопросов")
+                    return questions
                 except json.JSONDecodeError as e2:
                     logger.error(f"Не удалось исправить JSON: {e2}")
-                    # Попробуем извлечь отдельные вопросы
-                    try:
-                        questions = []
-                        question_pattern = r'"question":\s*"([^"]+)".*?"options":\s*{([^}]+)}.*?"correct_answer":\s*"([^"]+)".*?"explanation":\s*"([^"]+)"'
-                        matches = re.findall(question_pattern, json_text, re.DOTALL)
-                        
-                        for i, (question, options_str, correct, explanation) in enumerate(matches[:5]):  # Берем максимум 5 вопросов
-                            # Парсим опции
-                            options = {}
-                            option_pattern = r'"([A-D])":\s*"([^"]+)"'
-                            option_matches = re.findall(option_pattern, options_str)
-                            for opt_key, opt_value in option_matches:
-                                options[opt_key] = opt_value
-                            
-                            if len(options) == 4:  # Только если все 4 опции найдены
-                                questions.append({
-                                    "id": i + 1,
-                                    "question": question,
-                                    "options": options,
-                                    "correct_answer": correct,
-                                    "explanation": explanation,
-                                    "difficulty": 1 + (i % 3),  # Распределяем сложность
-                                    "topic": "Материал"
-                                })
-                        
-                        if questions:
-                            logger.info(f"Извлечено {len(questions)} вопросов из поврежденного JSON")
-                            return questions
-                    except Exception as e3:
-                        logger.error(f"Не удалось извлечь вопросы: {e3}")
+                    # Попробуем извлечь отдельные вопросы с улучшенным парсингом
+                    questions = extract_questions_from_broken_json(json_text)
+                    if questions:
+                        logger.info(f"Извлечено {len(questions)} вопросов из поврежденного JSON")
+                        return questions
                     
                     logger.error("Используем демонстрационные вопросы")
                     return get_demo_questions()
@@ -1220,9 +1321,14 @@ def upload_file():
             return redirect(url_for('index'))
         
         # Сохранение файла
-        filename = secure_filename(file.filename)
+        original_filename = secure_filename(file.filename)
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        filename = f"{timestamp}_{filename}"
+        
+        # Сохраняем оригинальное расширение файла
+        file_ext = Path(original_filename).suffix.lower()
+        filename_without_ext = Path(original_filename).stem
+        filename = f"{timestamp}_{filename_without_ext}{file_ext}"
+        
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
         
