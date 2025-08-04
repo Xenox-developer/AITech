@@ -12,25 +12,25 @@
         margin-bottom: 30px;
         text-align: center;
     }
-    
+
     .results-title {
         font-size: 2rem;
         font-weight: 700;
         margin-bottom: 10px;
     }
-    
+
     .results-subtitle {
         opacity: 0.9;
         font-size: 1.1rem;
     }
-    
+
     .results-container {
         background: white;
         border-radius: 16px;
         padding: 30px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     }
-    
+
     .results-filters {
         display: flex;
         justify-content: space-between;
@@ -39,18 +39,18 @@
         flex-wrap: wrap;
         gap: 16px;
     }
-    
+
     .results-count {
         color: #6b7280;
         font-weight: 500;
     }
-    
+
     .filter-buttons {
         display: flex;
         gap: 8px;
         flex-wrap: wrap;
     }
-    
+
     .filter-btn {
         padding: 8px 16px;
         border: 2px solid #e5e7eb;
@@ -62,7 +62,7 @@
         transition: all 0.3s ease;
         text-decoration: none;
     }
-    
+
     .filter-btn:hover,
     .filter-btn.active {
         border-color: #6366f1;
@@ -70,7 +70,7 @@
         color: white;
         text-decoration: none;
     }
-    
+
     .result-card {
         border: 1px solid #e5e7eb;
         border-radius: 12px;
@@ -79,19 +79,19 @@
         transition: all 0.3s ease;
         background: white;
     }
-    
+
     .result-card:hover {
         border-color: #6366f1;
         box-shadow: 0 4px 15px rgba(99, 102, 241, 0.1);
         transform: translateY(-2px);
     }
-    
+
     .result-header {
         display: flex;
         align-items: center;
         margin-bottom: 12px;
     }
-    
+
     .result-icon {
         width: 45px;
         height: 45px;
@@ -103,30 +103,30 @@
         font-size: 1.1rem;
         color: white;
     }
-    
+
     .result-icon.pdf {
         background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
     }
-    
+
     .result-icon.pptx {
         background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
     }
-    
+
     .result-icon.video {
         background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
     }
-    
+
     .result-info {
         flex: 1;
     }
-    
+
     .result-name {
         font-weight: 600;
         color: #1f2937;
         margin-bottom: 4px;
         font-size: 1.1rem;
     }
-    
+
     .result-meta {
         color: #6b7280;
         font-size: 0.9rem;
@@ -135,19 +135,19 @@
         gap: 16px;
         flex-wrap: wrap;
     }
-    
+
     .result-meta-item {
         display: flex;
         align-items: center;
         gap: 4px;
     }
-    
+
     .result-actions {
         display: flex;
         gap: 8px;
         flex-wrap: wrap;
     }
-    
+
     .btn-sm {
         padding: 8px 16px;
         font-size: 0.85rem;
@@ -157,65 +157,65 @@
         border: none;
         cursor: pointer;
     }
-    
+
     .btn-primary {
         background: #6366f1;
         color: white;
     }
-    
+
     .btn-primary:hover {
         background: #5856eb;
         transform: translateY(-1px);
         color: white;
         text-decoration: none;
     }
-    
+
     .btn-outline {
         background: transparent;
         color: #6366f1;
         border: 1px solid #6366f1;
     }
-    
+
     .btn-outline:hover {
         background: #6366f1;
         color: white;
         text-decoration: none;
     }
-    
+
     .btn-danger {
         background: #ef4444;
         color: white;
     }
-    
+
     .btn-danger:hover {
         background: #dc2626;
         transform: translateY(-1px);
     }
-    
+
     .empty-state {
         text-align: center;
         padding: 60px 20px;
         color: #6b7280;
     }
-    
+
     .empty-icon {
         font-size: 4rem;
         margin-bottom: 20px;
         opacity: 0.5;
     }
-    
+
     .empty-title {
         font-size: 1.5rem;
         font-weight: 600;
         margin-bottom: 12px;
         color: #374151;
     }
-    
+
     .empty-description {
         margin-bottom: 24px;
         font-size: 1rem;
     }
-    
+
     .pagination {
         display: flex;
         justify-content: center;
@@ -224,7 +224,7 @@
         margin-top: 30px;
         flex-wrap: wrap;
     }
-    
+
     .pagination-btn {
         padding: 8px 12px;
         border: 1px solid #e5e7eb;
@@ -236,60 +236,60 @@
         min-width: 40px;
         text-align: center;
     }
-    
+
     .pagination-btn:hover {
         border-color: #6366f1;
         background: #6366f1;
         color: white;
         text-decoration: none;
     }
-    
+
     .pagination-btn.active {
         border-color: #6366f1;
         background: #6366f1;
         color: white;
     }
-    
+
     .pagination-btn:disabled {
         opacity: 0.5;
         cursor: not-allowed;
     }
-    
+
     .pagination-info {
         color: #6b7280;
         font-size: 0.9rem;
         margin: 0 16px;
     }
-    
+
     @media (max-width: 768px) {
         .results-title {
             font-size: 1.5rem;
         }
-        
+
         .results-filters {
             flex-direction: column;
             align-items: stretch;
         }
-        
+
         .filter-buttons {
             justify-content: center;
         }
-        
+
         .result-header {
             flex-direction: column;
             text-align: center;
         }
-        
+
         .result-icon {
             margin-right: 0;
             margin-bottom: 12px;
         }
-        
+
         .result-actions {
             justify-content: center;
             margin-top: 16px;
         }
-        
+
         .pagination {
             flex-direction: column;
             gap: 12px;
@@ -317,174 +317,183 @@
                 <i class="fas fa-file-alt me-2"></i>
                 Всего результатов: <strong>{{ pagination.total }}</strong>
             </div>
-            
+
             <div class="filter-buttons">
-                <a href="{{ url_for('my_results') }}" class="filter-btn {{ 'active' if not request.args.get('filter') else '' }}">
+                <a href="{{ url_for('my_results') }}"
+                    class="filter-btn {{ 'active' if not request.args.get('filter') else '' }}">
                     <i class="fas fa-list me-1"></i>Все
                 </a>
-                <a href="{{ url_for('my_results', filter='pdf') }}" class="filter-btn {{ 'active' if request.args.get('filter') == 'pdf' else '' }}">
+                <a href="{{ url_for('my_results', filter='pdf') }}"
+                    class="filter-btn {{ 'active' if request.args.get('filter') == 'pdf' else '' }}">
                     <i class="fas fa-file-pdf me-1"></i>PDF
                 </a>
-                <a href="{{ url_for('my_results', filter='pptx') }}" class="filter-btn {{ 'active' if request.args.get('filter') == 'pptx' else '' }}">
+                <a href="{{ url_for('my_results', filter='pptx') }}"
+                    class="filter-btn {{ 'active' if request.args.get('filter') == 'pptx' else '' }}">
                     <i class="fas fa-file-powerpoint me-1"></i>PowerPoint
                 </a>
-                <a href="{{ url_for('my_results', filter='video') }}" class="filter-btn {{ 'active' if request.args.get('filter') == 'video' else '' }}">
+                <a href="{{ url_for('my_results', filter='video') }}"
+                    class="filter-btn {{ 'active' if request.args.get('filter') == 'video' else '' }}">
                     <i class="fas fa-video me-1"></i>Видео
                 </a>
             </div>
         </div>
-        
+
         <!-- Список результатов -->
         {% if results %}
-            {% for result in results %}
-            <div class="result-card">
-                <div class="result-header">
-                    <div class="result-icon {{ 'pdf' if result.file_type == '.pdf' else ('pptx' if result.file_type == '.pptx' else 'video') }}">
-                        <i class="fas fa-{{ 'file-pdf' if result.file_type == '.pdf' else ('file-powerpoint' if result.file_type == '.pptx' else 'video') }}"></i>
-                    </div>
-                    <div class="result-info">
-                        <div class="result-name">{{ result.filename }}</div>
-                        <div class="result-meta">
-                            <div class="result-meta-item">
-                                <i class="fas fa-tag"></i>
-                                <span>{{ result.file_type.upper() }}</span>
-                            </div>
-                            <div class="result-meta-item">
-                                <i class="fas fa-calendar"></i>
-                                <span>{{ result.created_at }}</span>
-                            </div>
+        {% for result in results %}
+        <div class="result-card">
+            <div class="result-header">
+                <div
+                    class="result-icon {{ 'pdf' if result.file_type == '.pdf' else ('pptx' if result.file_type == '.pptx' else 'video') }}">
+                    <i
+                        class="fas fa-{{ 'file-pdf' if result.file_type == '.pdf' else ('file-powerpoint' if result.file_type == '.pptx' else 'video') }}"></i>
+                </div>
+                <div class="result-info">
+                    <div class="result-name">{{ result.filename }}</div>
+                    <div class="result-meta">
+                        <div class="result-meta-item">
+                            <i class="fas fa-tag"></i>
+                            <span>{{ result.file_type.upper() }}</span>
+                        </div>
+                        <div class="result-meta-item">
+                            <i class="fas fa-calendar"></i>
+                            <span>{{ result.created_at }}</span>
                         </div>
                     </div>
-                    <div class="result-actions">
-                        <a href="{{ url_for('result', result_id=result.id) }}" class="btn btn-primary btn-sm">
-                            <i class="fas fa-eye me-1"></i>Открыть
-                        </a>
-                        <a href="{{ url_for('download_flashcards', result_id=result.id) }}" class="btn btn-outline btn-sm">
-                            <i class="fas fa-download me-1"></i>Скачать
-                        </a>
-                        <button class="btn btn-danger btn-sm" onclick="confirmDelete({{ result.id }})">
-                            <i class="fas fa-trash me-1"></i>Удалить
-                        </button>
-                    </div>
+                </div>
+                <div class="result-actions">
+                    <a href="{{ url_for('result', access_token=result.access_token) }}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-eye me-1"></i>Открыть
+                    </a>
+                    <a href="{{ url_for('download_flashcards', result_id=result.id) }}" class="btn btn-outline btn-sm">
+                        <i class="fas fa-download me-1"></i>Скачать
+                    </a>
+                    <button class="btn btn-danger btn-sm" onclick="confirmDelete({{ result.id }})">
+                        <i class="fas fa-trash me-1"></i>Удалить
+                    </button>
                 </div>
             </div>
-            {% endfor %}
-            
-            <!-- Пагинация -->
-            {% if pagination.total > pagination.per_page %}
-            <div class="pagination">
-                {% if pagination.has_prev %}
-                    <a href="{{ url_for('my_results', page=pagination.prev_num, filter=request.args.get('filter')) }}" class="pagination-btn">
-                        <i class="fas fa-chevron-left"></i>
-                    </a>
-                {% else %}
-                    <span class="pagination-btn" style="opacity: 0.5;">
-                        <i class="fas fa-chevron-left"></i>
-                    </span>
-                {% endif %}
-                
-                <div class="pagination-info">
-                    Страница {{ pagination.page }} из {{ (pagination.total + pagination.per_page - 1) // pagination.per_page }}
-                </div>
-                
-                {% if pagination.has_next %}
-                    <a href="{{ url_for('my_results', page=pagination.next_num, filter=request.args.get('filter')) }}" class="pagination-btn">
-                        <i class="fas fa-chevron-right"></i>
-                    </a>
-                {% else %}
-                    <span class="pagination-btn" style="opacity: 0.5;">
-                        <i class="fas fa-chevron-right"></i>
-                    </span>
-                {% endif %}
-            </div>
+        </div>
+        {% endfor %}
+
+        <!-- Пагинация -->
+        {% if pagination.total > pagination.per_page %}
+        <div class="pagination">
+            {% if pagination.has_prev %}
+            <a href="{{ url_for('my_results', page=pagination.prev_num, filter=request.args.get('filter')) }}"
+                class="pagination-btn">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+            {% else %}
+            <span class="pagination-btn" style="opacity: 0.5;">
+                <i class="fas fa-chevron-left"></i>
+            </span>
             {% endif %}
-            
-        {% else %}
-            <!-- Пустое состояние -->
-            <div class="empty-state">
-                <div class="empty-icon">
-                    <i class="fas fa-file-upload"></i>
-                </div>
-                <h3 class="empty-title">Пока нет результатов</h3>
-                <p class="empty-description">
-                    Загрузите первый файл для анализа и создания флеш-карт
-                </p>
-                <a href="{{ url_for('index') }}" class="btn btn-primary">
-                    <i class="fas fa-upload me-2"></i>Загрузить файл
-                </a>
+
+            <div class="pagination-info">
+                Страница {{ pagination.page }} из {{ (pagination.total + pagination.per_page - 1) // pagination.per_page
+                }}
             </div>
+
+            {% if pagination.has_next %}
+            <a href="{{ url_for('my_results', page=pagination.next_num, filter=request.args.get('filter')) }}"
+                class="pagination-btn">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+            {% else %}
+            <span class="pagination-btn" style="opacity: 0.5;">
+                <i class="fas fa-chevron-right"></i>
+            </span>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% else %}
+        <!-- Пустое состояние -->
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="fas fa-file-upload"></i>
+            </div>
+            <h3 class="empty-title">Пока нет результатов</h3>
+            <p class="empty-description">
+                Загрузите первый файл для анализа и создания флеш-карт
+            </p>
+            <a href="{{ url_for('index') }}" class="btn btn-primary">
+                <i class="fas fa-upload me-2"></i>Загрузить файл
+            </a>
+        </div>
         {% endif %}
     </div>
 </div>
 
 <script>
-async function confirmDelete(resultId) {
-    if (confirm('Вы уверены, что хотите удалить этот результат? Это действие нельзя отменить.')) {
-        try {
-            const response = await fetch(`/api/delete_result/${resultId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
+    async function confirmDelete(resultId) {
+        if (confirm('Вы уверены, что хотите удалить этот результат? Это действие нельзя отменить.')) {
+            try {
+                const response = await fetch(`/api/delete_result/${resultId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Удаляем элемент из DOM
+                    const resultCard = event.target.closest('.result-card');
+                    if (resultCard) {
+                        resultCard.style.transition = 'all 0.3s ease';
+                        resultCard.style.opacity = '0';
+                        resultCard.style.transform = 'translateX(-100%)';
+
+                        setTimeout(() => {
+                            resultCard.remove();
+
+                            // Проверяем, остались ли результаты
+                            const remainingResults = document.querySelectorAll('.result-card');
+                            if (remainingResults.length === 0) {
+                                location.reload(); // Перезагружаем страницу для показа пустого состояния
+                            }
+                        }, 300);
+                    }
+
+                    // Показываем уведомление об успехе
+                    showNotification('Результат успешно удален', 'success');
+                } else {
+                    showNotification(data.message || 'Ошибка при удалении', 'error');
                 }
-            });
-            
-            const data = await response.json();
-            
-            if (data.success) {
-                // Удаляем элемент из DOM
-                const resultCard = event.target.closest('.result-card');
-                if (resultCard) {
-                    resultCard.style.transition = 'all 0.3s ease';
-                    resultCard.style.opacity = '0';
-                    resultCard.style.transform = 'translateX(-100%)';
-                    
-                    setTimeout(() => {
-                        resultCard.remove();
-                        
-                        // Проверяем, остались ли результаты
-                        const remainingResults = document.querySelectorAll('.result-card');
-                        if (remainingResults.length === 0) {
-                            location.reload(); // Перезагружаем страницу для показа пустого состояния
-                        }
-                    }, 300);
-                }
-                
-                // Показываем уведомление об успехе
-                showNotification('Результат успешно удален', 'success');
-            } else {
-                showNotification(data.message || 'Ошибка при удалении', 'error');
+            } catch (error) {
+                console.error('Error deleting result:', error);
+                showNotification('Ошибка соединения с сервером', 'error');
             }
-        } catch (error) {
-            console.error('Error deleting result:', error);
-            showNotification('Ошибка соединения с сервером', 'error');
         }
     }
-}
 
-function showNotification(message, type) {
-    // Создаем уведомление
-    const notification = document.createElement('div');
-    notification.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show`;
-    notification.style.position = 'fixed';
-    notification.style.top = '20px';
-    notification.style.right = '20px';
-    notification.style.zIndex = '9999';
-    notification.style.minWidth = '300px';
-    
-    notification.innerHTML = `
+    function showNotification(message, type) {
+        // Создаем уведомление
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show`;
+        notification.style.position = 'fixed';
+        notification.style.top = '20px';
+        notification.style.right = '20px';
+        notification.style.zIndex = '9999';
+        notification.style.minWidth = '300px';
+
+        notification.innerHTML = `
         <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
         ${message}
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     `;
-    
-    document.body.appendChild(notification);
-    
-    // Автоматически удаляем через 5 секунд
-    setTimeout(() => {
-        if (notification.parentNode) {
-            notification.remove();
-        }
-    }, 5000);
-}
+
+        document.body.appendChild(notification);
+
+        // Автоматически удаляем через 5 секунд
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 5000);
+    }
 </script>
 {% endblock %}

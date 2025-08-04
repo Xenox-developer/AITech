@@ -460,7 +460,7 @@
                         </div>
                     </div>
                     <div class="result-actions">
-                        <a href="{{ url_for('result', result_id=result.id) }}" class="btn btn-primary btn-sm">
+                        <a href="{{ url_for('result', access_token=result.access_token) }}" class="btn btn-primary btn-sm">
                             <i class="fas fa-eye me-1"></i>Открыть
                         </a>
                         <a href="{{ url_for('download_flashcards', result_id=result.id) }}" class="btn btn-outline-secondary btn-sm">

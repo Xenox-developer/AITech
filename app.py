@@ -13,6 +13,7 @@ from pathlib import Path
 import yt_dlp
 import tempfile
 import re
+import secrets
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
@@ -195,6 +196,7 @@ def init_db():
             key_moments_json TEXT,
             full_text TEXT,
             user_id INTEGER,
+            access_token TEXT UNIQUE,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users(id)
         )
@@ -223,6 +225,46 @@ def init_db():
     except sqlite3.OperationalError:
         # Колонка уже существует
         pass
+    
+    # Добавляем колонку access_token если её нет (миграция)
+    try:
+        # Сначала добавляем колонку без UNIQUE ограничения
+        c.execute('ALTER TABLE result ADD COLUMN access_token TEXT')
+        logger.info("Added access_token column to result table")
+        
+        # Добавляем токены к существующим записям без токенов
+        c.execute('SELECT id FROM result WHERE access_token IS NULL')
+        results_without_tokens = c.fetchall()
+        
+        for (result_id,) in results_without_tokens:
+            access_token = secrets.token_urlsafe(32)
+            c.execute('UPDATE result SET access_token = ? WHERE id = ?', (access_token, result_id))
+            logger.info(f"Added access token to existing result {result_id}")
+        
+        # Теперь создаем уникальный индекс
+        try:
+            c.execute('CREATE UNIQUE INDEX idx_result_access_token ON result(access_token)')
+            logger.info("Created unique index for access_token")
+        except sqlite3.OperationalError as e:
+            if "already exists" not in str(e):
+                logger.warning(f"Could not create unique index: {e}")
+        
+    except sqlite3.OperationalError as e:
+        if "duplicate column name" in str(e):
+            # Колонка уже существует, проверяем есть ли записи без токенов
+            try:
+                c.execute('SELECT id FROM result WHERE access_token IS NULL')
+                results_without_tokens = c.fetchall()
+                
+                for (result_id,) in results_without_tokens:
+                    access_token = secrets.token_urlsafe(32)
+                    c.execute('UPDATE result SET access_token = ? WHERE id = ?', (access_token, result_id))
+                    logger.info(f"Added access token to existing result {result_id}")
+            except sqlite3.OperationalError:
+                # Колонка не существует, что странно, но продолжаем
+                pass
+        else:
+            logger.error(f"Error adding access_token column: {e}")
     
     # Таблица прогресса пользователя
     c.execute('''
@@ -310,27 +352,78 @@ def save_result(filename, file_type, analysis_result, page_info=None):
     # Получаем ID текущего пользователя (если авторизован)
     user_id = current_user.id if current_user.is_authenticated else None
     
+    # Генерируем уникальный токен доступа
+    access_token = secrets.token_urlsafe(32)
+    
     c.execute('''
         INSERT INTO result (
             filename, file_type, topics_json, summary, flashcards_json,
             mind_map_json, study_plan_json, quality_json,
-            video_segments_json, key_moments_json, full_text, user_id, test_questions_json
+            video_segments_json, key_moments_json, full_text, user_id, test_questions_json, access_token
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ''', (
         filename, file_type, topics_json, analysis_result['summary'], 
         flashcards_json, mind_map_json, study_plan_json, quality_json,
-        video_segments_json, key_moments_json, full_text, user_id, test_questions_json
+        video_segments_json, key_moments_json, full_text, user_id, test_questions_json, access_token
     ))
     
     result_id = c.lastrowid
     conn.commit()
     conn.close()
     
-    return result_id
+    return access_token
+
+def get_result_by_token(access_token):
+    """Получение результата по токену доступа"""
+    conn = sqlite3.connect('ai_study.db')
+    c = conn.cursor()
+    
+    c.execute('''
+        SELECT id, filename, file_type, topics_json, summary, flashcards_json,
+               mind_map_json, study_plan_json, quality_json,
+               video_segments_json, key_moments_json, full_text, created_at, user_id, test_questions_json
+        FROM result WHERE access_token = ?
+    ''', (access_token,))
+    
+    row = c.fetchone()
+    conn.close()
+    
+    if row:
+        result_data = {
+            'id': row[0],
+            'filename': row[1],
+            'file_type': row[2],
+            'topics_data': json.loads(row[3]),
+            'summary': row[4],
+            'flashcards': json.loads(row[5]),
+            'mind_map': json.loads(row[6]),
+            'study_plan': json.loads(row[7]),
+            'quality_assessment': json.loads(row[8]),
+            'video_segments': json.loads(row[9]),
+            'key_moments': json.loads(row[10]),
+            'full_text': row[11] or '',
+            'created_at': row[12],
+            'user_id': row[13],
+            'test_questions': json.loads(row[14]) if row[14] else []
+        }
+        
+        # Проверяем права доступа - если у результата есть владелец, доступ только у него
+        if result_data['user_id']:
+            # Результат принадлежит конкретному пользователю
+            if not (current_user and current_user.is_authenticated and result_data['user_id'] == current_user.id):
+                return None  # Нет доступа к чужому результату
+        
+        # Извлекаем информацию о страницах из mind_map (если она там сохранена)
+        mind_map_data = result_data['mind_map']
+        if isinstance(mind_map_data, dict) and 'page_info' in mind_map_data:
+            result_data['page_info'] = mind_map_data['page_info']
+        
+        return result_data
+    return None
 
 def get_result(result_id, check_access=True):
-    """Получение результата из базы данных"""
+    """Получение результата из базы данных по ID (для обратной совместимости)"""
     conn = sqlite3.connect('ai_study.db')
     c = conn.cursor()
     
@@ -540,7 +633,7 @@ def dashboard():
     # Все результаты с пагинацией
     offset = (page - 1) * per_page
     c.execute('''
-        SELECT id, filename, file_type, created_at
+        SELECT id, filename, file_type, created_at, access_token
         FROM result 
         WHERE user_id = ?
         ORDER BY created_at DESC
@@ -553,7 +646,8 @@ def dashboard():
             'id': row[0],
             'filename': row[1],
             'file_type': row[2],
-            'created_at': row[3]
+            'created_at': row[3],
+            'access_token': row[4]
         })
     
     conn.close()
@@ -672,7 +766,7 @@ def my_results():
     # Получаем результаты с пагинацией и фильтрацией
     offset = (page - 1) * per_page
     c.execute(f'''
-        SELECT id, filename, file_type, created_at
+        SELECT id, filename, file_type, created_at, access_token
         FROM result 
         {base_where}
         ORDER BY created_at DESC
@@ -685,7 +779,8 @@ def my_results():
             'id': row[0],
             'filename': row[1],
             'file_type': row[2],
-            'created_at': row[3]
+            'created_at': row[3],
+            'access_token': row[4]
         })
     
     conn.close()
@@ -1361,14 +1456,14 @@ def upload_file():
                 }
             
             # Сохранение результата в БД
-            result_id = save_result(filename, file_type, analysis_result, page_info)
+            access_token = save_result(filename, file_type, analysis_result, page_info)
             
             # Удаление файла
             os.remove(filepath)
             
             logger.info(f"Advanced processing completed for: {filename}")
             
-            return redirect(url_for('result', result_id=result_id))
+            return redirect(url_for('result', access_token=access_token))
             
         except Exception as e:
             logger.error(f"Error processing file {filename}: {str(e)}")
@@ -1426,8 +1521,8 @@ def upload_video_url():
                 
                 # Сохранение результата в БД
                 logger.info("💾 Saving results to database...")
-                result_id = save_result(filename, '.mp4', analysis_result, video_info)
-                logger.info(f"✅ Results saved with ID: {result_id}")
+                access_token = save_result(filename, '.mp4', analysis_result, video_info)
+                logger.info(f"✅ Results saved with token: {access_token}")
                 
                 # Теперь можно безопасно удалить файл
                 if os.path.exists(filepath):
@@ -1436,7 +1531,7 @@ def upload_video_url():
                 
                 logger.info(f"🎉 Video processing completed successfully for: {filename}")
                 
-                return redirect(url_for('result', result_id=result_id))
+                return redirect(url_for('result', access_token=access_token))
                 
             except Exception as e:
                 logger.error(f"❌ Error processing video {filename}: {str(e)}")
@@ -1483,15 +1578,15 @@ def upload_video_url():
         flash('Общая ошибка загрузки видео по ссылке', 'danger')
         return redirect(url_for('index'))
 
-@app.route('/result/<int:result_id>')
-def result(result_id):
-    """Отображение результата"""
-    data = get_result(result_id)
+@app.route('/result/<access_token>')
+def result(access_token):
+    """Отображение результата по уникальному токену"""
+    data = get_result_by_token(access_token)
     if not data:
-        flash('Результат не найден', 'danger')
+        flash('Результат не найден или нет доступа', 'danger')
         return redirect(url_for('index'))
     
-    return render_template('result.html', **data, result_id=result_id)
+    return render_template('result.html', **data, result_id=data['id'], access_token=access_token)
 
 @app.route('/api/create_flashcard', methods=['POST'])
 def create_flashcard():
