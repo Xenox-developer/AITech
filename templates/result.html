@@ -5464,36 +5464,7 @@
         position: relative;
     }
 
-    .math-processed::after {
-        content: "✓";
-        position: absolute;
-        top: -5px;
-        right: -5px;
-        background: #28a745;
-        color: white;
-        width: 16px;
-        height: 16px;
-        border-radius: 50%;
-        font-size: 0.7rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        opacity: 0;
-        animation: fadeInOut 2s ease-in-out;
-    }
 
-    @keyframes fadeInOut {
-
-        0%,
-        100% {
-            opacity: 0;
-        }
-
-        20%,
-        80% {
-            opacity: 1;
-        }
-    }
 
     /* Math toolbar responsive */
     @media (max-width: 768px) {

@@ -578,7 +578,7 @@
         <h2><i class="fas fa-trophy me-2"></i>Тест завершен!</h2>
         <p class="lead">Отличная работа! Вы прошли все карточки.</p>
         <div class="mt-4">
-            <a href="{{ url_for('result', result_id=result_id) }}" class="btn btn-lg">
+            <a href="{{ url_for('result', access_token=access_token) }}" class="btn btn-lg">
                 <i class="fas fa-arrow-left me-2"></i>Вернуться к результатам
             </a>
             <button class="btn btn-lg" onclick="restartTest()">
@@ -610,7 +610,7 @@
 
     <!-- Навигация -->
     <div class="text-center mt-4">
-        <a href="{{ url_for('result', result_id=result_id) }}" class="btn btn-outline-secondary">
+        <a href="{{ url_for('result', access_token=access_token) }}" class="btn btn-outline-secondary">
             <i class="fas fa-arrow-left me-2"></i>Вернуться к результатам
         </a>
     </div>

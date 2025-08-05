@@ -430,7 +430,7 @@ def get_result(result_id, check_access=True):
     c.execute('''
         SELECT filename, file_type, topics_json, summary, flashcards_json,
                mind_map_json, study_plan_json, quality_json,
-               video_segments_json, key_moments_json, full_text, created_at, user_id, test_questions_json
+               video_segments_json, key_moments_json, full_text, created_at, user_id, test_questions_json, access_token
         FROM result WHERE id = ?
     ''', (result_id,))
     
@@ -458,7 +458,8 @@ def get_result(result_id, check_access=True):
             'full_text': row[10] or '',
             'created_at': row[11],
             'user_id': row[12],
-            'test_questions': json.loads(row[13]) if row[13] else []
+            'test_questions': json.loads(row[13]) if row[13] else [],
+            'access_token': row[14]
         }
         
         # Извлекаем информацию о страницах из mind_map (если она там сохранена)
@@ -1271,7 +1272,8 @@ def test_mode(result_id):
     return render_template('test_mode.html', 
                          result_data=result_data, 
                          test_questions=test_questions,
-                         result_id=result_id)
+                         result_id=result_id,
+                         access_token=result_data.get('access_token'))
 
 @app.route('/test/<int:result_id>/answer', methods=['POST'])
 def submit_test_answer(result_id):
