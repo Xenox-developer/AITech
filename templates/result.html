@@ -4,6 +4,31 @@
 
 {% block extra_styles %}
 <style>
+    /* Убираем градиентный фон с навигации и возвращаем обычный белый */
+    .navbar {
+        background: white !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .navbar-brand,
+    .navbar-brand strong,
+    .nav-link,
+    .navbar-nav .nav-link,
+    .dropdown-toggle {
+        color: #374151 !important;
+    }
+    
+    .navbar-brand:hover,
+    .nav-link:hover,
+    .navbar-nav .nav-link:hover,
+    .dropdown-toggle:hover {
+        color: #6366f1 !important;
+    }
+    
+    .badge.bg-warning {
+        background-color: #fbbf24 !important;
+        color: #92400e !important;
+    }
     /* Равномерное распределение вкладок */
     #resultTabs {
         display: flex;
@@ -399,12 +424,19 @@
     }
 
     .stat-label {
-        font-size: 0.75rem;
-        font-weight: 600;
-        color: #64748b;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        margin-bottom: 10px;
+        font-size: 0.9rem !important;
+        font-weight: 900 !important;
+        color: #000000 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 1px !important;
+        margin-bottom: 10px !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        display: block !important;
+        text-shadow: none !important;
+        background: rgba(255, 255, 255, 0.9) !important;
+        padding: 2px 4px !important;
+        border-radius: 4px !important;
     }
 
     .stat-progress {
@@ -2644,6 +2676,50 @@
     .mind-map-svg {
         width: 100%;
         height: 100%;
+    }
+    
+    /* Enhanced text styles for better multi-line display */
+    .mind-map-svg text {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        font-weight: 600;
+        fill: #374151;
+        text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+    }
+    
+    .mind-map-svg text tspan {
+        dominant-baseline: central;
+        text-anchor: middle;
+        line-height: 1.3;
+        word-spacing: 0.1em;
+        letter-spacing: 0.02em;
+    }
+    
+    /* Node styles */
+    .mind-node {
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .mind-node:hover text {
+        font-weight: 900;
+        filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));
+    }
+    
+    .mind-node circle {
+        transition: all 0.3s ease;
+    }
+    
+    .mind-node:hover circle {
+        stroke-width: 3;
+        filter: drop-shadow(0 3px 6px rgba(0,0,0,0.3));
+    }
+    
+    /* Link styles */
+    .mind-link {
+        transition: all 0.3s ease;
         background: radial-gradient(circle at 30% 30%, rgba(99, 102, 241, 0.05) 0%, transparent 50%),
                     radial-gradient(circle at 70% 70%, rgba(139, 92, 246, 0.05) 0%, transparent 50%);
     }
@@ -3080,7 +3156,11 @@
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         border-radius: 15px;
         padding: 20px;
-        color: white;
+        color: white !important;
+    }
+
+    .summary-stats * {
+        color: white !important;
     }
 
     .stat-item {
@@ -3090,14 +3170,50 @@
     .stat-number {
         font-size: 2rem;
         font-weight: bold;
-        color: white;
+        color: white !important;
     }
 
-    .stat-label {
+    /* Специфичные правила для элементов статистики */
+    .summary-stats #wordCount,
+    .summary-stats #readingTime,
+    .summary-stats #sectionCount,
+    .summary-stats #keyPoints {
+        color: white !important;
+        font-size: 2rem !important;
+        font-weight: bold !important;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    /* Дополнительные правила для всех элементов внутри stat-item */
+    .summary-stats .stat-item * {
+        color: white !important;
+    }
+
+    .summary-stats .stat-number {
+        color: white !important;
+        font-size: 2rem !important;
+        font-weight: bold !important;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    /* Максимально специфичные правила для переопределения любых других стилей */
+    div.summary-stats div.stat-item div.stat-number#wordCount,
+    div.summary-stats div.stat-item div.stat-number#readingTime,
+    div.summary-stats div.stat-item div.stat-number#sectionCount,
+    div.summary-stats div.stat-item div.stat-number#keyPoints {
+        color: white !important;
+        font-size: 2rem !important;
+        font-weight: bold !important;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+        background: transparent !important;
+    }
+
+    .summary-stats .stat-label {
         font-size: 0.9rem;
         opacity: 0.9;
         text-transform: uppercase;
         letter-spacing: 0.5px;
+        color: white !important;
     }
 
     .summary-compact .summary-content-enhanced {
@@ -3330,23 +3446,54 @@
         padding-bottom: 25px;
     }
 
+    .study-stats {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        position: relative !important;
+        z-index: 1000 !important;
+    }
+
     .study-stats .stat-item {
-        text-align: center;
-        padding: 15px;
+        text-align: center !important;
+        padding: 25px !important;
+        background: #ff0000 !important;
+        border-radius: 12px !important;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5) !important;
+        border: 5px solid #00ff00 !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        min-height: 100px !important;
+        min-width: 150px !important;
+        position: relative !important;
+        z-index: 1001 !important;
     }
 
     .study-stats .stat-number {
-        font-size: 2.5rem;
-        font-weight: bold;
-        color: #667eea;
-        display: block;
+        font-size: 2.8rem !important;
+        font-weight: 900 !important;
+        color: #000000 !important;
+        display: block !important;
+        text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8) !important;
+        line-height: 1 !important;
+        margin-bottom: 6px !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        z-index: 999 !important;
+        position: relative !important;
     }
 
     .study-stats .stat-label {
-        font-size: 0.9rem;
-        color: #495057;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
+        font-size: 1rem !important;
+        color: #1a202c !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.8px !important;
+        font-weight: 700 !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        z-index: 999 !important;
+        position: relative !important;
     }
 
     /* Material Analysis Cards */
@@ -3359,10 +3506,13 @@
     .analysis-card {
         background: white;
         border-radius: 12px;
-        padding: 20px;
+        padding: 25px 20px;
         text-align: center;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-        transition: transform 0.3s ease;
+        transition: all 0.3s ease;
+        border: 1px solid #f1f5f9;
+        position: relative;
+        overflow: hidden;
     }
 
     .analysis-card:hover {
@@ -3370,19 +3520,26 @@
     }
 
     .analysis-icon {
-        font-size: 2rem;
-        margin-bottom: 10px;
+        font-size: 2.2rem;
+        margin-bottom: 12px;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+        opacity: 0.9;
     }
 
     .analysis-title {
         font-weight: 600;
-        color: #495057;
-        margin-bottom: 8px;
+        color: #374151;
+        margin-bottom: 10px;
+        font-size: 0.95rem;
+        letter-spacing: 0.3px;
     }
 
     .analysis-value {
-        font-size: 1.1rem;
+        font-size: 1.3rem;
         font-weight: bold;
+        color: #2d3748;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        line-height: 1.2;
     }
 
     /* Learning Path Timeline */
@@ -5358,6 +5515,33 @@
             padding: 2px 6px !important;
         }
     }
+
+    /* ФИНАЛЬНЫЕ ПРАВИЛА ДЛЯ ЦИФР СТАТИСТИКИ - МАКСИМАЛЬНЫЙ ПРИОРИТЕТ */
+    #wordCount, #readingTime, #sectionCount, #keyPoints {
+        color: #ffffff !important;
+        font-size: 2rem !important;
+        font-weight: bold !important;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+        background: transparent !important;
+        border: none !important;
+        outline: none !important;
+    }
+
+    /* Дополнительные правила с максимальной специфичностью */
+    .summary-stats .stat-item .stat-number {
+        color: #ffffff !important;
+        font-size: 2rem !important;
+        font-weight: bold !important;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    /* Переопределение любых Bootstrap стилей */
+    .summary-stats .text-muted,
+    .summary-stats .text-dark,
+    .summary-stats .text-primary,
+    .summary-stats .text-secondary {
+        color: #ffffff !important;
+    }
 </style>
 {% endblock %}
 
@@ -5521,46 +5705,9 @@
                     <!-- Content will be populated by JavaScript -->
                 </div>
 
-                <!-- Reading Progress -->
-                <div class="reading-progress mt-4">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <small class="text-muted">Прогресс чтения</small>
-                        <small class="text-muted" id="readingProgress">0%</small>
-                    </div>
-                    <div class="progress" style="height: 4px;">
-                        <div class="progress-bar bg-gradient-primary" id="progressBar" style="width: 0%"></div>
-                    </div>
-                </div>
 
-                <!-- Summary Stats -->
-                <div class="summary-stats mt-4">
-                    <div class="row text-center">
-                        <div class="col-md-3">
-                            <div class="stat-item">
-                                <div class="stat-number" id="wordCount">-</div>
-                                <div class="stat-label">Слов</div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="stat-item">
-                                <div class="stat-number" id="readingTime">-</div>
-                                <div class="stat-label">Мин. чтения</div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="stat-item">
-                                <div class="stat-number" id="sectionCount">-</div>
-                                <div class="stat-label">Разделов</div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="stat-item">
-                                <div class="stat-number" id="keyPoints">-</div>
-                                <div class="stat-label">Ключевых точек</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+
+
             </div>
         </div>
 
@@ -6165,14 +6312,7 @@
                                 Научно обоснованный план с учетом сложности материала и кривой забывания
                             </p>
                         </div>
-                        <div class="col-md-4 text-end">
-                            <div class="study-stats">
-                                <div class="stat-item">
-                                    <div class="stat-number">{{ study_plan.total_hours|round(1) }}</div>
-                                    <div class="stat-label">часов</div>
-                                </div>
-                            </div>
-                        </div>
+
                     </div>
                 </div>
 
@@ -7547,12 +7687,18 @@
     }
 
     function drawForceLayout(g, width, height) {
+        console.log('🎯 drawForceLayout called with', mindMapNodes.length, 'nodes');
+        
+        // ПРИНУДИТЕЛЬНО удаляем все существующие текстовые элементы
+        g.selectAll('text').remove();
+        console.log('🧹 Все текстовые элементы удалены');
+        
         // Force-directed layout
         const simulation = d3.forceSimulation(mindMapNodes)
             .force('link', d3.forceLink(mindMapLinks).id(d => d.id).distance(80))
             .force('charge', d3.forceManyBody().strength(-200))
             .force('center', d3.forceCenter(width / 2, height / 2))
-            .force('collision', d3.forceCollide().radius(d => d.size + 5));
+            .force('collision', d3.forceCollide().radius(d => d.size + 40)); // Увеличиваем радиус коллизии
 
         drawDynamicNodes(g, simulation);
     }
@@ -7630,18 +7776,63 @@
             .attr('stroke-width', 2)
             .style('filter', 'drop-shadow(0 3px 6px rgba(0,0,0,0.2))');
 
-        // Node labels with better positioning
-        nodeGroups.append('text')
-            .attr('text-anchor', 'middle')
-            .attr('dy', d => d.size + 18)
-            .attr('font-size', d => d.type === 'central' ? '13px' : d.type === 'branch' ? '11px' : '9px')
-            .attr('font-weight', d => d.type === 'central' ? 'bold' : 'normal')
-            .attr('fill', '#333')
-            .style('text-shadow', '1px 1px 2px rgba(255,255,255,0.8)')
-            .text(d => {
-                const maxLength = d.type === 'central' ? 25 : d.type === 'branch' ? 20 : 15;
-                return d.name.length > maxLength ? d.name.substring(0, maxLength) + '...' : d.name;
+        // Node labels with multi-line text support - UPDATED 2024-01-05-16:00
+        console.log('🔤 Создаем многострочные подписи для узлов...');
+        nodeGroups.each(function(d) {
+            const nodeGroup = d3.select(this);
+            const text = d.name.trim();
+            
+            // Настройки в зависимости от типа узла
+            const maxChars = d.type === 'central' ? 18 : d.type === 'branch' ? 16 : 14;
+            const fontSize = d.type === 'central' ? 12 : d.type === 'branch' ? 10 : 9;
+            const lineSpacing = fontSize + 4;
+            const startY = d.size + 25;
+            
+            // Разбиваем текст на слова
+            const words = text.split(' ');
+            let lines = [];
+            let currentLine = '';
+            
+            for (let word of words) {
+                const testLine = currentLine ? currentLine + ' ' + word : word;
+                
+                if (testLine.length <= maxChars) {
+                    currentLine = testLine;
+                } else {
+                    if (currentLine) {
+                        lines.push(currentLine);
+                        currentLine = word;
+                    } else {
+                        lines.push(word.substring(0, maxChars));
+                        currentLine = '';
+                    }
+                    
+                    if (lines.length >= 3) break;
+                }
+            }
+            
+            if (currentLine && lines.length < 3) {
+                lines.push(currentLine);
+            }
+            
+            if (lines.length === 0) {
+                lines = [text.substring(0, maxChars)];
+            }
+            
+            // Создаем текстовые элементы
+            lines.forEach((line, index) => {
+                nodeGroup.append('text')
+                    .text(line)
+                    .attr('text-anchor', 'middle')
+                    .attr('x', 0)
+                    .attr('y', startY + (index * lineSpacing))
+                    .attr('font-size', fontSize + 'px')
+                    .attr('font-weight', d.type === 'central' ? 'bold' : 'normal')
+                    .attr('fill', '#333')
+                    .style('text-shadow', '1px 1px 2px rgba(255,255,255,0.8)')
+                    .style('font-family', 'Arial, sans-serif');
             });
+        });
     }
 
     function drawDynamicNodes(g, simulation) {
@@ -7684,12 +7875,7 @@
             .attr('stroke', '#fff')
             .attr('stroke-width', 2);
 
-        nodeGroups.append('text')
-            .attr('text-anchor', 'middle')
-            .attr('dy', d => d.size + 15)
-            .attr('font-size', '10px')
-            .attr('fill', '#333')
-            .text(d => d.name.length > 15 ? d.name.substring(0, 15) + '...' : d.name);
+        // Дублирующий код удален - используем только один блок создания многострочного текста выше
 
         simulation.on('tick', () => {
             links
@@ -8030,27 +8216,125 @@
 
     function createFlashcardFromNode(nodeId) {
         const node = window.selectedNode || mindMapNodes.find(n => n.id === nodeId);
-        if (!node) return;
+        if (!node) {
+            console.error('Node not found for flashcard creation');
+            showToast('Ошибка: узел не найден', 'danger');
+            return;
+        }
 
-        // Create a simple flashcard modal or redirect to flashcards tab
-        const flashcardData = {
-            question: `Что такое "${node.name}"?`,
-            answer: node.details.description,
-            difficulty: node.type === 'central' ? 3 : node.type === 'branch' ? 2 : 1
+        console.log('Creating flashcard from node:', node);
+
+        // Get more detailed information from topics_data
+        const topicsData = {{ topics_data | tojson | safe }};
+        
+        // Prepare flashcard data based on node type and content
+        let question, answer, type, difficulty;
+        
+        if (node.type === 'central') {
+            question = `Какова основная тема изучаемого материала?`;
+            answer = `Основная тема: ${node.name}. Это центральная концепция всего изучаемого материала, которая объединяет все остальные темы и концепции.`;
+            type = 'concept';
+            difficulty = 3;
+        } else if (node.type === 'branch') {
+            // Try to find detailed information from topics_data
+            let detailedAnswer = `${node.name} - это важная тема изучаемого материала.`;
+            
+            // Look for matching topic in topics_data
+            if (topicsData && typeof topicsData === 'object') {
+                const matchingTopic = Object.entries(topicsData).find(([topicName, topicData]) => 
+                    topicName.toLowerCase().includes(node.name.toLowerCase()) || 
+                    node.name.toLowerCase().includes(topicName.toLowerCase())
+                );
+                
+                if (matchingTopic) {
+                    const [topicName, topicData] = matchingTopic;
+                    if (topicData.summary) {
+                        detailedAnswer = topicData.summary;
+                    } else if (topicData.key_concepts && topicData.key_concepts.length > 0) {
+                        detailedAnswer = `${node.name} включает в себя следующие ключевые концепции: ${topicData.key_concepts.slice(0, 3).join(', ')}.`;
+                    } else if (topicData.subtopics && topicData.subtopics.length > 0) {
+                        detailedAnswer = `${node.name} состоит из следующих подтем: ${topicData.subtopics.slice(0, 3).join(', ')}.`;
+                    }
+                }
+            }
+            
+            // Fallback to basic description
+            if (detailedAnswer === `${node.name} - это важная тема изучаемого материала.` && node.details.children > 0) {
+                detailedAnswer += ` Эта тема включает в себя ${node.details.children} подтем и является важной частью общего понимания материала.`;
+            }
+            
+            question = `Что представляет собой "${node.name}"?`;
+            answer = detailedAnswer;
+            type = 'definition';
+            difficulty = 2;
+        } else if (node.type === 'child') {
+            question = `Объясните концепцию "${node.name}"`;
+            answer = `${node.name} - это подтема раздела "${node.details.parent || 'основной темы'}". Это важная составляющая, которая помогает глубже понять основную тему и её практическое применение.`;
+            type = 'concept';
+            difficulty = 1;
+        } else {
+            question = `Что такое "${node.name}"?`;
+            answer = `${node.name} - это связанная концепция в изучаемом материале, которая помогает лучше понять взаимосвязи между различными темами и их практическое применение.`;
+            type = 'definition';
+            difficulty = 2;
+        }
+
+        const cardData = {
+            q: question,
+            a: answer,
+            type: type,
+            difficulty: difficulty,
+            hint: `Эта карта создана из mind-map узла: ${node.name}`
         };
 
-        // Show success message
-        const toast = document.createElement('div');
-        toast.className = 'alert alert-success position-fixed';
-        toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-        toast.innerHTML = `
-            <i class="fas fa-check-circle me-2"></i>
-            Флеш-карта создана для "${node.name}"
-            <button type="button" class="btn-close ms-2" onclick="this.parentElement.remove()"></button>
-        `;
-        document.body.appendChild(toast);
+        console.log('Sending flashcard data to API:', cardData);
 
-        setTimeout(() => toast.remove(), 3000);
+        // Call the API to create the flashcard
+        fetch('/api/create_flashcard', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                result_id: {{ result_id }},
+                card: cardData
+            })
+        })
+        .then(response => {
+            console.log('API response status:', response.status);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('API response data:', data);
+            if (data.success) {
+                // Add the new card to the DOM
+                addCardToDOM(cardData, data.card_id);
+                
+                // Update statistics
+                updateFlashcardStats();
+                
+                // Show success message
+                showToast(`Флеш-карта создана для "${node.name}"! Перейдите на вкладку "Флеш-карты" чтобы увидеть её.`, 'success');
+                
+                // Optionally switch to flashcards tab
+                setTimeout(() => {
+                    const flashcardsTab = document.getElementById('flashcards-tab');
+                    if (flashcardsTab) {
+                        flashcardsTab.click();
+                    }
+                }, 1500);
+            } else {
+                console.error('Server returned error:', data);
+                showToast(data.error || 'Ошибка при создании флеш-карты', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error creating flashcard:', error);
+            showToast('Ошибка при создании флеш-карты. Проверьте подключение к интернету.', 'danger');
+        });
     }
 
     function addToStudyPlan(nodeId) {
@@ -8214,6 +8498,20 @@
         processSummaryContent();
         calculateSummaryStats();
         initReadingProgress();
+        
+        // Принудительно применяем белый цвет через интервалы
+        setTimeout(() => {
+            forceWhiteStatsColor();
+            // Повторяем каждые 500мс в течение 5 секунд
+            let attempts = 0;
+            const interval = setInterval(() => {
+                forceWhiteStatsColor();
+                attempts++;
+                if (attempts >= 10) {
+                    clearInterval(interval);
+                }
+            }, 500);
+        }, 100);
     }
 
     function processSummaryContent() {
@@ -8303,6 +8601,43 @@
         document.getElementById('readingTime').textContent = readingTime;
         document.getElementById('sectionCount').textContent = sectionCount;
         document.getElementById('keyPoints').textContent = keyPoints;
+
+        // Принудительно устанавливаем белый цвет для цифр
+        console.log('🎨 Применяем белый цвет к цифрам статистики...');
+        const statElements = ['wordCount', 'readingTime', 'sectionCount', 'keyPoints'];
+        statElements.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                console.log(`Применяем стили к элементу ${id}:`, element);
+                element.style.setProperty('color', 'white', 'important');
+                element.style.setProperty('font-size', '2rem', 'important');
+                element.style.setProperty('font-weight', 'bold', 'important');
+                element.style.setProperty('text-shadow', '0 2px 4px rgba(0, 0, 0, 0.3)', 'important');
+                element.style.setProperty('background', 'transparent', 'important');
+                
+                // Дополнительная проверка
+                setTimeout(() => {
+                    if (element.style.color !== 'white') {
+                        console.warn(`⚠️ Цвет элемента ${id} не белый, принудительно исправляем...`);
+                        element.style.cssText = 'color: white !important; font-size: 2rem !important; font-weight: bold !important; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;';
+                    }
+                }, 100);
+            } else {
+                console.error(`❌ Элемент ${id} не найден!`);
+            }
+        });
+    }
+
+    // Дополнительная функция для принудительного применения белого цвета
+    function forceWhiteStatsColor() {
+        const statElements = ['wordCount', 'readingTime', 'sectionCount', 'keyPoints'];
+        statElements.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.style.cssText = 'color: white !important; font-size: 2rem !important; font-weight: bold !important; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important; background: transparent !important;';
+                element.setAttribute('style', element.getAttribute('style') + '; color: white !important;');
+            }
+        });
     }
 
     function initReadingProgress() {
@@ -10170,8 +10505,8 @@
     let mindMapZoom = null;
     let selectedNode = null;
 
-    // Initialize Mind Map
-    function initMindMap() {
+    // Initialize Enhanced Mind Map (renamed to avoid conflict)
+    function initEnhancedMindMap() {
         console.log('🧠 Initializing Enhanced Mind Map...');
         
         // Show loading state
@@ -10211,19 +10546,20 @@
         console.log('📊 Preparing mind map data...');
         
         // Extract data from topics_data
-        const topicsData = {{ topics_data | tojsonfilter | safe }};
-        const mindMapRaw = {{ mind_map | tojsonfilter | safe }};
+        const topicsData = {{ topics_data | tojson | safe }};
+        const mindMapRaw = {{ mind_map | tojson | safe }};
         
         mindMapNodes = [];
         mindMapLinks = [];
         
         // Create central node
+        const centralName = 'Основные концепции';
         mindMapNodes.push({
             id: 'center',
-            name: 'Основные концепции',
+            name: centralName,
             type: 'center',
             level: 0,
-            size: 40,
+            size: Math.max(35, Math.min(50, centralName.length * 2 + 20)), // Динамический размер
             color: '#6366f1',
             description: 'Центральная тема материала'
         });
@@ -10358,6 +10694,10 @@
 
     function createMindMapVisualization() {
         console.log('🎨 Creating mind map visualization...');
+        console.log('📊 Узлов для обработки:', mindMapNodes.length);
+        
+        // Принудительно очищаем все существующие SVG элементы
+        d3.select('#mindMapSvg').selectAll('*').remove();
         
         const container = document.getElementById('mindMapVisualization');
         const width = container.clientWidth;
@@ -10434,18 +10774,98 @@
             .attr('stroke-width', 2)
             .style('filter', 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))');
         
-        // Add labels to nodes
-        nodes.append('text')
-            .text(d => d.name)
-            .attr('text-anchor', 'middle')
-            .attr('dy', d => d.size + 20)
-            .attr('font-size', d => Math.max(10, d.size / 3))
-            .attr('font-weight', 'bold')
-            .attr('fill', '#374151')
-            .style('pointer-events', 'none')
-            .each(function(d) {
-                wrapText(d3.select(this), d.name, d.size * 2);
+        // НОВЫЙ ПОДХОД: Создаем многострочные подписи для узлов
+        console.log('🔧 Создаем многострочный текст для узлов...');
+        
+        // Удаляем все существующие текстовые элементы
+        nodes.selectAll('text').remove();
+        
+        // Создаем новые многострочные подписи
+        nodes.each(function(d) {
+            const nodeGroup = d3.select(this);
+            let text = d.name || 'Без названия';
+            
+            console.log('📝 Обрабатываем узел:', text);
+            
+            // Настройки для разных типов узлов
+            let maxCharsPerLine, maxLines, fontSize, lineHeight, yOffset;
+            
+            if (d.type === 'center') {
+                maxCharsPerLine = 20;
+                maxLines = 2;
+                fontSize = 12;
+                lineHeight = 16;
+                yOffset = d.size + 60;
+            } else if (d.type === 'main-topic') {
+                maxCharsPerLine = 16;
+                maxLines = 3;
+                fontSize = 11;
+                lineHeight = 15;
+                yOffset = d.size + 55;
+            } else {
+                maxCharsPerLine = 14;
+                maxLines = 3;
+                fontSize = 10;
+                lineHeight = 14;
+                yOffset = d.size + 50;
+            }
+            
+            // Разбиваем текст на строки
+            const words = text.split(/\s+/);
+            let lines = [];
+            let currentLine = '';
+            
+            for (let word of words) {
+                const testLine = currentLine ? currentLine + ' ' + word : word;
+                
+                if (testLine.length <= maxCharsPerLine) {
+                    currentLine = testLine;
+                } else {
+                    if (currentLine) {
+                        lines.push(currentLine);
+                        currentLine = word;
+                    } else {
+                        // Очень длинное слово - разбиваем
+                        lines.push(word.substring(0, maxCharsPerLine));
+                        currentLine = '';
+                    }
+                    
+                    if (lines.length >= maxLines) {
+                        break;
+                    }
+                }
+            }
+            
+            // Добавляем последнюю строку
+            if (currentLine && lines.length < maxLines) {
+                lines.push(currentLine);
+            }
+            
+            // Гарантируем хотя бы одну строку
+            if (lines.length === 0) {
+                lines = [text.substring(0, maxCharsPerLine)];
+            }
+            
+            console.log('📋 Строки для узла:', lines);
+            
+            // Создаем текстовые элементы для каждой строки
+            lines.forEach((line, index) => {
+                nodeGroup.append('text')
+                    .text(line)
+                    .attr('text-anchor', 'middle')
+                    .attr('x', 0)
+                    .attr('y', yOffset + (index * lineHeight))
+                    .attr('font-size', fontSize + 'px')
+                    .attr('font-weight', 'bold')
+                    .attr('fill', '#1a202c')
+                    .style('pointer-events', 'none')
+                    .style('font-family', '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif')
+                    .style('text-shadow', '0 1px 3px rgba(255,255,255,0.9)')
+                    .style('letter-spacing', '0.5px');
             });
+        });
+        
+        console.log('✅ Многострочный текст создан для всех узлов');
         
         // Update simulation
         mindMapSimulation.nodes(mindMapNodes);
@@ -10473,7 +10893,7 @@
             .force('link', d3.forceLink().id(d => d.id).distance(d => getLinkDistance(d)))
             .force('charge', d3.forceManyBody().strength(d => getNodeCharge(d)))
             .force('center', d3.forceCenter(width / 2, height / 2))
-            .force('collision', d3.forceCollide().radius(d => d.size + 5));
+            .force('collision', d3.forceCollide().radius(d => d.size + 50)); // Увеличиваем радиус коллизии для многострочного текста
         
         // Adjust forces based on layout
         switch (currentLayout) {
@@ -10495,22 +10915,22 @@
 
     function getLinkDistance(link) {
         switch (link.type) {
-            case 'primary': return 80;
-            case 'secondary': return 60;
-            case 'concept': return 50;
-            case 'relationship': return 100;
-            default: return 70;
+            case 'primary': return 180; // Еще больше увеличено для предотвращения наложения текста
+            case 'secondary': return 150; // Еще больше увеличено
+            case 'concept': return 120; // Еще больше увеличено
+            case 'relationship': return 200; // Еще больше увеличено
+            default: return 160; // Еще больше увеличено
         }
     }
 
     function getNodeCharge(node) {
         switch (node.type) {
-            case 'center': return -800;
-            case 'main-topic': return -400;
-            case 'subtopic': return -200;
-            case 'concept': return -100;
-            case 'relationship': return -50;
-            default: return -100;
+            case 'center': return -2000; // Максимальное отталкивание
+            case 'main-topic': return -1000; // Максимальное отталкивание
+            case 'subtopic': return -600; // Максимальное отталкивание
+            case 'concept': return -400; // Максимальное отталкивание
+            case 'relationship': return -300; // Максимальное отталкивание
+            default: return -400; // Максимальное отталкивание
         }
     }
 
@@ -10891,40 +11311,221 @@
         document.getElementById('levelCount').textContent = levels;
     }
 
-    // Text wrapping utility
+    // Helper function to measure text width more accurately
+    function getTextWidth(text, fontSize, fontWeight = 'normal') {
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        context.font = `${fontWeight} ${fontSize}px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`;
+        return context.measureText(text).width;
+    }
+
+    // Enhanced text wrapping utility with better multi-line support
     function wrapText(text, content, width) {
         const words = content.split(/\s+/);
-        if (words.length <= 2) return; // Don't wrap short text
         
+        // Clear existing text
         text.text(null);
         
-        let line = [];
-        let lineNumber = 0;
-        const lineHeight = 1.1;
-        const y = text.attr('y') || 0;
-        const dy = parseFloat(text.attr('dy')) || 0;
+        // Configuration for text wrapping
+        const fontSize = parseFloat(text.style('font-size')) || 12;
+        const fontWeight = text.style('font-weight') || 'bold';
+        const lineHeight = 1.3; // Better line spacing
+        const maxLines = 5; // Allow more lines for better display
+        const padding = 12; // More padding for better appearance
+        const availableWidth = width - padding;
         
-        words.forEach(word => {
-            line.push(word);
-            const testLine = line.join(' ');
+        // If text is very short, just display it as is
+        if (content.length <= 15) {
+            text.append('tspan')
+                .attr('x', 0)
+                .attr('dy', '0.35em')
+                .text(content)
+                .style('text-anchor', 'middle')
+                .style('dominant-baseline', 'central');
+            return;
+        }
+        
+        let lines = [];
+        let currentLine = [];
+        
+        // Process each word
+        for (let i = 0; i < words.length; i++) {
+            const word = words[i];
+            const testLine = [...currentLine, word].join(' ');
+            const testWidth = getTextWidth(testLine, fontSize, fontWeight);
             
-            if (testLine.length * 6 > width && line.length > 1) {
-                line.pop();
-                text.append('tspan')
-                    .attr('x', 0)
-                    .attr('y', y)
-                    .attr('dy', lineNumber * lineHeight + dy + 'em')
-                    .text(line.join(' '));
-                line = [word];
-                lineNumber++;
+            // Check if adding this word would exceed the available width
+            if (testWidth > availableWidth && currentLine.length > 0) {
+                // Start a new line
+                lines.push(currentLine.join(' '));
+                currentLine = [word];
+                
+                // If we've reached max lines, handle the remaining text
+                if (lines.length >= maxLines) {
+                    // For the last line, try to fit remaining words without ellipsis first
+                    const remainingWords = words.slice(i);
+                    const remainingText = remainingWords.join(' ');
+                    const remainingWidth = getTextWidth(remainingText, fontSize, fontWeight);
+                    
+                    if (remainingWidth <= availableWidth) {
+                        // All remaining text fits
+                        lines.push(remainingText);
+                    } else {
+                        // Need to truncate with ellipsis
+                        let truncatedLine = currentLine.join(' ');
+                        const ellipsisWidth = getTextWidth('...', fontSize, fontWeight);
+                        
+                        // Try to add more words until we need ellipsis
+                        for (let j = i + 1; j < words.length; j++) {
+                            const testTruncated = [...currentLine, ...words.slice(i, j)].join(' ') + '...';
+                            const testWidth = getTextWidth(testTruncated, fontSize, fontWeight);
+                            
+                            if (testWidth <= availableWidth) {
+                                truncatedLine = [...currentLine, ...words.slice(i, j)].join(' ') + '...';
+                            } else {
+                                break;
+                            }
+                        }
+                        
+                        lines.push(truncatedLine);
+                    }
+                    break;
+                }
+            } else {
+                // Add word to current line
+                currentLine.push(word);
             }
-        });
+        }
         
-        text.append('tspan')
-            .attr('x', 0)
-            .attr('y', y)
-            .attr('dy', lineNumber * lineHeight + dy + 'em')
-            .text(line.join(' '));
+        // Add the last line if it has content and we haven't exceeded max lines
+        if (currentLine.length > 0 && lines.length < maxLines) {
+            lines.push(currentLine.join(' '));
+        }
+        
+        // If no lines were created, use original content
+        if (lines.length === 0) {
+            lines = [content];
+        }
+        
+        // Calculate vertical positioning for multi-line text
+        const totalLines = lines.length;
+        const totalHeight = (totalLines - 1) * lineHeight;
+        const startY = -(totalHeight / 2);
+        
+        // Create tspan elements for each line
+        lines.forEach((line, index) => {
+            const yOffset = startY + (index * lineHeight);
+            text.append('tspan')
+                .attr('x', 0)
+                .attr('dy', index === 0 ? `${yOffset}em` : `${lineHeight}em`)
+                .text(line)
+                .style('text-anchor', 'middle')
+                .style('dominant-baseline', 'central')
+                .style('font-size', 'inherit')
+                .style('font-weight', 'inherit');
+        });
+    }
+
+    // Improved text wrapping function with better line breaking
+    function wrapTextImproved(text, content, width) {
+        // Clear existing text
+        text.text(null);
+        
+        // Configuration
+        const fontSize = parseFloat(text.style('font-size')) || 12;
+        const fontWeight = text.style('font-weight') || 'bold';
+        const lineHeight = 1.4; // Increased line height for better readability
+        const maxLines = 6; // More lines allowed
+        const padding = 15; // More padding
+        const availableWidth = width - padding;
+        
+        // For very short text, display as single line
+        if (content.length <= 12) {
+            text.append('tspan')
+                .attr('x', 0)
+                .attr('dy', '0.35em')
+                .text(content)
+                .style('text-anchor', 'middle')
+                .style('dominant-baseline', 'central');
+            return;
+        }
+        
+        // Split text into words
+        const words = content.split(/\s+/);
+        let lines = [];
+        let currentLine = [];
+        
+        // Smart word wrapping
+        for (let i = 0; i < words.length; i++) {
+            const word = words[i];
+            const testLine = [...currentLine, word].join(' ');
+            const testWidth = getTextWidth(testLine, fontSize, fontWeight);
+            
+            if (testWidth > availableWidth && currentLine.length > 0) {
+                // Current line is full, start new line
+                lines.push(currentLine.join(' '));
+                currentLine = [word];
+                
+                // Check if we've reached the maximum number of lines
+                if (lines.length >= maxLines - 1) {
+                    // This is the last line, fit remaining words or add ellipsis
+                    const remainingWords = words.slice(i + 1);
+                    if (remainingWords.length > 0) {
+                        // Try to fit more words on the last line
+                        for (let j = 0; j < remainingWords.length; j++) {
+                            const testLastLine = [...currentLine, ...remainingWords.slice(0, j + 1)].join(' ');
+                            const testLastWidth = getTextWidth(testLastLine, fontSize, fontWeight);
+                            
+                            if (testLastWidth <= availableWidth) {
+                                currentLine = [...currentLine, ...remainingWords.slice(0, j + 1)];
+                            } else {
+                                // Add ellipsis if there are more words
+                                if (j === 0 && remainingWords.length > 0) {
+                                    const ellipsisLine = currentLine.join(' ') + '...';
+                                    const ellipsisWidth = getTextWidth(ellipsisLine, fontSize, fontWeight);
+                                    if (ellipsisWidth <= availableWidth) {
+                                        currentLine = [currentLine.join(' ') + '...'];
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                    }
+                    break;
+                }
+            } else {
+                currentLine.push(word);
+            }
+        }
+        
+        // Add the final line
+        if (currentLine.length > 0) {
+            lines.push(currentLine.join(' '));
+        }
+        
+        // Ensure we have at least one line
+        if (lines.length === 0) {
+            lines = [content.substring(0, 20) + (content.length > 20 ? '...' : '')];
+        }
+        
+        // Calculate vertical centering
+        const totalLines = lines.length;
+        const totalHeight = (totalLines - 1) * lineHeight;
+        const startOffset = -(totalHeight / 2);
+        
+        // Create tspan elements for each line
+        lines.forEach((line, index) => {
+            const yOffset = startOffset + (index * lineHeight);
+            text.append('tspan')
+                .attr('x', 0)
+                .attr('dy', index === 0 ? `${yOffset}em` : `${lineHeight}em`)
+                .text(line)
+                .style('text-anchor', 'middle')
+                .style('dominant-baseline', 'central')
+                .style('font-size', 'inherit')
+                .style('font-weight', 'inherit')
+                .style('line-height', lineHeight);
+        });
     }
 
     // Search functionality

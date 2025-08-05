@@ -1419,10 +1419,30 @@ def upload_file():
         original_filename = secure_filename(file.filename)
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         
+        # Отладочная информация
+        logger.info(f"Original filename: {file.filename}")
+        logger.info(f"Secure filename: {original_filename}")
+        
         # Сохраняем оригинальное расширение файла
         file_ext = Path(original_filename).suffix.lower()
         filename_without_ext = Path(original_filename).stem
+        
+        # Дополнительная проверка расширения
+        if not file_ext:
+            # Если расширение потерялось, попробуем извлечь из оригинального имени
+            original_ext = Path(file.filename).suffix.lower()
+            if original_ext:
+                file_ext = original_ext
+                logger.warning(f"Extension recovered from original filename: {file_ext}")
+            else:
+                logger.error(f"No file extension found in: {file.filename}")
+                flash('Ошибка: не удалось определить тип файла', 'danger')
+                return redirect(url_for('index'))
+        
         filename = f"{timestamp}_{filename_without_ext}{file_ext}"
+        
+        logger.info(f"File extension: {file_ext}")
+        logger.info(f"Final filename: {filename}")
         
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
