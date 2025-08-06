@@ -6359,11 +6359,6 @@
                         <div class="sessions-container">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h5 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Учебные сессии</h5>
-                                <div class="session-controls">
-                                    <button class="btn btn-sm btn-outline-primary" onclick="toggleSessionView()">
-                                        <i class="fas fa-list me-1"></i>Компактный вид
-                                    </button>
-                                </div>
                             </div>
 
                             {% for session in study_plan.sessions %}
@@ -8396,13 +8391,13 @@
     }
 
     // Start study session
-    function startStudySession() {
+    function startInteractiveStudyMode() {
         // TODO: Implement interactive study mode
         alert('Интерактивный режим изучения будет добавлен в следующей версии');
     }
 
-    // Start specific session
-    function startSession(day) {
+    // Start specific session for day
+    function startDaySession(day) {
         // TODO: Implement session start
         alert(`Начать сессию дня ${day}`);
     }
@@ -8755,7 +8750,6 @@
     }
 
     // Enhanced Study Plan Functionality
-    let isCompactSessionView = false;
 
     function initStudyPlan() {
         // Initialize progress circles for milestones
@@ -8873,27 +8867,9 @@
         }
     }
 
-    function toggleSessionView() {
-        const sessionsContainer = document.querySelector('.sessions-container');
-        const toggleButton = document.querySelector('[onclick="toggleSessionView()"]');
 
-        isCompactSessionView = !isCompactSessionView;
 
-        if (isCompactSessionView) {
-            sessionsContainer.classList.add('compact-view');
-            toggleButton.innerHTML = '<i class="fas fa-expand me-1"></i>Полный вид';
-
-            // Hide all expanded details
-            document.querySelectorAll('.session-details').forEach(details => {
-                details.style.display = 'none';
-            });
-        } else {
-            sessionsContainer.classList.remove('compact-view');
-            toggleButton.innerHTML = '<i class="fas fa-list me-1"></i>Компактный вид';
-        }
-    }
-
-    function startSession(sessionNumber) {
+    function startSessionModal(sessionNumber) {
         // Create session modal or redirect to session page
         showSessionModal(sessionNumber);
     }
@@ -9215,15 +9191,7 @@
             .session-card.session-started {
                 border-left: 5px solid #28a745;
             }
-            .sessions-container.compact-view .session-details {
-                display: none !important;
-            }
-            .sessions-container.compact-view .session-card {
-                margin-bottom: 10px;
-            }
-            .sessions-container.compact-view .session-header {
-                padding: 15px;
-            }
+
         </style>
     `;
 
@@ -10207,12 +10175,29 @@
         });
     }
 
-    function startStudySession() {
+    function startInteractiveStudySession() {
         showToast('Интерактивный режим изучения будет добавлен в следующей версии', 'info');
     }
 
     function startSession(sessionNumber) {
-        showToast(`Начинаем сессию ${sessionNumber}`, 'info');
+        // Получаем длительность сессии из данных (по умолчанию 25 минут)
+        let duration = 25;
+        
+        // Пытаемся найти информацию о сессии в study_plan
+        if (typeof study_plan !== 'undefined' && study_plan.sessions) {
+            const session = study_plan.sessions.find(s => s.session_number == sessionNumber);
+            if (session && session.duration_minutes) {
+                duration = session.duration_minutes;
+            }
+        }
+        
+        // Вызываем глобальную функцию startStudySession из base.html
+        if (typeof window.startStudySession === 'function') {
+            window.startStudySession(sessionNumber, duration);
+        } else {
+            // Fallback если глобальная функция недоступна
+            showToast(`Функция таймера недоступна. Сессия ${sessionNumber} (${duration} мин)`, 'warning');
+        }
     }
 
     function seekToTime(seconds) {

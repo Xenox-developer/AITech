@@ -335,6 +335,166 @@
         border-color: #ef4444;
     }
     
+    /* Стили для учебных сессий */
+    .session-card {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 20px;
+        transition: all 0.3s ease;
+        margin-bottom: 16px;
+    }
+    
+    .session-card:hover {
+        border-color: #6366f1;
+        box-shadow: 0 4px 15px rgba(99, 102, 241, 0.1);
+        transform: translateY(-2px);
+    }
+    
+    .session-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 12px;
+    }
+    
+    .session-info {
+        flex: 1;
+    }
+    
+    .session-phase {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+    }
+    
+    .phase-основы {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+    
+    .phase-развитие {
+        background: #dcfce7;
+        color: #166534;
+    }
+    
+    .phase-мастерство {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    
+    .session-meta {
+        display: flex;
+        gap: 16px;
+        font-size: 0.8rem;
+        color: #6b7280;
+        margin-top: 8px;
+    }
+    
+    .session-difficulty.difficulty-средний {
+        color: #f59e0b;
+    }
+    
+    .session-difficulty.difficulty-сложный {
+        color: #ef4444;
+    }
+    
+    .session-actions {
+        display: flex;
+        gap: 8px;
+        flex-shrink: 0;
+    }
+    
+    .session-details {
+        border-top: 1px solid #f3f4f6;
+        padding-top: 16px;
+        margin-top: 16px;
+    }
+    
+    /* Стили для контрольных точек */
+    .checkpoint-card {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    
+    .checkpoint-card:hover {
+        border-color: #6366f1;
+        box-shadow: 0 4px 15px rgba(99, 102, 241, 0.1);
+        transform: translateY(-2px);
+    }
+    
+    .checkpoint-progress {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #6366f1;
+        margin-bottom: 12px;
+    }
+    
+    .checkpoint-info h6 {
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 8px;
+    }
+    
+    .checkpoint-status {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        margin-top: 8px;
+    }
+    
+    .checkpoint-status.completed {
+        background: #dcfce7;
+        color: #166534;
+    }
+    
+    .checkpoint-status.current {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+    
+    .checkpoint-status.upcoming {
+        background: #f3f4f6;
+        color: #6b7280;
+    }
+    
+    /* Стили для целевых показателей */
+    .target-card {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+    }
+    
+    .target-label {
+        font-size: 0.9rem;
+        color: #6b7280;
+        margin-bottom: 8px;
+    }
+    
+    .target-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 12px;
+    }
+    
+    .target-progress .progress {
+        height: 8px;
+        border-radius: 4px;
+    }
+
     @media (max-width: 768px) {
         .stats-grid {
             grid-template-columns: 1fr;
@@ -352,6 +512,20 @@
         .result-icon {
             margin-right: 0;
             margin-bottom: 12px;
+        }
+        
+        .session-header {
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .session-actions {
+            align-self: stretch;
+        }
+        
+        .session-meta {
+            flex-direction: column;
+            gap: 8px;
         }
     }
 </style>
@@ -519,6 +693,294 @@
         {% endif %}
     </div>
     
+    <!-- План обучения -->
+    <div class="recent-results">
+        <h2 class="section-title">
+            <div class="section-icon">
+                <i class="fas fa-graduation-cap"></i>
+            </div>
+            План обучения
+        </h2>
+        
+        <!-- Учебные сессии -->
+        <div class="study-sessions-section mb-4">
+            <h5 class="mb-3">
+                <i class="fas fa-calendar-alt me-2"></i>
+                Учебные сессии
+            </h5>
+            
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="session-card">
+                        <div class="session-header">
+                            <div class="session-info">
+                                <div class="session-phase phase-основы">ОСНОВЫ</div>
+                                <h6 class="mb-1">Сессия 1: Субъективность ИИ и оценка</h6>
+                                <div class="session-meta">
+                                    <span class="session-date">
+                                        <i class="fas fa-calendar me-1"></i>06.08.2025
+                                    </span>
+                                    <span class="session-duration">
+                                        <i class="fas fa-clock me-1"></i>45 мин
+                                    </span>
+                                    <span class="session-difficulty difficulty-средний">
+                                        <i class="fas fa-signal me-1"></i>средний
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="session-actions">
+                                <button class="btn btn-primary btn-sm" onclick="window.startStudySession(1, 45)">
+                                    <i class="fas fa-play me-1"></i>Начать
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm" onclick="toggleSessionDetails(1)">
+                                    <i class="fas fa-chevron-down me-1"></i>Развернуть
+                                </button>
+                            </div>
+                        </div>
+                        <div class="session-details" id="sessionDetails1" style="display: none;">
+                            <div class="session-focus mb-3">
+                                <h6><i class="fas fa-bullseye me-2"></i>Фокус сессии</h6>
+                                <p class="text-muted">Понимание базовых концепций ИИ и оценка качества</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="session-card">
+                        <div class="session-header">
+                            <div class="session-info">
+                                <div class="session-phase phase-развитие">РАЗВИТИЕ</div>
+                                <h6 class="mb-1">Сессия 2: Сравнение традиционного и ИИ-обучения</h6>
+                                <div class="session-meta">
+                                    <span class="session-date">
+                                        <i class="fas fa-calendar me-1"></i>07.08.2025
+                                    </span>
+                                    <span class="session-duration">
+                                        <i class="fas fa-clock me-1"></i>45 мин
+                                    </span>
+                                    <span class="session-difficulty difficulty-средний">
+                                        <i class="fas fa-signal me-1"></i>средний
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="session-actions">
+                                <button class="btn btn-primary btn-sm" onclick="window.startStudySession(2, 45)">
+                                    <i class="fas fa-play me-1"></i>Начать
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm" onclick="toggleSessionDetails(2)">
+                                    <i class="fas fa-chevron-down me-1"></i>Развернуть
+                                </button>
+                            </div>
+                        </div>
+                        <div class="session-details" id="sessionDetails2" style="display: none;">
+                            <div class="session-focus mb-3">
+                                <h6><i class="fas fa-bullseye me-2"></i>Фокус сессии</h6>
+                                <p class="text-muted">Применение знаний и установление связей</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="session-card">
+                        <div class="session-header">
+                            <div class="session-info">
+                                <div class="session-phase phase-развитие">РАЗВИТИЕ</div>
+                                <h6 class="mb-1">Сессия 3: Влияние ИИ на образовательный процесс</h6>
+                                <div class="session-meta">
+                                    <span class="session-date">
+                                        <i class="fas fa-calendar me-1"></i>08.08.2025
+                                    </span>
+                                    <span class="session-duration">
+                                        <i class="fas fa-clock me-1"></i>45 мин
+                                    </span>
+                                    <span class="session-difficulty difficulty-средний">
+                                        <i class="fas fa-signal me-1"></i>средний
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="session-actions">
+                                <button class="btn btn-primary btn-sm" onclick="window.startStudySession(3, 45)">
+                                    <i class="fas fa-play me-1"></i>Начать
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm" onclick="toggleSessionDetails(3)">
+                                    <i class="fas fa-chevron-down me-1"></i>Развернуть
+                                </button>
+                            </div>
+                        </div>
+                        <div class="session-details" id="sessionDetails3" style="display: none;">
+                            <div class="session-focus mb-3">
+                                <h6><i class="fas fa-bullseye me-2"></i>Фокус сессии</h6>
+                                <p class="text-muted">Экспертное понимание и критическое мышление</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="session-card">
+                        <div class="session-header">
+                            <div class="session-info">
+                                <div class="session-phase phase-мастерство">МАСТЕРСТВО</div>
+                                <h6 class="mb-1">Сессия 4: Выбор языковых моделей для образовательных целей</h6>
+                                <div class="session-meta">
+                                    <span class="session-date">
+                                        <i class="fas fa-calendar me-1"></i>10.08.2025
+                                    </span>
+                                    <span class="session-duration">
+                                        <i class="fas fa-clock me-1"></i>45 мин
+                                    </span>
+                                    <span class="session-difficulty difficulty-сложный">
+                                        <i class="fas fa-signal me-1"></i>сложный
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="session-actions">
+                                <button class="btn btn-primary btn-sm" onclick="window.startStudySession(4, 45)">
+                                    <i class="fas fa-play me-1"></i>Начать
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm" onclick="toggleSessionDetails(4)">
+                                    <i class="fas fa-chevron-down me-1"></i>Развернуть
+                                </button>
+                            </div>
+                        </div>
+                        <div class="session-details" id="sessionDetails4" style="display: none;">
+                            <div class="session-focus mb-3">
+                                <h6><i class="fas fa-bullseye me-2"></i>Фокус сессии</h6>
+                                <p class="text-muted">Полное освоение материала</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="session-card">
+                        <div class="session-header">
+                            <div class="session-info">
+                                <div class="session-phase phase-мастерство">МАСТЕРСТВО</div>
+                                <h6 class="mb-1">Сессия 5: Архитектура ИИ и качество ответов</h6>
+                                <div class="session-meta">
+                                    <span class="session-date">
+                                        <i class="fas fa-calendar me-1"></i>11.08.2025
+                                    </span>
+                                    <span class="session-duration">
+                                        <i class="fas fa-clock me-1"></i>45 мин
+                                    </span>
+                                    <span class="session-difficulty difficulty-сложный">
+                                        <i class="fas fa-signal me-1"></i>сложный
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="session-actions">
+                                <button class="btn btn-primary btn-sm" onclick="window.startStudySession(5, 45)">
+                                    <i class="fas fa-play me-1"></i>Начать
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm" onclick="toggleSessionDetails(5)">
+                                    <i class="fas fa-chevron-down me-1"></i>Развернуть
+                                </button>
+                            </div>
+                        </div>
+                        <div class="session-details" id="sessionDetails5" style="display: none;">
+                            <div class="session-focus mb-3">
+                                <h6><i class="fas fa-bullseye me-2"></i>Фокус сессии</h6>
+                                <p class="text-muted">Завершение изучения</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Контрольные точки -->
+        <div class="checkpoints-section">
+            <h5 class="mb-3">
+                <i class="fas fa-flag-checkered me-2"></i>
+                Контрольные точки
+            </h5>
+            
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="checkpoint-card">
+                        <div class="checkpoint-progress">42%</div>
+                        <div class="checkpoint-info">
+                            <h6>Основание основ</h6>
+                            <p class="text-muted">Понимание базовых концепций и терминологии</p>
+                            <span class="checkpoint-status completed">Сессия 1</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="checkpoint-card">
+                        <div class="checkpoint-progress">54%</div>
+                        <div class="checkpoint-info">
+                            <h6>Развитие навыков</h6>
+                            <p class="text-muted">Применение знаний и установление связей</p>
+                            <span class="checkpoint-status current">Сессия 2</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="checkpoint-card">
+                        <div class="checkpoint-progress">85%</div>
+                        <div class="checkpoint-info">
+                            <h6>Достижение мастерства</h6>
+                            <p class="text-muted">Экспертное понимание и критическое мышление</p>
+                            <span class="checkpoint-status upcoming">Сессия 3</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="checkpoint-card">
+                        <div class="checkpoint-progress">90%</div>
+                        <div class="checkpoint-info">
+                            <h6>Завершение изучения</h6>
+                            <p class="text-muted">Полное освоение материала</p>
+                            <span class="checkpoint-status upcoming">Сессия 5</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Целевые показатели -->
+        <div class="targets-section mt-4">
+            <h5 class="mb-3">
+                <i class="fas fa-bullseye me-2"></i>
+                Целевые показатели
+            </h5>
+            
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="target-card">
+                        <div class="target-label">Удержание знаний</div>
+                        <div class="target-value">85%</div>
+                        <div class="target-progress">
+                            <div class="progress">
+                                <div class="progress-bar bg-success" style="width: 85%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="target-card">
+                        <div class="target-label">Завершение курса</div>
+                        <div class="target-value">90%</div>
+                        <div class="target-progress">
+                            <div class="progress">
+                                <div class="progress-bar bg-info" style="width: 90%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Быстрые действия -->
     <div class="quick-actions">
         <h2 class="section-title">
@@ -560,6 +1022,14 @@
                 <div class="action-title">Тарифы</div>
                 <div class="action-description">Обновить подписку</div>
             </a>
+            
+            <div class="action-card" onclick="testTimer()" style="cursor: pointer;">
+                <div class="action-icon">
+                    <i class="fas fa-stopwatch"></i>
+                </div>
+                <div class="action-title">Тест таймера</div>
+                <div class="action-description">Проверить работу таймера (5 сек)</div>
+            </div>
         </div>
     </div>
 </div>
@@ -689,9 +1159,66 @@ function updateStats() {
     }
 }
 
+// Функция для переключения деталей сессии
+function toggleSessionDetails(sessionNumber) {
+    const details = document.getElementById(`sessionDetails${sessionNumber}`);
+    const button = event.target;
+    const icon = button.querySelector('i');
+    
+    if (details.style.display === 'none') {
+        details.style.display = 'block';
+        icon.className = 'fas fa-chevron-up me-1';
+        button.title = 'Свернуть';
+    } else {
+        details.style.display = 'none';
+        icon.className = 'fas fa-chevron-down me-1';
+        button.title = 'Развернуть';
+    }
+}
+
+// Тестовая функция для проверки таймера
+function testTimer() {
+    console.log('testTimer called');
+    if (typeof window.startStudySession === 'function') {
+        console.log('startStudySession function found, starting test timer');
+        window.startStudySession(999, 0.1); // 6 секунд для теста
+    } else {
+        console.error('startStudySession function not found');
+        alert('Функция startStudySession не найдена. Проверьте консоль для деталей.');
+    }
+}
+
 // Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
     updateResultsCount();
+    
+    // Добавляем обработчики для кнопок "Начать"
+    const startButtons = document.querySelectorAll('button[onclick*="startStudySession"]');
+    console.log('Found start buttons:', startButtons.length);
+    
+    startButtons.forEach((button, index) => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Button clicked:', index + 1);
+            
+            // Извлекаем номер сессии и длительность из onclick атрибута
+            const onclickAttr = button.getAttribute('onclick');
+            const match = onclickAttr.match(/startStudySession\((\d+),\s*(\d+)\)/);
+            
+            if (match) {
+                const sessionNumber = parseInt(match[1]);
+                const duration = parseInt(match[2]);
+                console.log('Starting session:', sessionNumber, 'duration:', duration);
+                
+                if (typeof window.startStudySession === 'function') {
+                    window.startStudySession(sessionNumber, duration);
+                } else {
+                    console.error('window.startStudySession is not a function');
+                    alert('Ошибка: функция таймера не найдена');
+                }
+            }
+        });
+    });
 });
 </script>
 {% endblock %}
