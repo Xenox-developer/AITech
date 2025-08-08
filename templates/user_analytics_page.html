@@ -1,0 +1,719 @@
+{% extends "base.html" %}
+
+{% block title %}Моя аналитика - AI Study{% endblock %}
+
+{% block extra_styles %}
+<style>
+    :root {
+        --primary: #6366f1;
+        --success: #10b981;
+        --warning: #f59e0b;
+        --danger: #ef4444;
+        --info: #06b6d4;
+        --secondary: #6b7280;
+    }
+
+    .analytics-header {
+        background: linear-gradient(135deg, var(--primary) 0%, #8b5cf6 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+        border-radius: 0 0 20px 20px;
+    }
+
+    .plan-badge {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        margin-left: 1rem;
+    }
+
+    .plan-freemium { background: rgba(107, 114, 128, 0.2); }
+    .plan-lite { background: rgba(6, 182, 212, 0.2); }
+    .plan-starter { background: rgba(107, 114, 128, 0.2); }
+    .plan-basic { background: rgba(245, 158, 11, 0.2); }
+    .plan-pro { background: rgba(16, 185, 129, 0.2); }
+
+    .analytics-card {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+        transition: transform 0.3s ease;
+    }
+
+    .analytics-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin: 2rem 0;
+    }
+
+    .stat-item {
+        text-align: center;
+        padding: 1.5rem;
+        background: rgba(99, 102, 241, 0.05);
+        border-radius: 12px;
+        border: 1px solid rgba(99, 102, 241, 0.1);
+    }
+
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 900;
+        color: var(--primary);
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+        color: var(--secondary);
+        font-weight: 500;
+    }
+
+    .progress-item {
+        margin-bottom: 1.5rem;
+    }
+
+    .progress-label {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+    }
+
+    .progress-bar-container {
+        background: #f3f4f6;
+        border-radius: 10px;
+        height: 8px;
+        overflow: hidden;
+    }
+
+    .progress-bar {
+        height: 100%;
+        border-radius: 10px;
+        transition: width 0.8s ease;
+    }
+
+    .progress-success { background: var(--success); }
+    .progress-warning { background: var(--warning); }
+    .progress-info { background: var(--info); }
+
+    .recommendations-list {
+        list-style: none;
+        padding: 0;
+    }
+
+    .recommendation-item {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        background: rgba(16, 185, 129, 0.05);
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+        border-left: 4px solid var(--success);
+    }
+
+    .recommendation-icon {
+        width: 40px;
+        height: 40px;
+        background: var(--success);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        margin-right: 1rem;
+        flex-shrink: 0;
+    }
+
+    .weak-areas-list {
+        list-style: none;
+        padding: 0;
+    }
+
+    .weak-area-item {
+        display: flex;
+        align-items: center;
+        justify-content: between;
+        padding: 1rem;
+        background: rgba(239, 68, 68, 0.05);
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+        border-left: 4px solid var(--danger);
+    }
+
+    .weak-area-info {
+        flex: 1;
+    }
+
+    .weak-area-accuracy {
+        background: var(--danger);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .comparison-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        background: rgba(6, 182, 212, 0.05);
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+    }
+
+    .comparison-value {
+        font-weight: 700;
+        font-size: 1.1rem;
+    }
+
+    .comparison-positive { color: var(--success); }
+    .comparison-negative { color: var(--danger); }
+
+    .upgrade-prompt {
+        text-align: center;
+        padding: 3rem 2rem;
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+        border-radius: 16px;
+        border: 2px dashed rgba(99, 102, 241, 0.3);
+    }
+
+    .upgrade-icon {
+        font-size: 4rem;
+        color: var(--primary);
+        margin-bottom: 1rem;
+    }
+
+    .chart-container {
+        height: 300px;
+        margin: 2rem 0;
+        background: #f9fafb;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--secondary);
+    }
+
+    @media (max-width: 768px) {
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .analytics-card {
+            padding: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="analytics-header">
+        <div class="container">
+            <h1 class="mb-2">
+                📊 Моя аналитика
+                <span class="plan-badge plan-{{ plan_type }}">{{ plan_type.upper() }}</span>
+            </h1>
+            <p class="mb-0 opacity-75">
+                {% if plan_type == 'freemium' %}
+                    Аналитика доступна начиная с плана LITE
+                {% elif plan_type == 'lite' %}
+                    Базовая статистика вашего обучения
+                {% elif plan_type == 'starter' %}
+                    Персональный прогресс и рекомендации
+                {% elif plan_type == 'basic' %}
+                    Детальная аналитика с сравнениями
+                {% elif plan_type == 'pro' %}
+                    Полная аналитика с расширенными возможностями
+                {% endif %}
+            </p>
+        </div>
+    </div>
+
+    <div class="container">
+        {% if plan_type == 'freemium' %}
+            <!-- FREEMIUM - Нет аналитики -->
+            <div class="upgrade-prompt">
+                <div class="upgrade-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <h3 class="mb-3">Откройте мир аналитики!</h3>
+                <p class="mb-4">Получите детальную статистику своего обучения, персональные рекомендации и отслеживайте свой прогресс.</p>
+                <div class="row justify-content-center">
+                    <div class="col-md-8">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="card border-info">
+                                    <div class="card-body text-center">
+                                        <h5 class="text-info">LITE - ₽79/неделя</h5>
+                                        <p class="small">Статистика изучения</p>
+                                        <ul class="list-unstyled small text-start">
+                                            <li>📈 Графики активности</li>
+                                            <li>📊 Статистика по типам файлов</li>
+                                            <li>⏱️ Время изучения</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="card border-warning">
+                                    <div class="card-body text-center">
+                                        <h5 class="text-warning">STARTER - ₽149/неделя</h5>
+                                        <p class="small">Прогресс обучения</p>
+                                        <ul class="list-unstyled small text-start">
+                                            <li>🎯 Персональные рекомендации</li>
+                                            <li>📚 Анализ слабых мест</li>
+                                            <li>🏆 Отслеживание мастерства</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <a href="{{ url_for('pricing') }}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-arrow-up me-2"></i>Выбрать план
+                </a>
+            </div>
+
+        {% elif analytics_data %}
+            <!-- Отображение аналитики в зависимости от плана -->
+            
+            {% if analytics_data.type == 'learning_stats' %}
+                <!-- LITE - Базовая статистика -->
+                <div class="analytics-card">
+                    <h3 class="mb-4"><i class="fas fa-chart-bar text-info me-2"></i>Статистика изучения</h3>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value">{{ analytics_data.total_documents }}</div>
+                            <div class="stat-label">Документов изучено</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">{{ analytics_data.active_days }}</div>
+                            <div class="stat-label">Активных дней</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">{{ analytics_data.estimated_study_time }}</div>
+                            <div class="stat-label">Минут изучения</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">{{ analytics_data.file_types.pdf + analytics_data.file_types.video + analytics_data.file_types.pptx }}</div>
+                            <div class="stat-label">Всего файлов</div>
+                        </div>
+                    </div>
+
+                    <h4 class="mb-3">Типы файлов</h4>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="progress-item">
+                                <div class="progress-label">
+                                    <span>📄 PDF файлы</span>
+                                    <span>{{ analytics_data.file_types.pdf }}</span>
+                                </div>
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar progress-info" style="width: {{ (analytics_data.file_types.pdf / (analytics_data.total_documents or 1) * 100) }}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="progress-item">
+                                <div class="progress-label">
+                                    <span>🎬 Видео</span>
+                                    <span>{{ analytics_data.file_types.video }}</span>
+                                </div>
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar progress-warning" style="width: {{ (analytics_data.file_types.video / (analytics_data.total_documents or 1) * 100) }}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="progress-item">
+                                <div class="progress-label">
+                                    <span>📊 PPTX</span>
+                                    <span>{{ analytics_data.file_types.pptx }}</span>
+                                </div>
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar progress-success" style="width: {{ (analytics_data.file_types.pptx / (analytics_data.total_documents or 1) * 100) }}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            {% elif analytics_data.type == 'learning_progress' %}
+                <!-- STARTER - Прогресс обучения -->
+                <div class="analytics-card">
+                    <h3 class="mb-4"><i class="fas fa-graduation-cap text-warning me-2"></i>Прогресс обучения</h3>
+                    
+                    <!-- Базовая статистика -->
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value">{{ analytics_data.total_documents }}</div>
+                            <div class="stat-label">Документов изучено</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">{{ analytics_data.flashcard_progress.mastered_cards }}</div>
+                            <div class="stat-label">Карточек освоено</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">{{ analytics_data.flashcard_progress.mastery_rate }}%</div>
+                            <div class="stat-label">Уровень мастерства</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">{{ analytics_data.chat_activity.total_messages }}</div>
+                            <div class="stat-label">AI сообщений</div>
+                        </div>
+                    </div>
+
+                    <!-- Персональные рекомендации -->
+                    {% if analytics_data.recommendations %}
+                    <h4 class="mb-3">🎯 Персональные рекомендации</h4>
+                    <ul class="recommendations-list">
+                        {% for recommendation in analytics_data.recommendations %}
+                        <li class="recommendation-item">
+                            <div class="recommendation-icon">
+                                <i class="fas fa-lightbulb"></i>
+                            </div>
+                            <div>{{ recommendation }}</div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+
+                    <!-- Слабые места -->
+                    {% if analytics_data.weak_areas %}
+                    <h4 class="mb-3 mt-4">📚 Материалы для повторения</h4>
+                    <ul class="weak-areas-list">
+                        {% for area in analytics_data.weak_areas %}
+                        <li class="weak-area-item">
+                            <div class="weak-area-info">
+                                <strong>{{ area.filename }}</strong>
+                                <div class="text-muted small">{{ area.file_type.upper() }} • {{ area.reviews }} повторений</div>
+                            </div>
+                            <div class="weak-area-accuracy">{{ area.accuracy }}/3</div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                </div>
+
+            {% elif analytics_data.type == 'detailed_analytics' %}
+                <!-- BASIC - Детальная аналитика -->
+                <div class="analytics-card">
+                    <h3 class="mb-4"><i class="fas fa-chart-line text-success me-2"></i>Детальная аналитика</h3>
+                    
+                    <!-- Все предыдущие данные + сравнения -->
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value">{{ analytics_data.total_documents }}</div>
+                            <div class="stat-label">Документов изучено</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">{{ analytics_data.flashcard_progress.mastery_rate }}%</div>
+                            <div class="stat-label">Уровень мастерства</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">{{ analytics_data.comparison.performance_percentile }}%</div>
+                            <div class="stat-label">Процентиль</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">{{ analytics_data.optimal_study_hours|length }}</div>
+                            <div class="stat-label">Оптимальных часов</div>
+                        </div>
+                    </div>
+
+                    <!-- Сравнение с другими пользователями -->
+                    <h4 class="mb-3">📊 Сравнение с другими пользователями</h4>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="comparison-item">
+                                <span>Анализы vs среднего</span>
+                                <span class="comparison-value {{ 'comparison-positive' if analytics_data.comparison.analyses_vs_average > 0 else 'comparison-negative' }}">
+                                    {{ "+" if analytics_data.comparison.analyses_vs_average > 0 else "" }}{{ analytics_data.comparison.analyses_vs_average }}%
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="comparison-item">
+                                <span>AI чат vs среднего</span>
+                                <span class="comparison-value {{ 'comparison-positive' if analytics_data.comparison.chat_vs_average > 0 else 'comparison-negative' }}">
+                                    {{ "+" if analytics_data.comparison.chat_vs_average > 0 else "" }}{{ analytics_data.comparison.chat_vs_average }}%
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Оптимальные часы для изучения -->
+                    {% if analytics_data.optimal_study_hours %}
+                    <h4 class="mb-3 mt-4">⏰ Оптимальное время для изучения</h4>
+                    <div class="row">
+                        {% for hour_data in analytics_data.optimal_study_hours %}
+                        <div class="col-md-4">
+                            <div class="text-center p-3 bg-light rounded">
+                                <div class="h4 text-primary">{{ hour_data.hour }}</div>
+                                <div class="small text-muted">Точность: {{ hour_data.accuracy }}/3</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <!-- Прогнозы -->
+                    {% if analytics_data.predictions %}
+                    <h4 class="mb-3 mt-4">🔮 Прогнозы</h4>
+                    <div class="alert alert-info">
+                        <strong>Следующая неделя:</strong> {{ analytics_data.predictions.next_week_performance }}<br>
+                        <strong>Тренд:</strong> {{ analytics_data.predictions.improvement_trend }}<br>
+                        <strong>Рекомендуемый фокус:</strong> {{ analytics_data.predictions.recommended_focus }}
+                    </div>
+                    {% endif %}
+                </div>
+
+            {% elif analytics_data.type == 'full_analytics' %}
+                <!-- PRO - Полная аналитика -->
+                <div class="analytics-card">
+                    <h3 class="mb-4"><i class="fas fa-crown text-warning me-2"></i>Полная аналитика PRO</h3>
+                    
+                    <!-- Основная статистика -->
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value">{{ analytics_data.total_documents }}</div>
+                            <div class="stat-label">Документов изучено</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">{{ analytics_data.learning_velocity.documents_per_week }}</div>
+                            <div class="stat-label">Документов в неделю</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">{{ analytics_data.retention_forecast.retention_rate_7_days }}%</div>
+                            <div class="stat-label">Удержание знаний</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">{{ analytics_data.monthly_trends|length }}</div>
+                            <div class="stat-label">Месяцев данных</div>
+                        </div>
+                    </div>
+
+                    <!-- Скорость обучения -->
+                    <h4 class="mb-3 mt-4">🚀 Скорость обучения</h4>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="text-center p-3 bg-light rounded mb-3">
+                                <div class="h5 text-primary">{{ analytics_data.learning_velocity.velocity_trend }}</div>
+                                <div class="small text-muted">Тренд скорости</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center p-3 bg-light rounded mb-3">
+                                <div class="h5 text-info">{{ analytics_data.learning_velocity.learning_consistency }}</div>
+                                <div class="small text-muted">Консистентность</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center p-3 bg-light rounded mb-3">
+                                <div class="h5 text-success">{{ analytics_data.learning_velocity.mastery_improvement_rate }}%</div>
+                                <div class="small text-muted">Улучшение мастерства</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center p-3 bg-light rounded mb-3">
+                                <div class="h5 text-warning">{{ analytics_data.learning_velocity.cards_per_week }}</div>
+                                <div class="small text-muted">Карточек в неделю</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Прогноз удержания знаний -->
+                    <h4 class="mb-3">🧠 Прогноз удержания знаний</h4>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="alert alert-info">
+                                <h6><i class="fas fa-chart-line me-2"></i>Кривая забывания: {{ analytics_data.retention_forecast.forgetting_curve }}</h6>
+                                <p class="mb-2">Удержание через 7 дней: <strong>{{ analytics_data.retention_forecast.retention_rate_7_days }}%</strong></p>
+                                <p class="mb-2">Удержание через 30 дней: <strong>{{ analytics_data.retention_forecast.retention_rate_30_days }}%</strong></p>
+                                <p class="mb-0">Сила удержания: <strong>{{ analytics_data.retention_forecast.retention_strength }}</strong></p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="alert alert-warning">
+                                <h6><i class="fas fa-clock me-2"></i>Рекомендации по повторению</h6>
+                                <p class="mb-2">Частота повторений: <strong>{{ analytics_data.retention_forecast.recommended_review_frequency }}</strong></p>
+                                <p class="mb-0">Материалов требует повторения: <strong>{{ analytics_data.retention_forecast.materials_need_review }}</strong></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Анализ сложности материалов -->
+                    {% if analytics_data.complexity_analysis %}
+                    <h4 class="mb-3">📊 Анализ сложности материалов</h4>
+                    <div class="row">
+                        {% for complexity in analytics_data.complexity_analysis %}
+                        <div class="col-md-4">
+                            <div class="text-center p-3 border rounded mb-3">
+                                <div class="h5 
+                                    {% if complexity.complexity == 'Простой' %}text-success
+                                    {% elif complexity.complexity == 'Средний' %}text-warning
+                                    {% else %}text-danger{% endif %}">
+                                    {{ complexity.complexity }}
+                                </div>
+                                <div class="small text-muted">{{ complexity.count }} материалов</div>
+                                <div class="small">Мастерство: {{ complexity.avg_mastery }}/3</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <!-- Продуктивность по часам -->
+                    {% if analytics_data.productivity_by_hour %}
+                    <h4 class="mb-3">⏰ Продуктивность по времени</h4>
+                    <div class="row">
+                        {% for hour_data in analytics_data.productivity_by_hour[:6] %}
+                        <div class="col-md-2">
+                            <div class="text-center p-2 bg-light rounded mb-2">
+                                <div class="h6 text-primary">{{ hour_data.hour }}</div>
+                                <div class="small text-muted">{{ hour_data.performance }}/3</div>
+                                <div class="small">{{ hour_data.documents }} док.</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <!-- Анализ контента -->
+                    {% if analytics_data.content_analysis %}
+                    <h4 class="mb-3 mt-4">📄 Анализ типов контента</h4>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Тип файла</th>
+                                    <th>Количество</th>
+                                    <th>Средняя длина конспекта</th>
+                                    <th>Средняя длина контента</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for content in analytics_data.content_analysis %}
+                                <tr>
+                                    <td><span class="badge bg-secondary">{{ content.file_type }}</span></td>
+                                    <td>{{ content.count }}</td>
+                                    <td>{{ content.avg_summary_length }} символов</td>
+                                    <td>{{ content.avg_content_length }} символов</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% endif %}
+
+                    <!-- Статистика использования -->
+                    <h4 class="mb-3 mt-4">📈 Статистика использования</h4>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="text-center p-3 bg-light rounded">
+                                <div class="h4 text-primary">{{ analytics_data.usage_statistics.total_analyses }}</div>
+                                <div class="small text-muted">Всего анализов</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center p-3 bg-light rounded">
+                                <div class="h4 text-info">{{ analytics_data.usage_statistics.chat_interactions }}</div>
+                                <div class="small text-muted">AI взаимодействий</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center p-3 bg-light rounded">
+                                <div class="h4 text-success">{{ analytics_data.usage_statistics.flashcard_reviews }}</div>
+                                <div class="small text-muted">Повторений карточек</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center p-3 bg-light rounded">
+                                <div class="h4 text-warning">{{ analytics_data.usage_statistics.avg_question_length }}</div>
+                                <div class="small text-muted">Средняя длина вопроса</div>
+                            </div>
+                        </div>
+                    </div>
+
+
+
+
+
+                    <!-- Расширенные возможности -->
+                    <h4 class="mb-3 mt-4">⚡ Расширенные возможности PRO</h4>
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i>
+                        Профессиональные инструменты для глубокого анализа вашего обучения:
+                        <ul class="mt-2 mb-0">
+                            <li>🔍 Глубокий анализ контента по типам файлов</li>
+                            <li>📊 Инсайты продуктивности по времени</li>
+                            <li>🚀 Отслеживание скорости обучения и трендов</li>
+                            <li>🧠 Прогнозирование удержания знаний</li>
+                            <li>📈 Анализ сложности материалов</li>
+                            <li>🎛️ Кастомные дашборды и фильтры</li>
+                            <li>📅 Долгосрочные тренды за 12 месяцев</li>
+                        </ul>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Кнопка апгрейда для всех планов кроме PRO -->
+            {% if plan_type != 'pro' %}
+            <div class="text-center mt-4">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Хотите больше возможностей аналитики? 
+                    <a href="{{ url_for('pricing') }}" class="btn btn-primary btn-sm ms-2">
+                        Обновить план
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+        {% else %}
+            <!-- Ошибка загрузки данных -->
+            <div class="alert alert-warning text-center">
+                <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                <h4>Данные временно недоступны</h4>
+                <p>Попробуйте обновить страницу или обратитесь в поддержку.</p>
+                <button class="btn btn-primary" onclick="location.reload()">
+                    <i class="fas fa-refresh me-2"></i>Обновить
+                </button>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+// Анимация прогресс-баров при загрузке
+document.addEventListener('DOMContentLoaded', function() {
+    const progressBars = document.querySelectorAll('.progress-bar');
+    progressBars.forEach(bar => {
+        const width = bar.style.width;
+        bar.style.width = '0%';
+        setTimeout(() => {
+            bar.style.width = width;
+        }, 500);
+    });
+});
+
+// Функция для экспорта данных (заглушка)
+function exportData(format) {
+    alert(`Экспорт в формате ${format} будет доступен в ближайшее время!`);
+}
+</script>
+{% endblock %}

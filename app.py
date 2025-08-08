@@ -2,12 +2,445 @@ import os
 import json
 import sqlite3
 from datetime import datetime, timedelta
-from flask import Flask, render_template, request, redirect, url_for, flash, send_file, jsonify, session
+from flask import Flask, render_template, request, redirect, url_for, flash, send_file, jsonify, session, send_from_directory
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename
 from usage_tracking import usage_tracker
 from auth import User, init_auth_db, generate_password_hash, check_password_hash
 from migration_manager import run_migrations
+from analytics import element_analytics
+from subscription_manager import subscription_manager, SUBSCRIPTION_PLANS
+from subscription_decorators import require_subscription_limit, track_usage, subscription_required
+from gamification import gamification
+from smart_upgrade_triggers import smart_triggers
+from analytics_manager import analytics_manager
+
+# Функция проверки прав администратора
+def is_admin(user):
+    """Проверка, является ли пользователь администратором"""
+    if not user or not user.is_authenticated:
+        return False
+    return user.email == 'test@test.ru'
+
+def get_user_learning_stats(user_id):
+    """Получение персональной статистики обучения пользователя"""
+    conn = sqlite3.connect('ai_study.db')
+    c = conn.cursor()
+    
+    # Общая статистика пользователя
+    c.execute('''
+        SELECT COUNT(*) FROM result WHERE user_id = ?
+    ''', (user_id,))
+    total_results = c.fetchone()[0]
+    
+    # Статистика по флеш-картам
+    c.execute('''
+        SELECT COUNT(*) FROM user_progress 
+        WHERE user_id = ? AND consecutive_correct >= 3
+    ''', (user_id,))
+    mastered_cards = c.fetchone()[0]
+    
+    c.execute('''
+        SELECT COUNT(*) FROM user_progress WHERE user_id = ?
+    ''', (user_id,))
+    total_cards_studied = c.fetchone()[0]
+    
+    # Карточки для повторения сегодня
+    c.execute('''
+        SELECT COUNT(*) FROM user_progress 
+        WHERE user_id = ? AND date(next_review) <= date('now')
+    ''', (user_id,))
+    cards_due_today = c.fetchone()[0]
+    
+    # Статистика по типам файлов
+    c.execute('''
+        SELECT file_type, COUNT(*) 
+        FROM result 
+        WHERE user_id = ? 
+        GROUP BY file_type
+    ''', (user_id,))
+    file_types = dict(c.fetchall())
+    
+    # Активность за последние 30 дней
+    c.execute('''
+        SELECT DATE(created_at) as date, COUNT(*) as count
+        FROM result 
+        WHERE user_id = ? AND created_at >= date('now', '-30 days')
+        GROUP BY DATE(created_at)
+        ORDER BY date DESC
+    ''', (user_id,))
+    recent_activity = c.fetchall()
+    
+    # Прогресс изучения (на основе флеш-карт)
+    learning_progress = 0
+    if total_cards_studied > 0:
+        learning_progress = min(100, int((mastered_cards / max(total_cards_studied, 1)) * 100))
+    
+    # Расчет контрольных точек на основе реальных данных
+    checkpoints = calculate_user_checkpoints(user_id, total_results, mastered_cards, total_cards_studied)
+    
+    # Целевые показатели
+    targets = calculate_user_targets(user_id, total_results, mastered_cards, total_cards_studied)
+    
+    # Персональные учебные сессии
+    study_sessions = get_or_create_user_study_sessions(user_id)
+    
+    conn.close()
+    
+    return {
+        'total_results': total_results,
+        'mastered_cards': mastered_cards,
+        'total_cards_studied': total_cards_studied,
+        'cards_due_today': cards_due_today,
+        'file_types': file_types,
+        'recent_activity': recent_activity,
+        'learning_progress': learning_progress,
+        'checkpoints': checkpoints,
+        'targets': targets,
+        'study_sessions': study_sessions
+    }
+
+def calculate_user_checkpoints(user_id, total_results, mastered_cards, total_cards_studied):
+    """Расчет персональных контрольных точек пользователя"""
+    checkpoints = []
+    
+    # Контрольная точка 1: Первые шаги
+    first_progress = min(100, (total_results / 3) * 100) if total_results > 0 else 0
+    checkpoints.append({
+        'title': 'Первые шаги',
+        'description': 'Загрузка и анализ первых файлов',
+        'progress': int(first_progress),
+        'status': 'completed' if total_results >= 3 else ('current' if total_results > 0 else 'upcoming'),
+        'target': f'{min(total_results, 3)}/3 файлов'
+    })
+    
+    # Контрольная точка 2: Активное изучение
+    study_progress = min(100, (total_cards_studied / 20) * 100) if total_cards_studied > 0 else 0
+    checkpoints.append({
+        'title': 'Активное изучение',
+        'description': 'Работа с флеш-картами и повторения',
+        'progress': int(study_progress),
+        'status': 'completed' if total_cards_studied >= 20 else ('current' if total_cards_studied > 0 else 'upcoming'),
+        'target': f'{min(total_cards_studied, 20)}/20 карточек'
+    })
+    
+    # Контрольная точка 3: Мастерство
+    mastery_progress = min(100, (mastered_cards / 10) * 100) if mastered_cards > 0 else 0
+    checkpoints.append({
+        'title': 'Достижение мастерства',
+        'description': 'Освоение материала и закрепление знаний',
+        'progress': int(mastery_progress),
+        'status': 'completed' if mastered_cards >= 10 else ('current' if mastered_cards > 0 else 'upcoming'),
+        'target': f'{min(mastered_cards, 10)}/10 освоенных'
+    })
+    
+    # Контрольная точка 4: Эксперт
+    expert_progress = min(100, (total_results / 10) * 100) if total_results > 0 else 0
+    checkpoints.append({
+        'title': 'Экспертный уровень',
+        'description': 'Глубокое изучение разнообразных материалов',
+        'progress': int(expert_progress),
+        'status': 'completed' if total_results >= 10 else ('current' if total_results >= 5 else 'upcoming'),
+        'target': f'{min(total_results, 10)}/10 файлов'
+    })
+    
+    return checkpoints
+
+def calculate_user_targets(user_id, total_results, mastered_cards, total_cards_studied):
+    """Расчет персональных целевых показателей"""
+    targets = []
+    
+    # Цель 1: Удержание знаний
+    retention_rate = 0
+    if total_cards_studied > 0:
+        retention_rate = min(100, int((mastered_cards / total_cards_studied) * 100))
+    
+    targets.append({
+        'label': 'Удержание знаний',
+        'value': f'{retention_rate}%',
+        'progress': retention_rate,
+        'color': 'success' if retention_rate >= 70 else ('warning' if retention_rate >= 50 else 'danger')
+    })
+    
+    # Цель 2: Активность изучения
+    activity_rate = min(100, (total_results / 5) * 100) if total_results > 0 else 0
+    targets.append({
+        'label': 'Активность изучения',
+        'value': f'{int(activity_rate)}%',
+        'progress': int(activity_rate),
+        'color': 'info' if activity_rate >= 80 else ('warning' if activity_rate >= 40 else 'danger')
+    })
+    
+    return targets
+
+def get_or_create_user_study_sessions(user_id):
+    """Получение или создание персональных учебных сессий пользователя"""
+    conn = sqlite3.connect('ai_study.db')
+    c = conn.cursor()
+    
+    logger.info(f"Getting study sessions for user {user_id}")
+    
+    # Сначала проверяем, есть ли уже созданные сессии для пользователя
+    c.execute('''
+        SELECT id, title, description, phase, difficulty, duration_minutes, 
+               status, created_at, started_at, completed_at, result_id, session_type
+        FROM study_sessions 
+        WHERE user_id = ? 
+        ORDER BY created_at ASC
+    ''', (user_id,))
+    
+    existing_sessions = c.fetchall()
+    
+    logger.info(f"Found {len(existing_sessions)} existing sessions for user {user_id}")
+    
+    if existing_sessions:
+        # Если сессии уже есть, проверяем, нужно ли добавить новые
+        logger.info(f"Found existing sessions, checking for new files for user {user_id}")
+        
+        # Получаем ID файлов, для которых уже есть сессии
+        existing_result_ids = set()
+        for row in existing_sessions:
+            result_id = row[10]  # result_id
+            if result_id:
+                existing_result_ids.add(result_id)
+        
+        # Получаем все файлы пользователя
+        c.execute('''
+            SELECT id, filename, file_type, created_at 
+            FROM result 
+            WHERE user_id = ? 
+            ORDER BY created_at ASC
+        ''', (user_id,))
+        
+        all_user_files = c.fetchall()
+        
+        # Находим файлы без сессий
+        new_files = []
+        for file_data in all_user_files:
+            if file_data[0] not in existing_result_ids:  # file_data[0] это id
+                new_files.append(file_data)
+        
+        # Создаем сессии для новых файлов
+        if new_files:
+            logger.info(f"Creating sessions for {len(new_files)} new files")
+            
+            # Получаем статистику для определения статуса новых сессий
+            c.execute('''
+                SELECT COUNT(*) FROM user_progress 
+                WHERE user_id = ? AND consecutive_correct >= 3
+            ''', (user_id,))
+            mastered_cards = c.fetchone()[0]
+            
+            # Определяем следующий номер сессии
+            next_session_number = len([s for s in existing_sessions if s[11] == 'study']) + 1  # session_type == 'study'
+            
+            for file_data in new_files[:5]:  # Максимум 5 новых сессий
+                result_id, filename, file_type, created_at = file_data
+                
+                # Определяем фазу на основе номера
+                if next_session_number == 1:
+                    phase = 'ОСНОВЫ'
+                elif next_session_number <= 3:
+                    phase = 'РАЗВИТИЕ'
+                else:
+                    phase = 'МАСТЕРСТВО'
+                
+                # Создаем персональную сессию на основе файла
+                file_name_short = filename[:30] + '...' if len(filename) > 30 else filename
+                title = f'Сессия {next_session_number}: Изучение "{file_name_short}"'
+                description = f'Работа с материалом из файла {file_type.upper()}'
+                difficulty = 'легкий' if next_session_number == 1 else ('средний' if next_session_number <= 3 else 'сложный')
+                status = 'available'
+                
+                # Сохраняем новую сессию в базу данных
+                c.execute('''
+                    INSERT INTO study_sessions 
+                    (user_id, result_id, session_type, title, description, phase, difficulty, duration_minutes, status)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ''', (user_id, result_id, 'study', title, description, phase, difficulty, 45, status))
+                
+                next_session_number += 1
+            
+            conn.commit()
+            
+            # Перезапрашиваем все сессии после добавления новых
+            c.execute('''
+                SELECT id, title, description, phase, difficulty, duration_minutes, 
+                       status, created_at, started_at, completed_at, result_id, session_type
+                FROM study_sessions 
+                WHERE user_id = ? 
+                ORDER BY created_at ASC
+            ''', (user_id,))
+            
+            existing_sessions = c.fetchall()
+        
+        # Формируем список всех сессий для возврата
+        sessions = []
+        for row in existing_sessions:
+            session_id, title, description, phase, difficulty, duration_minutes, status, created_at, started_at, completed_at, result_id, session_type = row
+            
+            # Определяем класс фазы
+            phase_class = f'phase-{phase.lower()}'
+            difficulty_class = f'difficulty-{difficulty}'
+            
+            # Определяем текст действия на основе статуса
+            if status == 'completed':
+                action_text = 'Повторить'
+            elif status == 'in_progress':
+                action_text = 'Продолжить'
+            else:
+                action_text = 'Начать'
+            
+            sessions.append({
+                'id': session_id,
+                'phase': phase,
+                'phase_class': phase_class,
+                'title': title,
+                'description': description,
+                'date': datetime.strptime(created_at, '%Y-%m-%d %H:%M:%S').strftime('%d.%m.%Y'),
+                'duration': f'{duration_minutes} мин',
+                'difficulty': difficulty,
+                'difficulty_class': difficulty_class,
+                'status': status,
+                'action_text': action_text,
+                'result_id': result_id,
+                'session_type': session_type,
+                'started_at': started_at,
+                'completed_at': completed_at
+            })
+        
+        conn.close()
+        return sessions
+    
+    # Если сессий нет, создаем их на основе файлов пользователя
+    c.execute('''
+        SELECT id, filename, file_type, created_at 
+        FROM result 
+        WHERE user_id = ? 
+        ORDER BY created_at ASC 
+        LIMIT 5
+    ''', (user_id,))
+    
+    user_files = c.fetchall()
+    
+    # Получаем статистику пользователя для определения статуса сессий
+    c.execute('SELECT COUNT(*) FROM result WHERE user_id = ?', (user_id,))
+    total_results = c.fetchone()[0]
+    
+    c.execute('''
+        SELECT COUNT(*) FROM user_progress 
+        WHERE user_id = ? AND consecutive_correct >= 3
+    ''', (user_id,))
+    mastered_cards = c.fetchone()[0]
+    
+    c.execute('SELECT COUNT(*) FROM user_progress WHERE user_id = ?', (user_id,))
+    total_cards_studied = c.fetchone()[0]
+    
+    sessions = []
+    
+    if total_results == 0:
+        # Для пользователей без файлов - создаем мотивирующую сессию
+        c.execute('''
+            INSERT INTO study_sessions 
+            (user_id, session_type, title, description, phase, difficulty, duration_minutes, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (user_id, 'onboarding', 'Начните свое обучение', 
+              'Загрузите первый файл для анализа', 'НАЧАЛО', 'легкий', 15, 'available'))
+        
+        session_id = c.lastrowid
+        
+        sessions.append({
+            'id': session_id,
+            'phase': 'НАЧАЛО',
+            'phase_class': 'phase-начало',
+            'title': 'Начните свое обучение',
+            'description': 'Загрузите первый файл для анализа',
+            'date': datetime.now().strftime('%d.%m.%Y'),
+            'duration': '15 мин',
+            'difficulty': 'легкий',
+            'difficulty_class': 'difficulty-легкий',
+            'status': 'available',
+            'action_text': 'Загрузить файл',
+            'action_url': '/',
+            'session_type': 'onboarding'
+        })
+    else:
+        # Создаем сессии на основе реальных файлов пользователя
+        for i, (result_id, filename, file_type, created_at) in enumerate(user_files[:3], 1):
+            # Определяем фазу на основе порядка
+            if i == 1:
+                phase = 'ОСНОВЫ'
+            elif i == 2:
+                phase = 'РАЗВИТИЕ'
+            else:
+                phase = 'МАСТЕРСТВО'
+            
+            # Создаем персональную сессию на основе файла
+            file_name_short = filename[:30] + '...' if len(filename) > 30 else filename
+            title = f'Сессия {i}: Изучение "{file_name_short}"'
+            description = f'Работа с материалом из файла {file_type.upper()}'
+            difficulty = 'средний' if i <= 2 else 'сложный'
+            status = 'completed' if mastered_cards > i * 2 else 'available'
+            
+            # Сохраняем сессию в базу данных
+            c.execute('''
+                INSERT INTO study_sessions 
+                (user_id, result_id, session_type, title, description, phase, difficulty, duration_minutes, status)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (user_id, result_id, 'study', title, description, phase, difficulty, 45, status))
+            
+            session_id = c.lastrowid
+            
+            sessions.append({
+                'id': session_id,
+                'phase': phase,
+                'phase_class': f'phase-{phase.lower()}',
+                'title': title,
+                'description': description,
+                'date': datetime.strptime(created_at, '%Y-%m-%d %H:%M:%S').strftime('%d.%m.%Y'),
+                'duration': '45 мин',
+                'difficulty': difficulty,
+                'difficulty_class': f'difficulty-{difficulty}',
+                'status': status,
+                'action_text': 'Повторить' if status == 'completed' else 'Начать',
+                'filename': filename,
+                'file_type': file_type,
+                'result_id': result_id,
+                'session_type': 'study'
+            })
+        
+        # Добавляем сессию повторения, если есть карточки для повторения
+        if total_cards_studied > 0:
+            c.execute('''
+                INSERT INTO study_sessions 
+                (user_id, session_type, title, description, phase, difficulty, duration_minutes, status)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (user_id, 'review', 'Сессия повторения', 
+                  f'Повторение {total_cards_studied} изученных карточек', 
+                  'ПОВТОРЕНИЕ', 'легкий', 30, 'available'))
+            
+            session_id = c.lastrowid
+            
+            sessions.append({
+                'id': session_id,
+                'phase': 'ПОВТОРЕНИЕ',
+                'phase_class': 'phase-повторение',
+                'title': 'Сессия повторения',
+                'description': f'Повторение {total_cards_studied} изученных карточек',
+                'date': datetime.now().strftime('%d.%m.%Y'),
+                'duration': '30 мин',
+                'difficulty': 'легкий',
+                'difficulty_class': 'difficulty-легкий',
+                'status': 'available',
+                'action_text': 'Повторить',
+                'cards_count': total_cards_studied,
+                'session_type': 'review'
+            })
+    
+    conn.commit()
+    conn.close()
+    
+    return sessions
 import logging
 from pathlib import Path
 import yt_dlp
@@ -115,6 +548,13 @@ def download_video_from_url(url, upload_folder):
             # Проверяем длительность (максимум 2 часа)
             if duration and duration > 7200:
                 raise Exception(f"Видео слишком длинное ({duration//60} мин). Максимум 120 минут.")
+            
+            # Проверяем лимит длительности видео для пользователя
+            if current_user and current_user.is_authenticated:
+                duration_minutes = duration // 60 if duration else 0
+                allowed, message = subscription_manager.check_video_duration_limit(current_user.id, duration_minutes)
+                if not allowed:
+                    raise Exception(message)
             
             # Загружаем видео
             logger.info("⬇️ Starting download...")
@@ -676,7 +1116,20 @@ def dashboard():
         'cards_due_today': cards_due_today
     }
     
-    return render_template('dashboard.html', stats=stats, all_results=all_results, pagination=pagination)
+    # Получаем персональную статистику обучения
+    learning_stats = get_user_learning_stats(current_user.id)
+    
+    # Получаем информацию о подписке
+    user_subscription = subscription_manager.get_user_subscription(current_user.id)
+    usage_stats = subscription_manager.get_usage_stats(current_user.id)
+    
+    return render_template('dashboard.html', 
+                         stats=stats, 
+                         all_results=all_results, 
+                         pagination=pagination, 
+                         learning_stats=learning_stats,
+                         user_subscription=user_subscription,
+                         usage_stats=usage_stats)
 
 @app.route('/profile')
 @login_required
@@ -1389,14 +1842,23 @@ def test_stats(result_id):
 @app.route('/')
 def index():
     """Главная страница"""
-    return render_template('index.html')
+    user_subscription = None
+    usage_stats = None
+    
+    if current_user.is_authenticated:
+        user_subscription = subscription_manager.get_user_subscription(current_user.id)
+        usage_stats = subscription_manager.get_usage_stats(current_user.id)
+    
+    return render_template('index.html', 
+                         user_subscription=user_subscription,
+                         usage_stats=usage_stats)
 
-@app.route('/pricing')
-def pricing():
-    """Страница тарифов"""
-    return render_template('pricing.html')
+
 
 @app.route('/upload', methods=['POST'])
+@login_required
+@require_subscription_limit('analysis')
+@track_usage('analysis')
 def upload_file():
     """Загрузка и обработка файла"""
     try:
@@ -1460,6 +1922,27 @@ def upload_file():
                 page_range = '1-20'  # По умолчанию
             if file_type == '.pdf':
                 logger.info(f"PDF page range specified: {page_range}")
+                # Проверка лимита страниц PDF
+                try:
+                    if '-' in page_range:
+                        start, end = map(int, page_range.split('-'))
+                        pages_count = end - start + 1
+                    else:
+                        pages_count = len(page_range.split(','))
+                    
+                    allowed, message = subscription_manager.check_pdf_pages_limit(current_user.id, pages_count)
+                    if not allowed:
+                        flash(message, 'error')
+                        os.remove(filepath)
+                        return redirect(url_for('index'))
+                    
+                    # Записываем использование страниц PDF
+                    subscription_manager.record_usage(current_user.id, 'pdf_pages', pages_count, filename)
+                    
+                except ValueError:
+                    flash('Неверный формат диапазона страниц', 'error')
+                    os.remove(filepath)
+                    return redirect(url_for('index'))
             else:
                 logger.info(f"PowerPoint slide range specified: {page_range}")
         
@@ -1479,6 +1962,25 @@ def upload_file():
             
             # Сохранение результата в БД
             access_token = save_result(filename, file_type, analysis_result, page_info)
+            
+            # Начисление XP за анализ документа
+            if current_user.is_authenticated:
+                xp_result = gamification.award_xp(
+                    current_user.id, 
+                    'document_analysis', 
+                    f'Анализ {file_type.upper()} файла: {filename}',
+                    {'file_type': file_type, 'filename': filename}
+                )
+                
+                # Обновляем ежедневную серию
+                streak_result = gamification.update_daily_streak(current_user.id)
+                
+                # Если есть повышение уровня или новые достижения, добавляем в flash сообщения
+                if xp_result.get('level_up'):
+                    flash(f'🎉 Поздравляем! Вы достигли уровня {xp_result["new_level"]}: {xp_result["new_level_title"]}!', 'success')
+                
+                for achievement in xp_result.get('new_achievements', []):
+                    flash(f'🏆 Новое достижение: {achievement["title"]}! +{achievement["xp_reward"]} XP', 'success')
             
             # Удаление файла
             os.remove(filepath)
@@ -1501,6 +2003,9 @@ def upload_file():
         return redirect(url_for('index'))
 
 @app.route('/upload_url', methods=['POST'])
+@login_required
+@require_subscription_limit('analysis')
+@track_usage('analysis')
 def upload_video_url():
     """Загрузка и обработка видео по URL"""
     try:
@@ -1545,6 +2050,34 @@ def upload_video_url():
                 logger.info("💾 Saving results to database...")
                 access_token = save_result(filename, '.mp4', analysis_result, video_info)
                 logger.info(f"✅ Results saved with token: {access_token}")
+                
+                # Начисление XP за анализ видео
+                if current_user.is_authenticated:
+                    video_duration = video_info.get('duration_minutes', 0) if video_info else 0
+                    xp_result = gamification.award_xp(
+                        current_user.id, 
+                        'video_analysis', 
+                        f'Анализ видео: {filename} ({video_duration:.1f} мин)',
+                        {'filename': filename, 'duration': video_duration, 'source': 'url'}
+                    )
+                    
+                    # Дополнительный XP за длинное видео
+                    if video_duration > 30:
+                        gamification.award_xp(
+                            current_user.id,
+                            'long_study_session',
+                            f'Анализ длинного видео ({video_duration:.1f} мин)'
+                        )
+                    
+                    # Обновляем ежедневную серию
+                    streak_result = gamification.update_daily_streak(current_user.id)
+                    
+                    # Уведомления о достижениях
+                    if xp_result.get('level_up'):
+                        flash(f'🎉 Поздравляем! Вы достигли уровня {xp_result["new_level"]}: {xp_result["new_level_title"]}!', 'success')
+                    
+                    for achievement in xp_result.get('new_achievements', []):
+                        flash(f'🏆 Новое достижение: {achievement["title"]}! +{achievement["xp_reward"]} XP', 'success')
                 
                 # Теперь можно безопасно удалить файл
                 if os.path.exists(filepath):
@@ -1860,6 +2393,16 @@ def get_study_progress(result_id):
 def chat_with_lecture(result_id):
     """Чат с ChatGPT на основе загруженной лекции"""
     try:
+        # Проверяем лимит AI чата ПЕРЕД обработкой
+        allowed, message = subscription_manager.check_ai_chat_limit(current_user.id)
+        if not allowed:
+            return jsonify({
+                "success": False, 
+                "error": message, 
+                "limit_exceeded": True,
+                "upgrade_required": True
+            }), 403
+        
         data = request.json
         if not data:
             return jsonify({"success": False, "error": "No data provided"}), 400
@@ -1883,6 +2426,9 @@ def chat_with_lecture(result_id):
         # Получаем ответ от ChatGPT
         ai_response = get_chat_response(user_message, full_text, result_data)
         
+        # Записываем использование AI чата ПОСЛЕ успешного получения ответа
+        subscription_manager.record_usage(current_user.id, 'ai_chat', 1, f'chat_message_{result_id}')
+        
         # Сохраняем в историю чата
         conn = sqlite3.connect('ai_study.db')
         c = conn.cursor()
@@ -1894,6 +2440,15 @@ def chat_with_lecture(result_id):
         
         conn.commit()
         conn.close()
+        
+        # Начисление XP за AI чат
+        if current_user.is_authenticated:
+            gamification.award_xp(
+                current_user.id,
+                'ai_chat_message',
+                f'Вопрос в AI чате: {user_message[:50]}...',
+                {'result_id': result_id, 'message_length': len(user_message)}
+            )
         
         logger.info(f"Chat message processed for result {result_id} by user {current_user.id}")
         return jsonify({
@@ -2092,6 +2647,725 @@ def request_entity_too_large(e):
     max_mb = app.config['MAX_CONTENT_LENGTH'] // (1024 * 1024)
     flash(f'Размер файла превышает лимит в {max_mb} МБ', 'danger')
     return redirect(url_for('index'))
+
+# API для аналитики элементов интерфейса
+@app.route('/api/track_interaction', methods=['POST'])
+def track_interaction():
+    """API для записи взаимодействий с элементами интерфейса"""
+    try:
+        data = request.get_json()
+        
+        # Получаем данные из запроса
+        element_type = data.get('element_type')
+        element_id = data.get('element_id', '')
+        action_type = data.get('action_type')
+        page_url = data.get('page_url', request.referrer)
+        page_title = data.get('page_title', '')
+        metadata = data.get('metadata', {})
+        
+        # Получаем session_id из сессии или создаем новый
+        session_id = session.get('analytics_session_id')
+        if not session_id:
+            import uuid
+            session_id = str(uuid.uuid4())
+            session['analytics_session_id'] = session_id
+            
+            # Начинаем новую сессию
+            user_agent = request.headers.get('User-Agent', '')
+            ip_address = request.remote_addr
+            user_id = current_user.id if current_user.is_authenticated else None
+            
+            element_analytics.start_session(session_id, user_id, user_agent, ip_address)
+        
+        # Записываем взаимодействие
+        user_id = current_user.id if current_user.is_authenticated else None
+        element_analytics.record_interaction(
+            user_id=user_id,
+            session_id=session_id,
+            element_type=element_type,
+            element_id=element_id,
+            action_type=action_type,
+            page_url=page_url,
+            page_title=page_title,
+            metadata=metadata
+        )
+        
+        return jsonify({'success': True})
+        
+    except Exception as e:
+        logger.error(f"Error tracking interaction: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/analytics/popular_elements')
+@login_required
+def get_popular_elements():
+    """API для получения популярных элементов (только для администратора)"""
+    try:
+        if not is_admin(current_user):
+            return jsonify({'error': 'Access denied. Admin rights required.'}), 403
+        
+        days = request.args.get('days', 30, type=int)
+        limit = request.args.get('limit', 20, type=int)
+        
+        popular_elements = element_analytics.get_popular_elements(limit=limit, days=days)
+        return jsonify({'popular_elements': popular_elements})
+        
+    except Exception as e:
+        logger.error(f"Error getting popular elements: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/analytics/element_stats')
+@login_required
+def get_element_stats():
+    """API для получения статистики элементов (только для администратора)"""
+    try:
+        if not is_admin(current_user):
+            return jsonify({'error': 'Access denied. Admin rights required.'}), 403
+        
+        element_type = request.args.get('element_type')
+        element_id = request.args.get('element_id')
+        days = request.args.get('days', 30, type=int)
+        
+        stats = element_analytics.get_element_usage_stats(
+            element_type=element_type,
+            element_id=element_id,
+            days=days
+        )
+        
+        return jsonify(stats)
+        
+    except Exception as e:
+        logger.error(f"Error getting element stats: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/analytics/user_behavior')
+@login_required
+def get_user_behavior():
+    """API для получения паттернов поведения пользователей (только для администратора)"""
+    try:
+        if not is_admin(current_user):
+            return jsonify({'error': 'Access denied. Admin rights required.'}), 403
+        
+        user_id = request.args.get('user_id', type=int)
+        days = request.args.get('days', 30, type=int)
+        
+        behavior = element_analytics.get_user_behavior_patterns(user_id=user_id, days=days)
+        return jsonify(behavior)
+        
+    except Exception as e:
+        logger.error(f"Error getting user behavior: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/analytics/page_stats')
+@login_required
+def get_page_stats():
+    """API для получения статистики по страницам (только для администратора)"""
+    try:
+        if not is_admin(current_user):
+            return jsonify({'error': 'Access denied. Admin rights required.'}), 403
+        
+        page_url = request.args.get('page_url')
+        days = request.args.get('days', 30, type=int)
+        
+        stats = element_analytics.get_page_analytics(page_url=page_url, days=days)
+        return jsonify(stats)
+        
+    except Exception as e:
+        logger.error(f"Error getting page stats: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/analytics/user_stats')
+@login_required
+def get_detailed_user_stats():
+    """API для получения детальной статистики пользователей (только для администратора)"""
+    try:
+        if not is_admin(current_user):
+            return jsonify({'error': 'Access denied. Admin rights required.'}), 403
+        
+        days = request.args.get('days', 30, type=int)
+        
+        stats = element_analytics.get_detailed_user_stats(days=days)
+        return jsonify(stats)
+        
+    except Exception as e:
+        logger.error(f"Error getting user stats: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/analytics/user_engagement')
+@login_required
+def get_user_engagement():
+    """API для получения метрик вовлеченности пользователей (только для администратора)"""
+    try:
+        if not is_admin(current_user):
+            return jsonify({'error': 'Access denied. Admin rights required.'}), 403
+        
+        days = request.args.get('days', 30, type=int)
+        
+        engagement = element_analytics.get_user_engagement_metrics(days=days)
+        return jsonify(engagement)
+        
+    except Exception as e:
+        logger.error(f"Error getting user engagement: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+# API для управления учебными сессиями
+@app.route('/api/study_session/start/<int:session_id>', methods=['POST'])
+@login_required
+def start_study_session(session_id):
+    """Запуск учебной сессии"""
+    try:
+        conn = sqlite3.connect('ai_study.db')
+        c = conn.cursor()
+        
+        # Проверяем, что сессия принадлежит текущему пользователю
+        c.execute('''
+            SELECT id, status FROM study_sessions 
+            WHERE id = ? AND user_id = ?
+        ''', (session_id, current_user.id))
+        
+        session = c.fetchone()
+        if not session:
+            return jsonify({'success': False, 'error': 'Сессия не найдена'}), 404
+        
+        # Обновляем статус сессии
+        c.execute('''
+            UPDATE study_sessions 
+            SET status = 'in_progress', started_at = ?
+            WHERE id = ?
+        ''', (datetime.now(), session_id))
+        
+        # Записываем активность
+        c.execute('''
+            INSERT INTO session_activities 
+            (session_id, user_id, activity_type, created_at)
+            VALUES (?, ?, ?, ?)
+        ''', (session_id, current_user.id, 'session_started', datetime.now()))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'success': True, 'message': 'Сессия запущена'})
+        
+    except Exception as e:
+        logger.error(f"Error starting study session: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/study_session/complete/<int:session_id>', methods=['POST'])
+@login_required
+def complete_study_session(session_id):
+    """Завершение учебной сессии"""
+    try:
+        data = request.get_json() or {}
+        duration_seconds = data.get('duration_seconds', 0)
+        cards_reviewed = data.get('cards_reviewed', 0)
+        cards_mastered = data.get('cards_mastered', 0)
+        notes = data.get('notes', '')
+        
+        conn = sqlite3.connect('ai_study.db')
+        c = conn.cursor()
+        
+        # Проверяем, что сессия принадлежит текущему пользователю
+        c.execute('''
+            SELECT id, status FROM study_sessions 
+            WHERE id = ? AND user_id = ?
+        ''', (session_id, current_user.id))
+        
+        session = c.fetchone()
+        if not session:
+            return jsonify({'success': False, 'error': 'Сессия не найдена'}), 404
+        
+        # Обновляем статус сессии
+        c.execute('''
+            UPDATE study_sessions 
+            SET status = 'completed', completed_at = ?, progress = 100
+            WHERE id = ?
+        ''', (datetime.now(), session_id))
+        
+        # Записываем активность
+        c.execute('''
+            INSERT INTO session_activities 
+            (session_id, user_id, activity_type, duration_seconds, 
+             cards_reviewed, cards_mastered, notes, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (session_id, current_user.id, 'session_completed', duration_seconds,
+              cards_reviewed, cards_mastered, notes, datetime.now()))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'success': True, 'message': 'Сессия завершена'})
+        
+    except Exception as e:
+        logger.error(f"Error completing study session: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/study_session/reset_sessions', methods=['POST'])
+@login_required
+def reset_user_sessions():
+    """Сброс всех сессий пользователя (для пересоздания)"""
+    try:
+        conn = sqlite3.connect('ai_study.db')
+        c = conn.cursor()
+        
+        # Удаляем все сессии пользователя
+        c.execute('DELETE FROM session_activities WHERE user_id = ?', (current_user.id,))
+        c.execute('DELETE FROM study_sessions WHERE user_id = ?', (current_user.id,))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'success': True, 'message': 'Сессии сброшены'})
+        
+    except Exception as e:
+        logger.error(f"Error resetting sessions: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+# Страница аналитики
+@app.route('/analytics')
+@login_required
+def analytics_dashboard():
+    """Страница аналитики использования элементов"""
+    if not is_admin(current_user):
+        flash('Доступ запрещен. Недостаточно прав.', 'danger')
+        return redirect(url_for('dashboard'))
+    return render_template('analytics_dashboard.html')
+
+@app.route('/analytics/demo')
+@login_required
+def analytics_demo():
+    """Демонстрационная страница для тестирования аналитики"""
+    if not is_admin(current_user):
+        flash('Доступ запрещен. Недостаточно прав.', 'danger')
+        return redirect(url_for('dashboard'))
+    return render_template('analytics_demo.html')
+
+@app.route('/analytics/users')
+@login_required
+def user_analytics():
+    """Страница статистики пользователей"""
+    if not is_admin(current_user):
+        flash('Доступ запрещен. Недостаточно прав.', 'danger')
+        return redirect(url_for('dashboard'))
+    return render_template('user_analytics.html')
+
+@app.route('/my-analytics')
+@login_required
+def my_analytics():
+    """Персональная аналитика пользователя по плану подписки"""
+    try:
+        # Получаем план подписки пользователя
+        user_subscription = subscription_manager.get_user_subscription(current_user.id)
+        plan_type = user_subscription.get('type', 'freemium') if user_subscription else 'freemium'
+        
+        logger.info(f"User {current_user.id} analytics request, plan: {plan_type}")
+        
+        # Получаем аналитику в зависимости от плана
+        analytics_data = None
+        if plan_type == 'lite':
+            analytics_data = analytics_manager.get_learning_stats(current_user.id)
+            logger.info(f"LITE analytics data: {analytics_data}")
+        elif plan_type == 'starter':
+            analytics_data = analytics_manager.get_learning_progress(current_user.id)
+            logger.info(f"STARTER analytics data: {analytics_data}")
+        elif plan_type == 'basic':
+            analytics_data = analytics_manager.get_detailed_analytics(current_user.id)
+            logger.info(f"BASIC analytics data: {analytics_data}")
+        elif plan_type == 'pro':
+            analytics_data = analytics_manager.get_full_analytics(current_user.id)
+            logger.info(f"PRO analytics data: {analytics_data}")
+        
+        return render_template('user_analytics_page.html', 
+                             analytics_data=analytics_data,
+                             plan_type=plan_type,
+                             subscription_plans=SUBSCRIPTION_PLANS)
+    except Exception as e:
+        logger.error(f"Error loading user analytics: {e}")
+        flash('Ошибка при загрузке аналитики', 'danger')
+        return redirect(url_for('dashboard'))
+
+@app.route('/api/user-analytics')
+@login_required
+def api_user_analytics():
+    """API для получения персональной аналитики пользователя"""
+    try:
+        # Получаем план подписки пользователя
+        user_subscription = subscription_manager.get_user_subscription(current_user.id)
+        plan_type = user_subscription.get('type', 'freemium') if user_subscription else 'freemium'
+        
+        # Получаем аналитику в зависимости от плана
+        analytics_data = None
+        if plan_type == 'lite':
+            analytics_data = analytics_manager.get_learning_stats(current_user.id)
+        elif plan_type == 'starter':
+            analytics_data = analytics_manager.get_learning_progress(current_user.id)
+        elif plan_type == 'basic':
+            analytics_data = analytics_manager.get_detailed_analytics(current_user.id)
+        elif plan_type == 'pro':
+            analytics_data = analytics_manager.get_full_analytics(current_user.id)
+        
+        return jsonify({
+            'success': True,
+            'plan': plan_type,
+            'analytics': analytics_data
+        })
+    except Exception as e:
+        logger.error(f"Error in user analytics API: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Ошибка при получении аналитики'
+        }), 500
+
+@app.route('/pricing')
+def pricing():
+    """Страница с планами подписки"""
+    user_subscription = None
+    usage_stats = None
+    
+    if current_user.is_authenticated:
+        user_subscription = subscription_manager.get_user_subscription(current_user.id)
+        usage_stats = subscription_manager.get_usage_stats(current_user.id)
+    
+    return render_template('pricing.html', 
+                         user_subscription=user_subscription,
+                         usage_stats=usage_stats,
+                         subscription_plans=SUBSCRIPTION_PLANS)
+
+@app.route('/upgrade_subscription', methods=['POST'])
+@login_required
+def upgrade_subscription():
+    """Обновление плана подписки"""
+    try:
+        data = request.get_json()
+        new_plan = data.get('plan')
+        
+        if not new_plan or new_plan not in SUBSCRIPTION_PLANS:
+            return jsonify({'success': False, 'error': 'Неверный план подписки'})
+        
+        success = subscription_manager.upgrade_subscription(current_user.id, new_plan)
+        
+        if success:
+            return jsonify({'success': True, 'message': f'План успешно изменен на {new_plan.upper()}'})
+        else:
+            return jsonify({'success': False, 'error': 'Ошибка при изменении плана'})
+            
+    except Exception as e:
+        logger.error(f"Error upgrading subscription: {e}")
+        return jsonify({'success': False, 'error': 'Произошла ошибка'})
+
+@app.route('/subscription_status')
+@login_required
+def subscription_status():
+    """API для получения статуса подписки"""
+    try:
+        subscription = subscription_manager.get_user_subscription(current_user.id)
+        usage_stats = subscription_manager.get_usage_stats(current_user.id)
+        
+        return jsonify({
+            'success': True,
+            'subscription': subscription,
+            'usage_stats': usage_stats
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting subscription status: {e}")
+        return jsonify({'success': False, 'error': 'Ошибка получения статуса'})
+
+# ==================== ГЕЙМИФИКАЦИЯ И УМНЫЕ УВЕДОМЛЕНИЯ ====================
+
+@app.route('/api/smart-notifications')
+@login_required
+def get_smart_notifications():
+    """API для получения умных уведомлений"""
+    try:
+        # Получаем триггеры апгрейда
+        upgrade_offers = smart_triggers.get_upgrade_triggers(current_user.id)
+        
+        # Получаем данные геймификации
+        gamification_data = gamification.get_user_gamification_data(current_user.id)
+        
+        # Получаем статистику подписки
+        usage_stats = subscription_manager.get_usage_stats(current_user.id)
+        
+        notifications = []
+        
+        # Уведомления об апгрейде
+        for offer in upgrade_offers[:2]:  # Максимум 2 предложения
+            notification = {
+                'id': f'upgrade_{offer.trigger_reason}',
+                'type': 'upgrade',
+                'title': offer.title,
+                'message': offer.message,
+                'icon': 'fas fa-arrow-up',
+                'social_proof': offer.social_proof,
+                'auto_hide': None,  # Не скрываем автоматически
+                'actions': [
+                    {
+                        'text': offer.cta_text,
+                        'type': 'primary',
+                        'action': 'upgrade',
+                        'icon': 'fas fa-rocket',
+                        'url': '/pricing'
+                    },
+                    {
+                        'text': 'Позже',
+                        'type': 'outline-secondary',
+                        'action': 'dismiss',
+                        'icon': 'fas fa-times'
+                    }
+                ]
+            }
+            
+            if offer.discount > 0:
+                notification['message'] += f" Скидка {offer.discount}%!"
+            
+            notifications.append(notification)
+        
+        # Уведомления о лимитах
+        if not usage_stats['analyses']['unlimited']:
+            usage_percent = (usage_stats['analyses']['used'] / usage_stats['analyses']['limit']) * 100
+            
+            if usage_percent >= 80:
+                notifications.append({
+                    'id': 'limit_warning_analyses',
+                    'type': 'limit',
+                    'title': '⚠️ Лимит анализов почти исчерпан',
+                    'message': f'Использовано {usage_stats["analyses"]["used"]} из {usage_stats["analyses"]["limit"]} анализов.',
+                    'icon': 'fas fa-exclamation-triangle',
+                    'progress': usage_percent,
+                    'auto_hide': 30,
+                    'actions': [
+                        {
+                            'text': 'Увеличить лимиты',
+                            'type': 'warning',
+                            'action': 'upgrade',
+                            'icon': 'fas fa-arrow-up',
+                            'url': '/pricing'
+                        }
+                    ]
+                })
+        
+        # Уведомления о достижениях (если есть новые)
+        if gamification_data['recent_xp']:
+            recent_xp = gamification_data['recent_xp'][0]  # Последнее действие
+            if recent_xp['action'] == 'achievement_unlocked':
+                notifications.append({
+                    'id': f'achievement_{datetime.now().timestamp()}',
+                    'type': 'achievement',
+                    'title': '🏆 Новое достижение!',
+                    'message': recent_xp['description'],
+                    'icon': 'fas fa-trophy',
+                    'auto_hide': 10,
+                    'actions': [
+                        {
+                            'text': 'Посмотреть все',
+                            'type': 'success',
+                            'action': 'learn_more',
+                            'icon': 'fas fa-eye'
+                        }
+                    ]
+                })
+        
+        # Социальные уведомления
+        if gamification_data['level'] >= 5:
+            leaderboard = gamification.get_leaderboard(10)
+            user_rank = next((i for i, user in enumerate(leaderboard, 1) if user['user_id'] == current_user.id), None)
+            
+            if user_rank and user_rank <= 5:
+                notifications.append({
+                    'id': 'social_leaderboard',
+                    'type': 'social',
+                    'title': f'🌟 Вы в топ-{user_rank}!',
+                    'message': f'Отличная работа! Вы занимаете {user_rank} место в рейтинге.',
+                    'icon': 'fas fa-star',
+                    'social_proof': f'Опережаете {len(leaderboard) - user_rank} пользователей',
+                    'auto_hide': 15,
+                    'actions': [
+                        {
+                            'text': 'Посмотреть рейтинг',
+                            'type': 'info',
+                            'action': 'learn_more',
+                            'icon': 'fas fa-list'
+                        }
+                    ]
+                })
+        
+        # Записываем показ уведомлений для аналитики
+        for notification in notifications:
+            if notification['type'] == 'upgrade':
+                smart_triggers.record_trigger_shown(
+                    current_user.id, 
+                    notification['id'].replace('upgrade_', ''),
+                    notification
+                )
+        
+        return jsonify({
+            'success': True,
+            'notifications': notifications
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting smart notifications: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/track-notification-action', methods=['POST'])
+@login_required
+def track_notification_action():
+    """Отслеживание действий с уведомлениями"""
+    try:
+        data = request.get_json()
+        notification_id = data.get('notification_id')
+        action = data.get('action')
+        
+        # Записываем действие для аналитики
+        if notification_id.startswith('upgrade_'):
+            trigger_reason = notification_id.replace('upgrade_', '')
+            smart_triggers.record_trigger_action(current_user.id, trigger_reason, action)
+        
+        return jsonify({'success': True})
+        
+    except Exception as e:
+        logger.error(f"Error tracking notification action: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/gamification/profile')
+@login_required
+def get_gamification_profile():
+    """API для получения профиля геймификации"""
+    try:
+        data = gamification.get_user_gamification_data(current_user.id)
+        return jsonify({'success': True, 'data': data})
+        
+    except Exception as e:
+        logger.error(f"Error getting gamification profile: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/gamification/leaderboard')
+@login_required
+def get_leaderboard():
+    """API для получения таблицы лидеров"""
+    try:
+        leaderboard = gamification.get_leaderboard(20)
+        return jsonify({'success': True, 'leaderboard': leaderboard})
+        
+    except Exception as e:
+        logger.error(f"Error getting leaderboard: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/gamification')
+@login_required
+def gamification_dashboard():
+    """Страница геймификации"""
+    try:
+        # Получаем данные пользователя
+        user_data = gamification.get_user_gamification_data(current_user.id)
+        
+        # Получаем таблицу лидеров
+        leaderboard = gamification.get_leaderboard(10)
+        
+        # Получаем доступные достижения
+        from gamification import ACHIEVEMENTS
+        available_achievements = []
+        unlocked_ids = set(a['id'] for a in user_data['achievements'])
+        
+        for achievement_id, achievement in ACHIEVEMENTS.items():
+            available_achievements.append({
+                'id': achievement_id,
+                'title': achievement.title,
+                'description': achievement.description,
+                'icon': achievement.icon,
+                'category': achievement.category,
+                'xp_reward': achievement.xp_reward,
+                'rarity': achievement.rarity,
+                'unlocked': achievement_id in unlocked_ids
+            })
+        
+        return render_template('gamification_dashboard.html',
+                             user_data=user_data,
+                             leaderboard=leaderboard,
+                             achievements=available_achievements)
+        
+    except Exception as e:
+        logger.error(f"Error loading gamification dashboard: {e}")
+        flash('Ошибка загрузки данных геймификации', 'error')
+        return redirect(url_for('dashboard'))
+
+# ==================== АНАЛИТИКА ПО ПЛАНАМ ПОДПИСКИ ====================
+
+@app.route('/api/user-analytics')
+@login_required
+def get_user_analytics():
+    """API для получения аналитики пользователя в зависимости от плана подписки"""
+    try:
+        # Получаем план подписки пользователя
+        subscription = subscription_manager.get_user_subscription(current_user.id)
+        plan_type = subscription['type'] if subscription else 'freemium'
+        
+        # Получаем соответствующую аналитику
+        if plan_type == 'freemium':
+            # FREEMIUM - нет аналитики
+            analytics_data = {
+                'type': 'no_analytics',
+                'message': 'Аналитика доступна начиная с плана LITE',
+                'upgrade_required': True,
+                'recommended_plan': 'lite'
+            }
+        elif plan_type == 'lite':
+            # LITE - базовая статистика изучения
+            analytics_data = analytics_manager.get_learning_stats(current_user.id)
+        elif plan_type == 'starter':
+            # STARTER - прогресс обучения
+            analytics_data = analytics_manager.get_learning_progress(current_user.id)
+        elif plan_type == 'basic':
+            # BASIC - детальная аналитика
+            analytics_data = analytics_manager.get_detailed_analytics(current_user.id)
+        elif plan_type == 'pro':
+            # PRO - полная аналитика
+            analytics_data = analytics_manager.get_full_analytics(current_user.id)
+        else:
+            analytics_data = {'type': 'error', 'message': 'Неизвестный план подписки'}
+        
+        return jsonify({
+            'success': True,
+            'plan': plan_type,
+            'analytics': analytics_data
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting user analytics: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/my-analytics')
+@login_required
+def user_analytics_page():
+    """Страница персональной аналитики пользователя"""
+    try:
+        # Получаем план подписки
+        subscription = subscription_manager.get_user_subscription(current_user.id)
+        plan_type = subscription['type'] if subscription else 'freemium'
+        
+        # Получаем аналитику
+        if plan_type == 'freemium':
+            analytics_data = None
+        elif plan_type == 'lite':
+            analytics_data = analytics_manager.get_learning_stats(current_user.id)
+        elif plan_type == 'starter':
+            analytics_data = analytics_manager.get_learning_progress(current_user.id)
+        elif plan_type == 'basic':
+            analytics_data = analytics_manager.get_detailed_analytics(current_user.id)
+        elif plan_type == 'pro':
+            analytics_data = analytics_manager.get_full_analytics(current_user.id)
+        else:
+            analytics_data = None
+        
+        return render_template('user_analytics_page.html',
+                             plan_type=plan_type,
+                             analytics_data=analytics_data,
+                             subscription=subscription)
+        
+    except Exception as e:
+        logger.error(f"Error loading user analytics page: {e}")
+        flash('Ошибка загрузки аналитики', 'error')
+        return redirect(url_for('dashboard'))
 
 if __name__ == '__main__':
     init_db()

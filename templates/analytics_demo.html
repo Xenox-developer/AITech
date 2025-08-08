@@ -1,0 +1,389 @@
+{% extends "base.html" %}
+
+{% block title %}Демо аналитики - AI-конспект{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .demo-header {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        color: white;
+        padding: 40px 0;
+        border-radius: 20px;
+        margin-bottom: 30px;
+        text-align: center;
+    }
+    
+    .demo-section {
+        background: white;
+        border-radius: 16px;
+        padding: 30px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        margin-bottom: 30px;
+    }
+    
+    .demo-buttons {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-bottom: 30px;
+    }
+    
+    .demo-btn {
+        padding: 12px 20px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+        text-align: center;
+    }
+    
+    .demo-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    
+    .btn-primary-demo {
+        background: #6366f1;
+        color: white;
+    }
+    
+    .btn-success-demo {
+        background: #10b981;
+        color: white;
+    }
+    
+    .btn-warning-demo {
+        background: #f59e0b;
+        color: white;
+    }
+    
+    .btn-danger-demo {
+        background: #ef4444;
+        color: white;
+    }
+    
+    .demo-form {
+        max-width: 500px;
+        margin: 0 auto;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: #374151;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 1rem;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+    
+    .demo-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        justify-content: center;
+    }
+    
+    .demo-link {
+        color: #6366f1;
+        text-decoration: none;
+        padding: 8px 16px;
+        border: 1px solid #6366f1;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    
+    .demo-link:hover {
+        background: #6366f1;
+        color: white;
+        text-decoration: none;
+    }
+    
+    .interaction-log {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 20px;
+        max-height: 300px;
+        overflow-y: auto;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9rem;
+    }
+    
+    .log-entry {
+        margin-bottom: 8px;
+        padding: 4px 8px;
+        border-radius: 4px;
+        background: white;
+        border-left: 3px solid #6366f1;
+    }
+    
+    .log-timestamp {
+        color: #6b7280;
+        font-size: 0.8rem;
+    }
+    
+    .log-action {
+        color: #059669;
+        font-weight: 600;
+    }
+    
+    .log-element {
+        color: #dc2626;
+        font-weight: 600;
+    }
+    
+    .stats-display {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 16px;
+        margin-top: 20px;
+    }
+    
+    .stat-item {
+        text-align: center;
+        padding: 16px;
+        background: #f3f4f6;
+        border-radius: 8px;
+    }
+    
+    .stat-number {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #6366f1;
+        margin-bottom: 4px;
+    }
+    
+    .stat-label {
+        font-size: 0.8rem;
+        color: #6b7280;
+        text-transform: uppercase;
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="demo-header">
+    <div class="container">
+        <h1>
+            <i class="fas fa-flask me-3"></i>
+            Демонстрация системы аналитики
+        </h1>
+        <p>Взаимодействуйте с элементами ниже, чтобы увидеть, как работает трекинг</p>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Демо кнопки -->
+    <div class="demo-section">
+        <h2><i class="fas fa-hand-pointer me-2"></i>Кнопки для тестирования</h2>
+        <p>Нажимайте на кнопки ниже - каждое взаимодействие будет записано в аналитику:</p>
+        
+        <div class="demo-buttons">
+            <button class="demo-btn btn-primary-demo" id="demo-btn-1" onclick="showInteraction('button', 'demo-btn-1', 'click')">
+                <i class="fas fa-rocket me-2"></i>Кнопка 1
+            </button>
+            <button class="demo-btn btn-success-demo" id="demo-btn-2" onclick="showInteraction('button', 'demo-btn-2', 'click')">
+                <i class="fas fa-check me-2"></i>Кнопка 2
+            </button>
+            <button class="demo-btn btn-warning-demo" id="demo-btn-3" onclick="showInteraction('button', 'demo-btn-3', 'click')">
+                <i class="fas fa-star me-2"></i>Кнопка 3
+            </button>
+            <button class="demo-btn btn-danger-demo" id="demo-btn-4" onclick="showInteraction('button', 'demo-btn-4', 'click')">
+                <i class="fas fa-heart me-2"></i>Кнопка 4
+            </button>
+        </div>
+    </div>
+    
+    <!-- Демо ссылки -->
+    <div class="demo-section">
+        <h2><i class="fas fa-link me-2"></i>Ссылки для тестирования</h2>
+        <p>Кликайте по ссылкам (они не ведут никуда, но клики записываются):</p>
+        
+        <div class="demo-links">
+            <a href="#" class="demo-link" id="demo-link-1" onclick="event.preventDefault(); showInteraction('link', 'demo-link-1', 'click')">
+                <i class="fas fa-home me-2"></i>Главная
+            </a>
+            <a href="#" class="demo-link" id="demo-link-2" onclick="event.preventDefault(); showInteraction('link', 'demo-link-2', 'click')">
+                <i class="fas fa-user me-2"></i>Профиль
+            </a>
+            <a href="#" class="demo-link" id="demo-link-3" onclick="event.preventDefault(); showInteraction('link', 'demo-link-3', 'click')">
+                <i class="fas fa-cog me-2"></i>Настройки
+            </a>
+            <a href="#" class="demo-link" id="demo-link-4" onclick="event.preventDefault(); showInteraction('link', 'demo-link-4', 'click')">
+                <i class="fas fa-chart-bar me-2"></i>Аналитика
+            </a>
+        </div>
+    </div>
+    
+    <!-- Демо форма -->
+    <div class="demo-section">
+        <h2><i class="fas fa-wpforms me-2"></i>Форма для тестирования</h2>
+        <p>Взаимодействуйте с полями формы - фокус и изменения отслеживаются:</p>
+        
+        <form class="demo-form" id="demo-form" onsubmit="event.preventDefault(); showInteraction('form', 'demo-form', 'submit')">
+            <div class="form-group">
+                <label class="form-label" for="demo-input-1">Текстовое поле:</label>
+                <input type="text" class="form-control" id="demo-input-1" placeholder="Введите текст...">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="demo-select-1">Выпадающий список:</label>
+                <select class="form-control" id="demo-select-1">
+                    <option value="">Выберите опцию...</option>
+                    <option value="option1">Опция 1</option>
+                    <option value="option2">Опция 2</option>
+                    <option value="option3">Опция 3</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="demo-textarea-1">Текстовая область:</label>
+                <textarea class="form-control" id="demo-textarea-1" rows="3" placeholder="Введите многострочный текст..."></textarea>
+            </div>
+            
+            <button type="submit" class="demo-btn btn-primary-demo" style="width: 100%;">
+                <i class="fas fa-paper-plane me-2"></i>Отправить форму
+            </button>
+        </form>
+    </div>
+    
+    <!-- Лог взаимодействий -->
+    <div class="demo-section">
+        <h2><i class="fas fa-list me-2"></i>Лог взаимодействий</h2>
+        <p>Здесь отображаются ваши взаимодействия в реальном времени:</p>
+        
+        <div class="interaction-log" id="interactionLog">
+            <div class="log-entry">
+                <span class="log-timestamp">Ожидание взаимодействий...</span>
+            </div>
+        </div>
+        
+        <!-- Статистика сессии -->
+        <div class="stats-display" id="sessionStats">
+            <div class="stat-item">
+                <div class="stat-number" id="totalClicks">0</div>
+                <div class="stat-label">Всего кликов</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="buttonClicks">0</div>
+                <div class="stat-label">Кнопки</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="linkClicks">0</div>
+                <div class="stat-label">Ссылки</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="formInteractions">0</div>
+                <div class="stat-label">Формы</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Ссылка на полную аналитику -->
+    <div class="demo-section text-center">
+        <h2><i class="fas fa-chart-line me-2"></i>Полная аналитика</h2>
+        <p>Посмотрите детальную статистику использования элементов:</p>
+        
+        <a href="{{ url_for('analytics_dashboard') }}" class="demo-btn btn-primary-demo" style="font-size: 1.1rem; padding: 16px 32px;">
+            <i class="fas fa-chart-bar me-2"></i>Открыть аналитику
+        </a>
+    </div>
+</div>
+
+<script>
+// Счетчики для демонстрации
+let sessionStats = {
+    totalClicks: 0,
+    buttonClicks: 0,
+    linkClicks: 0,
+    formInteractions: 0
+};
+
+// Функция для отображения взаимодействия в логе
+function showInteraction(elementType, elementId, actionType) {
+    const timestamp = new Date().toLocaleTimeString();
+    const logEntry = document.createElement('div');
+    logEntry.className = 'log-entry';
+    logEntry.innerHTML = `
+        <span class="log-timestamp">[${timestamp}]</span>
+        <span class="log-action">${actionType}</span> на 
+        <span class="log-element">${elementType}.${elementId}</span>
+    `;
+    
+    const log = document.getElementById('interactionLog');
+    log.insertBefore(logEntry, log.firstChild);
+    
+    // Ограничиваем количество записей в логе
+    const entries = log.querySelectorAll('.log-entry');
+    if (entries.length > 20) {
+        entries[entries.length - 1].remove();
+    }
+    
+    // Обновляем статистику
+    updateSessionStats(elementType, actionType);
+}
+
+// Обновление статистики сессии
+function updateSessionStats(elementType, actionType) {
+    sessionStats.totalClicks++;
+    
+    if (elementType === 'button') {
+        sessionStats.buttonClicks++;
+    } else if (elementType === 'link') {
+        sessionStats.linkClicks++;
+    } else if (elementType === 'form' || elementType === 'input' || elementType === 'select' || elementType === 'textarea') {
+        sessionStats.formInteractions++;
+    }
+    
+    // Обновляем отображение
+    document.getElementById('totalClicks').textContent = sessionStats.totalClicks;
+    document.getElementById('buttonClicks').textContent = sessionStats.buttonClicks;
+    document.getElementById('linkClicks').textContent = sessionStats.linkClicks;
+    document.getElementById('formInteractions').textContent = sessionStats.formInteractions;
+}
+
+// Инициализация при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+    // Очищаем лог
+    const log = document.getElementById('interactionLog');
+    log.innerHTML = '<div class="log-entry"><span class="log-timestamp">Лог готов к записи взаимодействий...</span></div>';
+    
+    // Добавляем обработчики для полей формы
+    const formElements = document.querySelectorAll('#demo-form input, #demo-form select, #demo-form textarea');
+    formElements.forEach(element => {
+        element.addEventListener('focus', function() {
+            showInteraction(element.tagName.toLowerCase(), element.id, 'focus');
+        });
+        
+        element.addEventListener('change', function() {
+            showInteraction(element.tagName.toLowerCase(), element.id, 'change');
+        });
+    });
+    
+    // Показываем приветственное сообщение
+    setTimeout(() => {
+        showInteraction('page', 'analytics-demo', 'load');
+    }, 1000);
+});
+</script>
+{% endblock %}

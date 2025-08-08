@@ -276,6 +276,84 @@
         margin: 0 16px;
     }
 
+    /* Стили для статистики использования */
+    .usage-stats-card {
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .stat-item {
+        display: flex;
+        align-items: center;
+        padding: 16px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+
+    .stat-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12);
+    }
+
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 16px;
+        font-size: 1.2rem;
+        color: white;
+        flex-shrink: 0;
+    }
+
+    .stat-icon.analyses {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    }
+
+    .stat-icon.pdf {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    }
+
+    .stat-icon.video {
+        background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+    }
+
+    .stat-icon.ai-chat {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    }
+
+    .stat-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .stat-label {
+        font-size: 0.85rem;
+        color: #6b7280;
+        font-weight: 500;
+        margin-bottom: 4px;
+    }
+
+    .stat-value {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1f2937;
+        line-height: 1.2;
+    }
+
+    .stat-value .text-success {
+        color: #10b981 !important;
+        font-size: 1.1rem;
+    }
+
     @media (max-width: 768px) {
         .results-title {
             font-size: 1.5rem;
@@ -326,6 +404,93 @@
 
 <div class="container">
     <div class="results-container">
+        <!-- Статистика использования лимитов -->
+        {% if current_user.is_authenticated and usage_stats %}
+        <div class="usage-stats-card mb-4">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <div class="stat-item">
+                        <div class="stat-icon analyses">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-label">Анализы</div>
+                            <div class="stat-value">
+                                {% if usage_stats.analyses.unlimited %}
+                                {{ usage_stats.analyses.used }} <span class="text-success">∞</span>
+                                {% else %}
+                                {{ usage_stats.analyses.used }}/{{ usage_stats.analyses.limit }}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-item">
+                        <div class="stat-icon pdf">
+                            <i class="fas fa-file-pdf"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-label">PDF страницы</div>
+                            <div class="stat-value">
+                                {% if usage_stats.pdf_pages.unlimited %}
+                                {{ usage_stats.pdf_pages.used }} <span class="text-success">∞</span>
+                                {% else %}
+                                {{ usage_stats.pdf_pages.used }}/{{ usage_stats.pdf_pages.limit }}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-item">
+                        <div class="stat-icon video">
+                            <i class="fas fa-video"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-label">Видео загрузки</div>
+                            <div class="stat-value">
+                                {% if usage_stats.video_uploads.unlimited %}
+                                {{ usage_stats.video_uploads.used }} <span class="text-success">∞</span>
+                                {% else %}
+                                {{ usage_stats.video_uploads.used }}/{{ usage_stats.video_uploads.limit }}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-item">
+                        <div class="stat-icon ai-chat">
+                            <i class="fas fa-comments"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-label">AI чат</div>
+                            <div class="stat-value">
+                                {% if usage_stats.ai_chat.unlimited %}
+                                {{ usage_stats.ai_chat.used }} <span class="text-success">∞</span>
+                                {% else %}
+                                {{ usage_stats.ai_chat.used }}/{{ usage_stats.ai_chat.limit }}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center mt-3">
+                <small class="text-muted">
+                    <i class="fas fa-calendar me-1"></i>
+                    Лимиты обновятся: {{ usage_stats.reset_date[:10] if usage_stats.reset_date else 'Не установлено' }}
+                </small>
+                {% if user_subscription.type != 'pro' %}
+                <a href="{{ url_for('pricing') }}" class="btn btn-sm btn-outline-primary ms-3">
+                    <i class="fas fa-arrow-up me-1"></i>Обновить план
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
         <!-- Фильтры и статистика -->
         <div class="results-filters">
             <div class="results-count">
@@ -484,6 +649,8 @@
             }
         }
     }
+
+
 
     function showNotification(message, type) {
         // Создаем уведомление

@@ -542,11 +542,6 @@
 {% endblock %}
 
 {% block content %}
-<!-- Умные уведомления о лимитах -->
-<div class="container">
-    {% include 'smart_limit_notifications.html' %}
-</div>
-
 <div class="dashboard-header">
     <div class="container">
         <h1 class="dashboard-title">
@@ -592,53 +587,6 @@
             <div class="stat-label">Всего прогресса</div>
         </div>
     </div>
-    
-    <!-- Информация о подписке -->
-    {% if usage_stats %}
-    <div class="subscription-info mb-4">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body">
-                <div class="row align-items-center">
-                    <div class="col-md-8">
-                        <h5 class="card-title mb-2">
-                            <i class="fas fa-crown text-warning me-2"></i>
-                            План подписки: <span class="badge bg-primary">{{ usage_stats.plan.upper() }}</span>
-                        </h5>
-                        <div class="row">
-                            <div class="col-sm-6 mb-2">
-                                <small class="text-muted">Анализы в месяц:</small>
-                                {% if usage_stats.analyses.unlimited %}
-                                    <div class="fw-bold text-success">{{ usage_stats.analyses.used }} (безлимитно)</div>
-                                {% else %}
-                                    <div class="progress mt-1" style="height: 6px;">
-                                        <div class="progress-bar" style="width: {{ (usage_stats.analyses.used / usage_stats.analyses.limit * 100) if usage_stats.analyses.limit > 0 else 0 }}%"></div>
-                                    </div>
-                                    <small class="text-muted">{{ usage_stats.analyses.used }}/{{ usage_stats.analyses.limit }}</small>
-                                {% endif %}
-                            </div>
-                            <div class="col-sm-6 mb-2">
-                                <small class="text-muted">AI чат:</small>
-                                {% if usage_stats.ai_chat.unlimited %}
-                                    <div class="fw-bold text-success">{{ usage_stats.ai_chat.used }} (безлимитно)</div>
-                                {% else %}
-                                    <div class="progress mt-1" style="height: 6px;">
-                                        <div class="progress-bar" style="width: {{ (usage_stats.ai_chat.used / usage_stats.ai_chat.limit * 100) if usage_stats.ai_chat.limit > 0 else 0 }}%"></div>
-                                    </div>
-                                    <small class="text-muted">{{ usage_stats.ai_chat.used }}/{{ usage_stats.ai_chat.limit }}</small>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4 text-end">
-                        <a href="{{ url_for('pricing') }}" class="btn btn-outline-primary">
-                            <i class="fas fa-arrow-up me-1"></i>Обновить план
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endif %}
     
     <!-- Все результаты -->
     <div class="recent-results">
@@ -764,7 +712,91 @@
             План обучения
         </h2>
         
-
+        <!-- Учебные сессии -->
+        <div class="study-sessions-section mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">
+                    <i class="fas fa-calendar-alt me-2"></i>
+                    Учебные сессии
+                </h5>
+                <button class="btn btn-outline-secondary btn-sm" onclick="location.reload()" title="Обновить сессии">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+            
+            <div class="row g-3">
+                {% if learning_stats and learning_stats.study_sessions %}
+                    {% for session in learning_stats.study_sessions %}
+                    <div class="col-md-6">
+                        <div class="session-card">
+                            <div class="session-header">
+                                <div class="session-info">
+                                    <div class="session-phase {{ session.phase_class }}">{{ session.phase }}</div>
+                                    <h6 class="mb-1">{{ session.title }}</h6>
+                                    <div class="session-meta">
+                                        <span class="session-date">
+                                            <i class="fas fa-calendar me-1"></i>{{ session.date }}
+                                        </span>
+                                        <span class="session-duration">
+                                            <i class="fas fa-clock me-1"></i>{{ session.duration }}
+                                        </span>
+                                        <span class="session-difficulty {{ session.difficulty_class }}">
+                                            <i class="fas fa-signal me-1"></i>{{ session.difficulty }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="session-actions">
+                                    {% if session.action_url %}
+                                        <a href="{{ session.action_url }}" class="btn btn-primary btn-sm">
+                                            <i class="fas fa-{{ 'upload' if session.action_url == '/' else 'play' }} me-1"></i>{{ session.action_text }}
+                                        </a>
+                                    {% else %}
+                                        <button class="btn btn-primary btn-sm" onclick="startStudySessionWithTracking({{ session.id }}, {{ session.duration.split()[0] }})">
+                                            <i class="fas fa-play me-1"></i>{{ session.action_text }}
+                                        </button>
+                                    {% endif %}
+                                    <button class="btn btn-outline-secondary btn-sm" onclick="toggleSessionDetails({{ session.id }})">
+                                        <i class="fas fa-chevron-down me-1"></i>Развернуть
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="session-details" id="sessionDetails{{ session.id }}" style="display: none;">
+                                <div class="session-focus mb-3">
+                                    <h6><i class="fas fa-bullseye me-2"></i>Фокус сессии</h6>
+                                    <p class="text-muted">{{ session.description }}</p>
+                                    {% if session.filename %}
+                                        <div class="mt-2">
+                                            <small class="text-muted">
+                                                <i class="fas fa-file me-1"></i>Файл: {{ session.filename }}
+                                            </small>
+                                        </div>
+                                    {% endif %}
+                                    {% if session.cards_count %}
+                                        <div class="mt-2">
+                                            <small class="text-muted">
+                                                <i class="fas fa-layer-group me-1"></i>Карточек для повторения: {{ session.cards_count }}
+                                            </small>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="col-12">
+                        <div class="text-center text-muted py-4">
+                            <i class="fas fa-calendar-plus fa-3x mb-3 opacity-50"></i>
+                            <h5>Учебные сессии появятся после загрузки файлов</h5>
+                            <p>Загрузите первый файл, чтобы начать персональное обучение</p>
+                            <a href="{{ url_for('index') }}" class="btn btn-primary">
+                                <i class="fas fa-upload me-2"></i>Загрузить файл
+                            </a>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
         
         <!-- Контрольные точки -->
         <div class="checkpoints-section">
@@ -887,7 +919,6 @@
     </div>
 </div>
 {% endblock %}
-
 {% block extra_scripts %}
 <script>
 // Запуск учебной сессии с отслеживанием
@@ -923,45 +954,36 @@ async function startStudySessionWithTracking(sessionId, duration) {
     }
 }
 
-// Обновление учебных сессий из дашборда
-async function refreshSessionsFromDashboard() {
+// Завершение учебной сессии
+async function completeStudySession(sessionId, durationSeconds, cardsReviewed = 0, cardsMastered = 0, notes = '') {
     try {
-        // Показываем индикатор загрузки
-        const button = event.target;
-        const originalText = button.innerHTML;
-        button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Обновление...';
-        button.disabled = true;
-
-        // Сбрасываем все сессии пользователя
-        const response = await fetch('/api/study_session/reset_sessions', {
+        const response = await fetch(`/api/study_session/complete/${sessionId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-            }
+            },
+            body: JSON.stringify({
+                duration_seconds: durationSeconds,
+                cards_reviewed: cardsReviewed,
+                cards_mastered: cardsMastered,
+                notes: notes
+            })
         });
-
+        
         const data = await response.json();
-
+        
         if (data.success) {
-            showNotification('Учебные сессии обновлены!', 'success');
-            
-            // Перезагружаем страницу через 1 секунду
+            showNotification('Учебная сессия завершена!', 'success');
+            // Обновляем страницу, чтобы показать обновленный статус
             setTimeout(() => {
                 location.reload();
             }, 1000);
         } else {
-            showNotification(data.error || 'Ошибка при обновлении сессий', 'error');
+            showNotification(data.error || 'Ошибка завершения сессии', 'error');
         }
     } catch (error) {
-        console.error('Error refreshing sessions:', error);
+        console.error('Error completing study session:', error);
         showNotification('Ошибка соединения с сервером', 'error');
-    } finally {
-        // Восстанавливаем кнопку
-        const button = event.target;
-        if (button) {
-            button.innerHTML = originalText;
-            button.disabled = false;
-        }
     }
 }
 
@@ -1006,38 +1028,99 @@ function showNotification(message, type = 'info') {
     }, 5000);
 }
 
+// Переопределяем глобальную функцию завершения сессии из base.html
+window.originalCompleteSession = window.completeSession;
+window.completeSession = function() {
+    // Получаем ID текущей сессии из таймера
+    const currentSessionId = window.sessionTimer?.currentSession;
+    const duration = window.sessionTimer?.totalTime - window.sessionTimer?.remainingTime;
+    
+    if (currentSessionId && duration) {
+        // Завершаем сессию через API
+        completeStudySession(currentSessionId, duration);
+    }
+    
+    // Вызываем оригинальную функцию для остановки таймера
+    if (window.originalCompleteSession) {
+        window.originalCompleteSession();
+    }
+};
+
+// Фильтрация результатов
+function filterResults(type) {
+    const results = document.querySelectorAll('.result-item');
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    
+    // Обновляем активную кнопку
+    filterButtons.forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    // Фильтруем результаты
+    results.forEach(result => {
+        const resultType = result.getAttribute('data-type');
+        
+        if (type === 'all') {
+            result.classList.remove('hidden');
+        } else if (type === 'pdf' && resultType === '.pdf') {
+            result.classList.remove('hidden');
+        } else if (type === 'pptx' && resultType === '.pptx') {
+            result.classList.remove('hidden');
+        } else if (type === 'video' && (resultType === '.mp4' || resultType === '.mov' || resultType === '.mkv')) {
+            result.classList.remove('hidden');
+        } else {
+            result.classList.add('hidden');
+        }
+    });
+}
+
+// Удаление результата
+async function confirmDelete(resultId) {
+    if (confirm('Вы уверены, что хотите удалить этот результат? Это действие нельзя отменить.')) {
+        try {
+            const response = await fetch(`/api/delete_result/${resultId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Удаляем элемент из DOM
+                const resultCard = event.target.closest('.result-item');
+                if (resultCard) {
+                    resultCard.style.transition = 'all 0.3s ease';
+                    resultCard.style.opacity = '0';
+                    resultCard.style.transform = 'translateX(-100%)';
+
+                    setTimeout(() => {
+                        resultCard.remove();
+
+                        // Проверяем, остались ли результаты
+                        const remainingResults = document.querySelectorAll('.result-item');
+                        if (remainingResults.length === 0) {
+                            location.reload(); // Перезагружаем страницу для показа пустого состояния
+                        }
+                    }, 300);
+                }
+
+                // Показываем уведомление об успехе
+                showNotification('Результат успешно удален', 'success');
+            } else {
+                showNotification(data.message || 'Ошибка при удалении', 'error');
+            }
+        } catch (error) {
+            console.error('Error deleting result:', error);
+            showNotification('Ошибка соединения с сервером', 'error');
+        }
+    }
+}
+
 // Тестовая функция для таймера
 function testTimer() {
     window.startStudySession(999, 5); // 5 минут для теста
     showNotification('Запущен тестовый таймер на 5 секунд', 'info');
 }
-
-// Фильтрация результатов
-function filterResults(type) {
-    const items = document.querySelectorAll('.result-item');
-    const buttons = document.querySelectorAll('.filter-btn');
-    
-    // Обновляем активную кнопку
-    buttons.forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
-    
-    // Фильтруем элементы
-    items.forEach(item => {
-        if (type === 'all') {
-            item.style.display = 'flex';
-        } else {
-            const itemType = item.dataset.type;
-            item.style.display = itemType === `.${type}` ? 'flex' : 'none';
-        }
-    });
-}
-
-// Подтверждение удаления
-function confirmDelete(resultId) {
-    if (confirm('Вы уверены, что хотите удалить этот результат?')) {
-        // Здесь можно добавить AJAX запрос для удаления
-        window.location.href = `/delete_result/${resultId}`;
-    }
-}
 </script>
-{% endblock %}
+{% endblock %}ait fetch(`/api/study_session/start/${sessionId}`, {

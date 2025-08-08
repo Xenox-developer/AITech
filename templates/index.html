@@ -764,6 +764,11 @@
 {% endblock %}
 
 {% block content %}
+<!-- Умные уведомления о лимитах -->
+<div class="container-fluid px-3">
+    {% include 'smart_limit_notifications.html' %}
+</div>
+
 <!-- Compact Hero -->
 <section class="hero">
     <h1 class="hero-title">
@@ -788,6 +793,58 @@
                 <span>Видео по ссылке</span>
             </button>
         </div>
+        
+        <!-- Subscription Limits Info -->
+        {% if current_user.is_authenticated and usage_stats %}
+        <div class="subscription-limits mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-3">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-crown text-warning me-2"></i>
+                                <span class="fw-bold">План: {{ usage_stats.plan.upper() }}</span>
+                            </div>
+                            <div class="row">
+                                <div class="col-sm-4">
+                                    <small class="text-muted">Анализы:</small>
+                                    {% if usage_stats.analyses.unlimited %}
+                                        <div class="text-success fw-bold">{{ usage_stats.analyses.used }} (∞)</div>
+                                    {% else %}
+                                        <div class="progress mt-1" style="height: 4px;">
+                                            <div class="progress-bar" style="width: {{ (usage_stats.analyses.used / usage_stats.analyses.limit * 100) if usage_stats.analyses.limit > 0 else 0 }}%"></div>
+                                        </div>
+                                        <small>{{ usage_stats.analyses.used }}/{{ usage_stats.analyses.limit }}</small>
+                                    {% endif %}
+                                </div>
+                                <div class="col-sm-4">
+                                    <small class="text-muted">PDF страниц:</small>
+                                    {% if usage_stats.pdf_pages.unlimited %}
+                                        <div class="text-success fw-bold">∞</div>
+                                    {% else %}
+                                        <div class="fw-bold">до {{ usage_stats.pdf_pages.limit }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-sm-4">
+                                    <small class="text-muted">Видео:</small>
+                                    {% if usage_stats.video_minutes.unlimited %}
+                                        <div class="text-success fw-bold">∞</div>
+                                    {% else %}
+                                        <div class="fw-bold">до {{ usage_stats.video_minutes.limit }} мин</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <a href="{{ url_for('pricing') }}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-arrow-up me-1"></i>Обновить
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
         
         <!-- File Upload -->
         <div id="file-upload" class="upload-content active">

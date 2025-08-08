@@ -7,10 +7,9 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def run_migration():
+def up(conn):
     """Добавляет токены доступа к существующим результатам"""
     try:
-        conn = sqlite3.connect('ai_study.db')
         c = conn.cursor()
         
         # Проверяем, есть ли колонка access_token
@@ -33,9 +32,6 @@ def run_migration():
             c.execute('UPDATE result SET access_token = ? WHERE id = ?', (access_token, result_id))
             logger.info(f"Added access token to result {result_id}")
         
-        conn.commit()
-        conn.close()
-        
         logger.info(f"Migration completed: added access tokens to {len(results_without_tokens)} results")
         return True
         
@@ -45,4 +41,7 @@ def run_migration():
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
-    run_migration()
+    conn = sqlite3.connect('ai_study.db')
+    up(conn)
+    conn.commit()
+    conn.close()

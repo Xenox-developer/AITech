@@ -1,0 +1,277 @@
+<!-- Умные уведомления о лимитах -->
+{% if current_user.is_authenticated %}
+<div id="smart-notifications" class="smart-notifications-container">
+    <!-- Уведомления будут загружаться динамически -->
+</div>
+
+<script>
+// Система умных уведомлений
+class SmartNotifications {
+    constructor() {
+        this.container = document.getElementById('smart-notifications');
+        this.checkInterval = 30000; // Проверяем каждые 30 секунд
+        this.init();
+    }
+    
+    init() {
+        this.loadNotifications();
+        setInterval(() => this.loadNotifications(), this.checkInterval);
+    }
+    
+    async loadNotifications() {
+        try {
+            const response = await fetch('/api/smart-notifications');
+            const data = await response.json();
+            
+            if (data.notifications && data.notifications.length > 0) {
+                this.showNotifications(data.notifications);
+            }
+        } catch (error) {
+            console.error('Error loading smart notifications:', error);
+        }
+    }
+    
+    showNotifications(notifications) {
+        // Очищаем старые уведомления
+        this.container.innerHTML = '';
+        
+        notifications.forEach(notification => {
+            const element = this.createNotificationElement(notification);
+            this.container.appendChild(element);
+            
+            // Автоматически скрываем через определенное время
+            if (notification.auto_hide) {
+                setTimeout(() => {
+                    this.hideNotification(element);
+                }, notification.auto_hide * 1000);
+            }
+        });
+    }
+    
+    createNotificationElement(notification) {
+        const div = document.createElement('div');
+        div.className = `alert alert-${notification.type} alert-dismissible fade show smart-notification`;
+        div.setAttribute('data-notification-id', notification.id);
+        
+        let progressBar = '';
+        if (notification.progress !== undefined) {
+            const progressClass = notification.progress >= 80 ? 'bg-danger' : 
+                                notification.progress >= 60 ? 'bg-warning' : 'bg-info';
+            progressBar = `
+                <div class="progress mt-2" style="height: 4px;">
+                    <div class="progress-bar ${progressClass}" style="width: ${notification.progress}%"></div>
+                </div>
+            `;
+        }
+        
+        let actionButtons = '';
+        if (notification.actions) {
+            actionButtons = '<div class="mt-2">';
+            notification.actions.forEach(action => {
+                actionButtons += `
+                    <button class="btn btn-sm btn-${action.type} me-2" 
+                            onclick="smartNotifications.handleAction('${notification.id}', '${action.action}', '${action.url || ''}')">
+                        <i class="${action.icon} me-1"></i>${action.text}
+                    </button>
+                `;
+            });
+            actionButtons += '</div>';
+        }
+        
+        div.innerHTML = `
+            <div class="d-flex align-items-start">
+                <div class="notification-icon me-3">
+                    <i class="${notification.icon} fa-lg text-${notification.type}"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <h6 class="alert-heading mb-1">${notification.title}</h6>
+                    <p class="mb-1">${notification.message}</p>
+                    ${notification.social_proof ? `<small class="text-muted">${notification.social_proof}</small>` : ''}
+                    ${progressBar}
+                    ${actionButtons}
+                </div>
+                <button type="button" class="btn-close" onclick="smartNotifications.dismissNotification('${notification.id}')"></button>
+            </div>
+        `;
+        
+        return div;
+    }
+    
+    handleAction(notificationId, action, url) {
+        // Отправляем аналитику
+        this.trackAction(notificationId, action);
+        
+        if (action === 'upgrade') {
+            if (url) {
+                window.location.href = url;
+            } else {
+                window.location.href = '/pricing';
+            }
+        } else if (action === 'learn_more') {
+            // Показываем модальное окно с подробностями
+            this.showDetailsModal(notificationId);
+        } else if (action === 'dismiss') {
+            this.dismissNotification(notificationId);
+        }
+    }
+    
+    dismissNotification(notificationId) {
+        const element = document.querySelector(`[data-notification-id="${notificationId}"]`);
+        if (element) {
+            element.classList.add('fade-out');
+            setTimeout(() => {
+                element.remove();
+            }, 300);
+        }
+        
+        // Отправляем информацию о закрытии
+        this.trackAction(notificationId, 'dismissed');
+    }
+    
+    hideNotification(element) {
+        element.classList.add('fade-out');
+        setTimeout(() => {
+            element.remove();
+        }, 300);
+    }
+    
+    trackAction(notificationId, action) {
+        fetch('/api/track-notification-action', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                notification_id: notificationId,
+                action: action
+            })
+        }).catch(error => {
+            console.error('Error tracking notification action:', error);
+        });
+    }
+    
+    showDetailsModal(notificationId) {
+        // Здесь можно показать модальное окно с подробной информацией
+        console.log('Show details for notification:', notificationId);
+    }
+}
+
+// Инициализируем систему уведомлений
+const smartNotifications = new SmartNotifications();
+</script>
+
+<style>
+.smart-notifications-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1050;
+    max-width: 400px;
+    width: 100%;
+}
+
+.smart-notification {
+    margin-bottom: 10px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(10px);
+    animation: slideInRight 0.3s ease-out;
+}
+
+.smart-notification.fade-out {
+    animation: slideOutRight 0.3s ease-in;
+}
+
+.notification-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+}
+
+.alert-heading {
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.smart-notification p {
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+.smart-notification .btn-sm {
+    font-size: 0.75rem;
+    padding: 4px 12px;
+    border-radius: 6px;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutRight {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .smart-notifications-container {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        max-width: none;
+    }
+    
+    .smart-notification {
+        font-size: 0.9rem;
+    }
+    
+    .notification-icon {
+        width: 35px;
+        height: 35px;
+    }
+}
+
+/* Специальные стили для разных типов уведомлений */
+.alert-upgrade {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    color: #4c1d95;
+}
+
+.alert-limit {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(217, 119, 6, 0.1) 100%);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    color: #92400e;
+}
+
+.alert-achievement {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.1) 100%);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    color: #065f46;
+}
+
+.alert-social {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.1) 100%);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    color: #1e3a8a;
+}
+</style>
+{% endif %}

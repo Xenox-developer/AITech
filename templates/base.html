@@ -168,9 +168,23 @@
                                 <li><a class="dropdown-item" href="{{ url_for('dashboard') }}">
                                     <i class="fas fa-tachometer-alt me-2"></i>Личный кабинет
                                 </a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('gamification_dashboard') }}">
+                                    <i class="fas fa-gamepad me-2"></i>Мой прогресс
+                                </a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('my_analytics') }}">
+                                    <i class="fas fa-chart-line me-2"></i>Моя аналитика
+                                </a></li>
                                 <li><a class="dropdown-item" href="{{ url_for('profile') }}">
                                     <i class="fas fa-cog me-2"></i>Профиль
                                 </a></li>
+                                {% if current_user.email == 'test@test.ru' %}
+                                <li><a class="dropdown-item" href="{{ url_for('analytics_dashboard') }}">
+                                    <i class="fas fa-chart-bar me-2"></i>Аналитика элементов
+                                </a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('user_analytics') }}">
+                                    <i class="fas fa-users me-2"></i>Статистика пользователей
+                                </a></li>
+                                {% endif %}
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="{{ url_for('logout') }}">
                                     <i class="fas fa-sign-out-alt me-2"></i>Выйти
@@ -236,6 +250,255 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
+    
+    <!-- Система трекинга взаимодействий -->
+    <script>
+        // Система автоматического трекинга взаимодействий с элементами интерфейса
+        
+        class InteractionTracker {
+            constructor() {
+                this.isEnabled = true;
+                this.batchSize = 10;
+                this.batchTimeout = 5000; // 5 секунд
+                this.eventQueue = [];
+                this.batchTimer = null;
+                
+                this.init();
+            }
+            
+            init() {
+                // Трекинг кликов по кнопкам
+                document.addEventListener('click', (e) => {
+                    if (!this.isEnabled) return;
+                    
+                    const target = e.target.closest('button, .btn, a[href], [role="button"]');
+                    if (target) {
+                        this.trackInteraction(target, 'click');
+                    }
+                });
+                
+                // Трекинг отправки форм
+                document.addEventListener('submit', (e) => {
+                    if (!this.isEnabled) return;
+                    
+                    const form = e.target;
+                    if (form.tagName === 'FORM') {
+                        this.trackInteraction(form, 'submit');
+                    }
+                });
+                
+                // Трекинг изменений в формах
+                document.addEventListener('change', (e) => {
+                    if (!this.isEnabled) return;
+                    
+                    const target = e.target;
+                    if (target.matches('input, select, textarea')) {
+                        this.trackInteraction(target, 'change');
+                    }
+                });
+                
+                // Трекинг фокуса на элементах
+                document.addEventListener('focus', (e) => {
+                    if (!this.isEnabled) return;
+                    
+                    const target = e.target;
+                    if (target.matches('input, select, textarea')) {
+                        this.trackInteraction(target, 'focus');
+                    }
+                }, true);
+                
+                // Трекинг скролла (с дебаунсом)
+                let scrollTimeout;
+                document.addEventListener('scroll', () => {
+                    if (!this.isEnabled) return;
+                    
+                    clearTimeout(scrollTimeout);
+                    scrollTimeout = setTimeout(() => {
+                        this.trackInteraction(document.body, 'scroll', {
+                            scrollY: window.scrollY,
+                            scrollPercent: Math.round((window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100)
+                        });
+                    }, 1000);
+                });
+                
+                // Отправка накопленных событий при закрытии страницы
+                window.addEventListener('beforeunload', () => {
+                    this.flushEvents();
+                });
+                
+                // Периодическая отправка событий
+                setInterval(() => {
+                    if (this.eventQueue.length > 0) {
+                        this.flushEvents();
+                    }
+                }, 30000); // каждые 30 секунд
+            }
+            
+            trackInteraction(element, actionType, additionalMetadata = {}) {
+                try {
+                    const elementType = this.getElementType(element);
+                    const elementId = this.getElementId(element);
+                    
+                    const metadata = {
+                        tagName: element.tagName?.toLowerCase(),
+                        className: element.className,
+                        text: this.getElementText(element),
+                        href: element.href,
+                        type: element.type,
+                        ...additionalMetadata
+                    };
+                    
+                    const event = {
+                        element_type: elementType,
+                        element_id: elementId,
+                        action_type: actionType,
+                        page_url: window.location.pathname,
+                        page_title: document.title,
+                        metadata: metadata,
+                        timestamp: new Date().toISOString()
+                    };
+                    
+                    this.eventQueue.push(event);
+                    
+                    // Отправляем события батчами
+                    if (this.eventQueue.length >= this.batchSize) {
+                        this.flushEvents();
+                    } else if (!this.batchTimer) {
+                        this.batchTimer = setTimeout(() => {
+                            this.flushEvents();
+                        }, this.batchTimeout);
+                    }
+                    
+                } catch (error) {
+                    console.warn('Error tracking interaction:', error);
+                }
+            }
+            
+            getElementType(element) {
+                // Определяем тип элемента
+                if (element.tagName === 'BUTTON' || element.classList.contains('btn')) {
+                    return 'button';
+                } else if (element.tagName === 'A') {
+                    return 'link';
+                } else if (element.tagName === 'FORM') {
+                    return 'form';
+                } else if (element.tagName === 'INPUT') {
+                    return 'input';
+                } else if (element.tagName === 'SELECT') {
+                    return 'select';
+                } else if (element.tagName === 'TEXTAREA') {
+                    return 'textarea';
+                } else if (element.classList.contains('nav') || element.closest('nav')) {
+                    return 'navigation';
+                } else if (element.tagName === 'BODY') {
+                    return 'page';
+                } else {
+                    return 'content';
+                }
+            }
+            
+            getElementId(element) {
+                // Получаем идентификатор элемента
+                if (element.id) {
+                    return element.id;
+                } else if (element.name) {
+                    return element.name;
+                } else if (element.className) {
+                    // Используем первый класс как идентификатор
+                    const firstClass = element.className.split(' ')[0];
+                    return firstClass;
+                } else if (element.tagName === 'A' && element.href) {
+                    // Для ссылок используем путь
+                    try {
+                        return new URL(element.href).pathname;
+                    } catch {
+                        return element.href;
+                    }
+                } else {
+                    // Генерируем идентификатор на основе позиции в DOM
+                    const siblings = Array.from(element.parentNode?.children || []);
+                    const index = siblings.indexOf(element);
+                    return `${element.tagName.toLowerCase()}-${index}`;
+                }
+            }
+            
+            getElementText(element) {
+                // Получаем текст элемента (ограничиваем длину)
+                const text = element.textContent || element.value || element.alt || element.title || '';
+                return text.trim().substring(0, 100);
+            }
+            
+            async flushEvents() {
+                if (this.eventQueue.length === 0) return;
+                
+                const eventsToSend = [...this.eventQueue];
+                this.eventQueue = [];
+                
+                if (this.batchTimer) {
+                    clearTimeout(this.batchTimer);
+                    this.batchTimer = null;
+                }
+                
+                try {
+                    // Отправляем события по одному (можно оптимизировать для батчевой отправки)
+                    for (const event of eventsToSend) {
+                        await fetch('/api/track_interaction', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(event)
+                        });
+                    }
+                } catch (error) {
+                    console.warn('Error sending interaction events:', error);
+                    // Возвращаем события обратно в очередь при ошибке
+                    this.eventQueue.unshift(...eventsToSend);
+                }
+            }
+            
+            // Методы управления трекингом
+            enable() {
+                this.isEnabled = true;
+            }
+            
+            disable() {
+                this.isEnabled = false;
+            }
+            
+            // Ручной трекинг события
+            track(elementType, elementId, actionType, metadata = {}) {
+                const event = {
+                    element_type: elementType,
+                    element_id: elementId,
+                    action_type: actionType,
+                    page_url: window.location.pathname,
+                    page_title: document.title,
+                    metadata: metadata,
+                    timestamp: new Date().toISOString()
+                };
+                
+                this.eventQueue.push(event);
+                
+                if (this.eventQueue.length >= this.batchSize) {
+                    this.flushEvents();
+                }
+            }
+        }
+        
+        // Инициализируем трекер после загрузки DOM
+        let interactionTracker;
+        document.addEventListener('DOMContentLoaded', function() {
+            interactionTracker = new InteractionTracker();
+            
+            // Делаем трекер доступным глобально
+            window.trackInteraction = function(elementType, elementId, actionType, metadata = {}) {
+                if (interactionTracker) {
+                    interactionTracker.track(elementType, elementId, actionType, metadata);
+                }
+            };
+        });
+    </script>
     
     <!-- Глобальный JavaScript для таймера сессий -->
     <script>
