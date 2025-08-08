@@ -151,8 +151,14 @@ class SmartNotifications {
     }
     
     showDetailsModal(notificationId) {
-        // Здесь можно показать модальное окно с подробной информацией
-        console.log('Show details for notification:', notificationId);
+        // Обрабатываем разные типы уведомлений
+        if (notificationId === 'social_leaderboard') {
+            // Открываем страницу геймификации с рейтингом
+            window.location.href = '/gamification';
+        } else {
+            // Для других уведомлений показываем общую информацию
+            console.log('Show details for notification:', notificationId);
+        }
     }
 }
 
