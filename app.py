@@ -14,6 +14,7 @@ from subscription_decorators import require_subscription_limit, track_usage, sub
 from gamification import gamification
 from smart_upgrade_triggers import smart_triggers
 from analytics_manager import analytics_manager
+from analysis_manager import analysis_manager
 
 # Функция проверки прав администратора
 def is_admin(user):
@@ -506,8 +507,15 @@ def is_valid_video_url(url):
             return True
     return False
 
-def download_video_from_url(url, upload_folder):
-    """Загрузка видео по URL с помощью yt-dlp"""
+def download_video_from_url(url, upload_folder, task_id=None, analysis_manager=None):
+    """Загрузка видео по URL с помощью yt-dlp и поддержкой отмены"""
+    
+    def check_cancellation():
+        """Проверка отмены задачи во время загрузки"""
+        if task_id and analysis_manager and analysis_manager.is_task_cancelled(task_id):
+            logger.info(f"🛑 Video download cancelled for task {task_id}")
+            raise Exception("Video download was cancelled by user")
+    
     try:
         # Настройки для yt-dlp
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -537,6 +545,9 @@ def download_video_from_url(url, upload_folder):
         }
         
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            # Проверяем отмену перед получением информации о видео
+            check_cancellation()
+            
             # Получаем информацию о видео
             logger.info("📋 Extracting video info...")
             info = ydl.extract_info(url, download=False)
@@ -544,6 +555,9 @@ def download_video_from_url(url, upload_folder):
             duration = info.get('duration', 0)
             
             logger.info(f"📺 Video info: {title} ({duration}s)")
+            
+            # Проверяем отмену после получения информации
+            check_cancellation()
             
             # Проверяем длительность (максимум 2 часа)
             if duration and duration > 7200:
@@ -556,10 +570,16 @@ def download_video_from_url(url, upload_folder):
                 if not allowed:
                     raise Exception(message)
             
+            # Проверяем отмену перед началом загрузки
+            check_cancellation()
+            
             # Загружаем видео
             logger.info("⬇️ Starting download...")
             ydl.download([url])
             logger.info("✅ Download completed")
+            
+            # Проверяем отмену после загрузки
+            check_cancellation()
             
             # Получаем список файлов после загрузки
             files_after = set(os.listdir(upload_folder)) if os.path.exists(upload_folder) else set()
@@ -607,6 +627,25 @@ def download_video_from_url(url, upload_folder):
             
     except Exception as e:
         logger.error(f"❌ Error downloading video from URL {url}: {str(e)}")
+        
+        # ✅ ДОБАВЛЕНО: Очистка файлов при ошибке или отмене
+        if "cancelled" in str(e).lower():
+            logger.info("🗑️ Cleaning up files after cancellation...")
+            
+            # Удаляем все новые файлы, которые могли быть загружены
+            try:
+                files_after = set(os.listdir(upload_folder)) if os.path.exists(upload_folder) else set()
+                new_files = files_after - files_before
+                
+                for file in new_files:
+                    file_path = os.path.join(upload_folder, file)
+                    if os.path.exists(file_path):
+                        os.remove(file_path)
+                        logger.info(f"🗑️ Removed cancelled download: {file}")
+                        
+            except Exception as cleanup_error:
+                logger.warning(f"⚠️ Error during cleanup: {cleanup_error}")
+        
         raise e
 
 def init_db():
@@ -758,7 +797,7 @@ def init_db():
     conn.commit()
     conn.close()
 
-def save_result(filename, file_type, analysis_result, page_info=None):
+def save_result(filename, file_type, analysis_result, page_info=None, user_id=None, task_id=None, analysis_manager=None):
     """Сохранение результата в БД"""
     conn = sqlite3.connect('ai_study.db')
     c = conn.cursor()
@@ -779,7 +818,10 @@ def save_result(filename, file_type, analysis_result, page_info=None):
     # Получаем полный текст для чата
     full_text = analysis_result.get('full_text', '')
     
-    # Генерируем тестовые вопросы заранее
+    # Генерируем тестовые вопросы с обновлением прогресса
+    if analysis_manager and task_id:
+        analysis_manager.update_task_progress(task_id, 99, "Генерация тестовых вопросов")
+    
     logger.info("Генерируем тестовые вопросы...")
     test_questions = generate_test_questions({
         'full_text': full_text,
@@ -789,8 +831,13 @@ def save_result(filename, file_type, analysis_result, page_info=None):
     test_questions_json = json.dumps(test_questions, ensure_ascii=False)
     logger.info(f"Сгенерировано {len(test_questions)} тестовых вопросов")
     
-    # Получаем ID текущего пользователя (если авторизован)
-    user_id = current_user.id if current_user.is_authenticated else None
+    # Завершаем прогресс
+    if analysis_manager and task_id:
+        analysis_manager.update_task_progress(task_id, 100, "Готово")
+    
+    # Используем переданный user_id или получаем из current_user
+    if user_id is None:
+        user_id = current_user.id if current_user.is_authenticated else None
     
     # Генерируем уникальный токен доступа
     access_token = secrets.token_urlsafe(32)
@@ -1398,102 +1445,67 @@ def generate_test_questions(result_data):
         summary = result_data.get('summary', '')
         topics_data = result_data.get('topics_data', {})
         
-        # Формируем расширенный контекст для генерации вопросов
-        # Берем больше текста для лучшего понимания материала
-        text_sample = full_text[:5000] if len(full_text) > 5000 else full_text
+        # Оптимизируем размер контекста - берем только самое важное
+        text_sample = full_text[:2000] if len(full_text) > 2000 else full_text
         
-        # Извлекаем ключевые темы и подтемы
+        # Извлекаем только основные темы (без подтем для упрощения)
         main_topics = []
         if isinstance(topics_data, dict):
-            for topic, details in topics_data.items():
-                if isinstance(details, dict) and 'subtopics' in details:
-                    subtopics = details['subtopics'][:3]  # Берем первые 3 подтемы
-                    main_topics.append(f"{topic}: {', '.join(subtopics)}")
-                else:
-                    main_topics.append(str(topic))
+            for topic, details in list(topics_data.items())[:5]:  # Максимум 5 тем
+                main_topics.append(str(topic))
         
+        # Упрощенный контекст
         context = f"""
-        НАЗВАНИЕ МАТЕРИАЛА: {result_data.get('filename', 'Учебный материал')}
+        МАТЕРИАЛ: {result_data.get('filename', 'Учебный материал')}
         
-        КРАТКОЕ РЕЗЮМЕ:
-        {summary}
+        РЕЗЮМЕ: {summary[:500]}...
         
-        ОСНОВНЫЕ ТЕМЫ И ПОДТЕМЫ:
-        {chr(10).join(main_topics) if main_topics else 'Темы не определены'}
+        ОСНОВНЫЕ ТЕМЫ: {', '.join(main_topics) if main_topics else 'Не определены'}
         
-        ФРАГМЕНТ ПОЛНОГО ТЕКСТА (для понимания стиля и деталей):
-        {text_sample}
-        {'...' if len(full_text) > 5000 else ''}
-        
-        ДОПОЛНИТЕЛЬНАЯ ИНФОРМАЦИЯ:
-        - Общий объем материала: {len(full_text)} символов
-        - Количество основных тем: {len(main_topics)}
+        ТЕКСТ: {text_sample}
         """
         
+        # Упрощенный промпт - генерируем только 10 вопросов за раз
         prompt = f"""
-        На основе КОНКРЕТНОГО предоставленного учебного материала создай 25 тестовых вопросов разной сложности.
-        
-        ВАЖНО: Вопросы должны быть СТРОГО основаны на содержании данного материала, а не на общих знаниях по теме.
+        Создай 10 тестовых вопросов по материалу.
         
         Материал:
         {context}
         
-        Требования к вопросам:
-        1. 8 легких вопросов (конкретные определения и факты из материала)
-        2. 12 средних вопросов (понимание концепций, формул, алгоритмов из материала)
-        3. 5 сложных вопросов (анализ примеров, применение методов из материала)
+        Требования:
+        - 4 легких вопроса (факты из материала)
+        - 4 средних вопроса (понимание концепций)
+        - 2 сложных вопроса (анализ и применение)
+        - Каждый вопрос с 4 вариантами ответа
+        - Только один правильный ответ
+        - Краткое объяснение
         
-        ОБЯЗАТЕЛЬНЫЕ требования:
-        - Вопросы должны проверять знание ИМЕННО этого материала
-        - Используй конкретные термины, формулы, примеры из текста
-        - НЕ задавай общие вопросы по теме, которые можно ответить без чтения материала
-        - Включай специфические детали, числа, названия из материала
-        - Ссылайся на конкретные разделы, примеры, диаграммы из текста
-        
-        Каждый вопрос должен иметь:
-        - Четкую формулировку на русском языке, основанную на материале
-        - 4 варианта ответа (A, B, C, D) - все правдоподобные для данной темы
-        - Только один правильный ответ из материала
-        - Подробное объяснение со ссылкой на материал
-        - Неправильные варианты должны быть близкими по теме, но четко неверными
-        
-        Примеры хороших вопросов:
-        - "Согласно материалу, какая формула используется для расчета..."
-        - "В приведенном примере автор демонстрирует..."
-        - "Какой метод рекомендуется в материале для решения..."
-        - "Согласно тексту, основное отличие между X и Y заключается в..."
-        
-        Верни результат в формате JSON:
+        Формат JSON:
         {{
             "questions": [
                 {{
                     "id": 1,
-                    "question": "Конкретный вопрос по материалу",
-                    "options": {{
-                        "A": "Вариант A из материала",
-                        "B": "Вариант B из материала", 
-                        "C": "Вариант C из материала",
-                        "D": "Вариант D из материала"
-                    }},
+                    "question": "Вопрос?",
+                    "options": {{"A": "Вариант A", "B": "Вариант B", "C": "Вариант C", "D": "Вариант D"}},
                     "correct_answer": "A",
-                    "explanation": "Объяснение со ссылкой на конкретное место в материале",
+                    "explanation": "Краткое объяснение",
                     "difficulty": 1,
-                    "topic": "Конкретная тема из материала"
+                    "topic": "Тема"
                 }}
             ]
         }}
-        
-        Сложность: 1 = легко, 2 = средне, 3 = сложно
         """
         
+        # Используем более быстрые настройки
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": "Ты эксперт по созданию образовательных тестов, специализирующийся на создании вопросов строго по содержанию конкретного учебного материала. Твоя задача - создавать вопросы, которые можно ответить ТОЛЬКО прочитав данный материал, а не на основе общих знаний по теме. Фокусируйся на специфических деталях, примерах, формулах и концепциях из предоставленного текста."},
+                {"role": "system", "content": "Создавай краткие, четкие тестовые вопросы по материалу. Отвечай только валидным JSON."},
                 {"role": "user", "content": prompt}
             ],
-            temperature=0.3,  # Снижаем температуру для более точных вопросов
-            max_tokens=4000
+            temperature=0.1,  # Низкая температура для стабильности
+            max_tokens=2000,  # Меньше токенов = быстрее
+            timeout=30  # Таймаут 30 секунд
         )
         
         # Парсим ответ
@@ -1879,6 +1891,21 @@ def upload_file():
             flash('Формат не поддерживается. Используйте PDF, PPTX, MP4, MOV или MKV', 'danger')
             return redirect(url_for('index'))
         
+        # Дополнительная проверка для PPTX файлов - проверяем план подписки
+        file_ext = Path(file.filename).suffix.lower()
+        if file_ext == '.pptx':
+            allowed, message = subscription_manager.check_pptx_support(current_user.id)
+            if not allowed:
+                flash(message, 'error')
+                return redirect(url_for('index'))
+        
+        # Дополнительная проверка для видео файлов - проверяем план подписки
+        if file_ext in ['.mp4', '.mov', '.mkv']:
+            allowed, message = subscription_manager.check_video_support(current_user.id)
+            if not allowed:
+                flash(message, 'error')
+                return redirect(url_for('index'))
+        
         # Сохранение файла
         original_filename = secure_filename(file.filename)
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -1946,48 +1973,22 @@ def upload_file():
             else:
                 logger.info(f"PowerPoint slide range specified: {page_range}")
         
-        # Обработка файла
+        # Создаем задачу анализа
         try:
-            from ml import process_file
-            analysis_result = process_file(filepath, filename, page_range=page_range)
+            from analysis_manager import analysis_manager
+            task_id = analysis_manager.create_task(current_user.id, filename)
             
-            # Подготовка информации о страницах/слайдах
-            page_info = None
-            if file_type in ['.pdf', '.pptx'] and page_range:
-                page_info = {
-                    'page_range': page_range,
-                    'processed_at': datetime.now().isoformat(),
-                    'file_type': file_type
-                }
+            # Запускаем анализ в фоновом режиме
+            analysis_manager.start_analysis_task(task_id, current_user.id, filepath, filename, page_range)
             
-            # Сохранение результата в БД
-            access_token = save_result(filename, file_type, analysis_result, page_info)
+            logger.info(f"Analysis task {task_id} started for file: {filename}")
             
-            # Начисление XP за анализ документа
-            if current_user.is_authenticated:
-                xp_result = gamification.award_xp(
-                    current_user.id, 
-                    'document_analysis', 
-                    f'Анализ {file_type.upper()} файла: {filename}',
-                    {'file_type': file_type, 'filename': filename}
-                )
-                
-                # Обновляем ежедневную серию
-                streak_result = gamification.update_daily_streak(current_user.id)
-                
-                # Если есть повышение уровня или новые достижения, добавляем в flash сообщения
-                if xp_result.get('level_up'):
-                    flash(f'🎉 Поздравляем! Вы достигли уровня {xp_result["new_level"]}: {xp_result["new_level_title"]}!', 'success')
-                
-                for achievement in xp_result.get('new_achievements', []):
-                    flash(f'🏆 Новое достижение: {achievement["title"]}! +{achievement["xp_reward"]} XP', 'success')
-            
-            # Удаление файла
-            os.remove(filepath)
-            
-            logger.info(f"Advanced processing completed for: {filename}")
-            
-            return redirect(url_for('result', access_token=access_token))
+            # Возвращаем JSON ответ с task_id для отслеживания прогресса
+            return jsonify({
+                'success': True,
+                'task_id': task_id,
+                'message': 'Анализ запущен в фоновом режиме'
+            })
             
         except Exception as e:
             logger.error(f"Error processing file {filename}: {str(e)}")
@@ -2007,131 +2008,93 @@ def upload_file():
 @require_subscription_limit('analysis')
 @track_usage('analysis')
 def upload_video_url():
-    """Загрузка и обработка видео по URL"""
+    """Загрузка и обработка видео по URL через систему задач"""
     try:
+        # Проверка поддержки видео для плана пользователя
+        allowed, message = subscription_manager.check_video_support(current_user.id)
+        if not allowed:
+            return jsonify({
+                'success': False,
+                'error': message
+            }), 403
+        
         video_url = request.form.get('video_url', '').strip()
         
         if not video_url:
-            flash('Введите ссылку на видео', 'danger')
-            return redirect(url_for('index'))
+            return jsonify({
+                'success': False,
+                'error': 'Введите ссылку на видео'
+            }), 400
         
         # Проверка валидности URL
         if not is_valid_video_url(video_url):
-            flash('Неподдерживаемая платформа. Поддерживаются: YouTube, Vimeo, RuTube, VK, OK.ru и другие', 'danger')
-            return redirect(url_for('index'))
+            return jsonify({
+                'success': False,
+                'error': 'Неподдерживаемая платформа. Поддерживаются: YouTube, Vimeo, RuTube, VK, OK.ru и другие'
+            }), 400
         
         logger.info(f"🎥 Starting video download from URL: {video_url}")
         
-        # Загрузка видео
+        # Создаем задачу анализа сначала
+        from analysis_manager import analysis_manager
+        task_id = analysis_manager.create_task(current_user.id, f"video_from_url_{video_url}")
+        
+        # Загрузка видео с поддержкой отмены
         try:
             logger.info("📥 Downloading video...")
-            filepath, filename, original_title = download_video_from_url(video_url, app.config['UPLOAD_FOLDER'])
+            filepath, filename, original_title = download_video_from_url(video_url, app.config['UPLOAD_FOLDER'], task_id, analysis_manager)
             logger.info(f"✅ Video downloaded successfully: {filename} (Title: {original_title})")
             
-            # Обработка видео
-            try:
-                logger.info("🧠 Starting video processing...")
-                from ml import process_file
-                
-                logger.info("🎤 Beginning transcription and analysis...")
-                
-                # ВАЖНО: НЕ удаляем файл до завершения обработки
-                analysis_result = process_file(filepath, filename)
-                logger.info("✅ Video analysis completed successfully")
-                
-                # Добавляем информацию об источнике
-                video_info = {
-                    'source_url': video_url,
-                    'original_title': original_title,
-                    'downloaded_at': datetime.now().isoformat()
-                }
-                
-                # Сохранение результата в БД
-                logger.info("💾 Saving results to database...")
-                access_token = save_result(filename, '.mp4', analysis_result, video_info)
-                logger.info(f"✅ Results saved with token: {access_token}")
-                
-                # Начисление XP за анализ видео
-                if current_user.is_authenticated:
-                    video_duration = video_info.get('duration_minutes', 0) if video_info else 0
-                    xp_result = gamification.award_xp(
-                        current_user.id, 
-                        'video_analysis', 
-                        f'Анализ видео: {filename} ({video_duration:.1f} мин)',
-                        {'filename': filename, 'duration': video_duration, 'source': 'url'}
-                    )
-                    
-                    # Дополнительный XP за длинное видео
-                    if video_duration > 30:
-                        gamification.award_xp(
-                            current_user.id,
-                            'long_study_session',
-                            f'Анализ длинного видео ({video_duration:.1f} мин)'
-                        )
-                    
-                    # Обновляем ежедневную серию
-                    streak_result = gamification.update_daily_streak(current_user.id)
-                    
-                    # Уведомления о достижениях
-                    if xp_result.get('level_up'):
-                        flash(f'🎉 Поздравляем! Вы достигли уровня {xp_result["new_level"]}: {xp_result["new_level_title"]}!', 'success')
-                    
-                    for achievement in xp_result.get('new_achievements', []):
-                        flash(f'🏆 Новое достижение: {achievement["title"]}! +{achievement["xp_reward"]} XP', 'success')
-                
-                # Теперь можно безопасно удалить файл
-                if os.path.exists(filepath):
-                    os.remove(filepath)
-                    logger.info(f"🗑️ Temporary file {filename} removed")
-                
-                logger.info(f"🎉 Video processing completed successfully for: {filename}")
-                
-                return redirect(url_for('result', access_token=access_token))
-                
-            except Exception as e:
-                logger.error(f"❌ Error processing video {filename}: {str(e)}")
-                logger.exception("Detailed processing error:")
-                
-                # Удаление файла с ошибкой
-                if os.path.exists(filepath):
-                    os.remove(filepath)
-                    logger.info(f"🗑️ Cleaned up failed file: {filename}")
-                
-                # Более детальные сообщения об ошибках
-                if "transcrib" in str(e).lower():
-                    flash('Ошибка транскрипции видео. Возможно, видео не содержит речи или аудио повреждено', 'danger')
-                elif "whisper" in str(e).lower():
-                    flash('Ошибка модели распознавания речи. Попробуйте позже', 'danger')
-                elif "openai" in str(e).lower():
-                    flash('Ошибка анализа содержимого. Проверьте настройки API', 'danger')
-                else:
-                    flash('Ошибка обработки видео. Попробуйте другое видео или повторите позже', 'danger')
-                
-                return redirect(url_for('index'))
+            # Обновляем имя файла в задаче
+            analysis_manager.update_task_filename(task_id, filename)
+            
+            # Добавляем информацию об источнике в метаданные
+            video_info = {
+                'source_url': video_url,
+                'original_title': original_title,
+                'downloaded_at': datetime.now().isoformat()
+            }
+            
+            # Запускаем анализ в фоновом режиме
+            analysis_manager.start_video_analysis_task(task_id, current_user.id, filepath, filename, video_info)
+            
+            logger.info(f"🚀 Video analysis task {task_id} started for: {filename}")
+            
+            return jsonify({
+                'success': True,
+                'task_id': task_id,
+                'message': 'Видео загружено, начинаем анализ...'
+            })
                 
         except Exception as e:
             logger.error(f"❌ Error downloading video from {video_url}: {str(e)}")
             logger.exception("Detailed download error:")
             
+            error_message = 'Ошибка загрузки видео. Проверьте ссылку и попробуйте еще раз'
+            
             if "слишком длинное" in str(e):
-                flash(str(e), 'danger')
+                error_message = str(e)
             elif "Unsupported URL" in str(e) or "No video formats found" in str(e):
-                flash('Не удалось загрузить видео с этой ссылки. Проверьте URL или попробуйте другое видео', 'danger')
+                error_message = 'Не удалось загрузить видео с этой ссылки. Проверьте URL или попробуйте другое видео'
             elif "HTTP Error 403" in str(e):
-                flash('Доступ к видео ограничен. Попробуйте другое видео', 'danger')
+                error_message = 'Доступ к видео ограничен. Попробуйте другое видео'
             elif "HTTP Error 404" in str(e):
-                flash('Видео не найдено. Проверьте ссылку', 'danger')
+                error_message = 'Видео не найдено. Проверьте ссылку'
             elif "network" in str(e).lower() or "connection" in str(e).lower():
-                flash('Проблемы с сетевым соединением. Попробуйте позже', 'danger')
-            else:
-                flash('Ошибка загрузки видео. Проверьте ссылку и попробуйте ещё раз', 'danger')
-            return redirect(url_for('index'))
+                error_message = 'Проблемы с сетевым соединением. Попробуйте позже'
+            
+            return jsonify({
+                'success': False,
+                'error': error_message
+            }), 400
             
     except Exception as e:
         logger.error(f"❌ General URL upload error: {str(e)}")
         logger.exception("Detailed general error:")
-        flash('Общая ошибка загрузки видео по ссылке', 'danger')
-        return redirect(url_for('index'))
+        return jsonify({
+            'success': False,
+            'error': 'Общая ошибка загрузки видео по ссылке'
+        }), 500
 
 @app.route('/result/<access_token>')
 def result(access_token):
@@ -3171,23 +3134,57 @@ def get_smart_notifications():
             user_rank = next((i for i, user in enumerate(leaderboard, 1) if user['user_id'] == current_user.id), None)
             
             if user_rank and user_rank <= 5:
-                notifications.append({
-                    'id': 'social_leaderboard',
-                    'type': 'social',
-                    'title': f'🌟 Вы в топ-{user_rank}!',
-                    'message': f'Отличная работа! Вы занимаете {user_rank} место в рейтинге.',
-                    'icon': 'fas fa-star',
-                    'social_proof': f'Опережаете {len(leaderboard) - user_rank} пользователей',
-                    'auto_hide': 15,
-                    'actions': [
-                        {
-                            'text': 'Посмотреть рейтинг',
-                            'type': 'info',
-                            'action': 'learn_more',
-                            'icon': 'fas fa-list'
-                        }
-                    ]
-                })
+                # Проверяем, изменилась ли позиция пользователя
+                conn = sqlite3.connect('ai_study.db')
+                c = conn.cursor()
+                
+                c.execute('SELECT last_leaderboard_rank FROM users WHERE id = ?', (current_user.id,))
+                result = c.fetchone()
+                last_rank = result[0] if result and result[0] else None
+                
+                # Показываем уведомление только если позиция изменилась или это первый раз в топе
+                if last_rank != user_rank:
+                    # Обновляем последнюю позицию в базе данных
+                    c.execute('''
+                        UPDATE users 
+                        SET last_leaderboard_rank = ?, last_rank_update = CURRENT_TIMESTAMP 
+                        WHERE id = ?
+                    ''', (user_rank, current_user.id))
+                    conn.commit()
+                    
+                    # Определяем тип изменения для более точного сообщения
+                    if last_rank is None:
+                        # Первый раз в топе
+                        title = f'🌟 Вы в топ-{user_rank}!'
+                        message = f'Поздравляем! Вы впервые попали в топ-{user_rank} рейтинга!'
+                    elif user_rank < last_rank:
+                        # Поднялись в рейтинге
+                        title = f'📈 Вы поднялись на {last_rank - user_rank} позиций!'
+                        message = f'Отличная работа! Теперь вы на {user_rank} месте в рейтинге!'
+                    else:
+                        # Опустились в рейтинге (но все еще в топ-5)
+                        title = f'📊 Изменение в рейтинге'
+                        message = f'Вы на {user_rank} месте в рейтинге. Продолжайте активность!'
+                    
+                    notifications.append({
+                        'id': 'social_leaderboard',
+                        'type': 'social',
+                        'title': title,
+                        'message': message,
+                        'icon': 'fas fa-star',
+                        'social_proof': f'Опережаете {len(leaderboard) - user_rank} пользователей',
+                        'auto_hide': 15,
+                        'actions': [
+                            {
+                                'text': 'Посмотреть рейтинг',
+                                'type': 'info',
+                                'action': 'learn_more',
+                                'icon': 'fas fa-list'
+                            }
+                        ]
+                    })
+                
+                conn.close()
         
         # Записываем показ уведомлений для аналитики
         for notification in notifications:
@@ -3367,6 +3364,291 @@ def user_analytics_page():
         flash('Ошибка загрузки аналитики', 'error')
         return redirect(url_for('dashboard'))
 
+# ==================== API ДЛЯ УПРАВЛЕНИЯ ЗАДАЧАМИ АНАЛИЗА ====================
+
+@app.route('/api/analysis/cancel/<int:task_id>', methods=['POST'])
+@login_required
+def cancel_analysis_task(task_id):
+    """API для отмены задачи анализа"""
+    logger.info(f"🔴 Получен запрос на отмену задачи {task_id} от пользователя {current_user.id}")
+    
+    try:
+        from analysis_manager import analysis_manager
+        
+        logger.info(f"📋 Вызываем analysis_manager.cancel_task({task_id}, {current_user.id})")
+        success = analysis_manager.cancel_task(task_id, current_user.id)
+        
+        if success:
+            logger.info(f"✅ Задача {task_id} успешно отменена пользователем {current_user.id}")
+            return jsonify({
+                'success': True,
+                'message': 'Анализ отменен'
+            })
+        else:
+            logger.warning(f"⚠️ Не удалось отменить задачу {task_id} - задача не найдена или уже завершена")
+            return jsonify({
+                'success': False,
+                'error': 'Задача не найдена или уже завершена'
+            }), 404
+            
+    except Exception as e:
+        logger.error(f"💥 Ошибка при отмене задачи {task_id}: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'Ошибка при отмене задачи'
+        }), 500
+
+@app.route('/api/analysis/status/<int:task_id>')
+@login_required
+def get_analysis_status(task_id):
+    """API для получения статуса задачи анализа"""
+    try:
+        from analysis_manager import analysis_manager
+        
+        task_status = analysis_manager.get_task_status(task_id, current_user.id)
+        
+        if not task_status:
+            return jsonify({
+                'success': False,
+                'error': 'Задача не найдена'
+            }), 404
+        
+        # Если задача завершена, получаем access_token результата
+        if task_status['status'] == 'completed' and task_status['result_id']:
+            conn = sqlite3.connect('ai_study.db')
+            c = conn.cursor()
+            c.execute('SELECT access_token FROM result WHERE id = ?', (task_status['result_id'],))
+            result = c.fetchone()
+            conn.close()
+            
+            if result:
+                task_status['access_token'] = result[0]
+        
+        return jsonify({
+            'success': True,
+            'task': task_status
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting task status {task_id}: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'Ошибка при получении статуса'
+        }), 500
+
+@app.route('/api/analysis/active-tasks')
+@login_required
+def get_active_tasks():
+    """API для получения активных задач пользователя"""
+    try:
+        conn = sqlite3.connect('ai_study.db')
+        c = conn.cursor()
+        
+        c.execute('''
+            SELECT id, filename, status, created_at, progress, current_stage
+            FROM analysis_tasks 
+            WHERE user_id = ? AND status = 'processing'
+            ORDER BY created_at DESC
+            LIMIT 10
+        ''', (current_user.id,))
+        
+        tasks = []
+        for row in c.fetchall():
+            task_id, filename, status, created_at, progress, current_stage = row
+            tasks.append({
+                'id': task_id,
+                'filename': filename,
+                'status': status,
+                'created_at': created_at,
+                'progress': progress or 0,
+                'current_stage': current_stage or 'Подготовка'
+            })
+        
+        conn.close()
+        
+        logger.info(f"Found {len(tasks)} active tasks for user {current_user.id}")
+        
+        return jsonify({
+            'success': True,
+            'tasks': tasks
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting active tasks for user {current_user.id}: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'Ошибка при получении активных задач'
+        }), 500
+
+@app.route('/test_cancel.html')
+def test_cancel_page():
+    """Тестовая страница для отладки отмены анализа"""
+    return send_from_directory('.', 'test_cancel.html')
+
+@app.route('/api/cleanup/files', methods=['POST'])
+@login_required
+def cleanup_files():
+    """API для ручной очистки файлов (только для администраторов)"""
+    try:
+        # Проверяем права администратора
+        if not hasattr(current_user, 'is_admin') or not current_user.is_admin:
+            return jsonify({
+                'success': False,
+                'error': 'Доступ запрещен'
+            }), 403
+        
+        from analysis_manager import analysis_manager
+        
+        # Получаем параметры из запроса
+        data = request.get_json() or {}
+        upload_folder = data.get('upload_folder', 'uploads')
+        task_days = data.get('task_days', 7)
+        file_hours = data.get('file_hours', 24)
+        
+        logger.info(f"🧹 Manual cleanup requested by admin {current_user.id}")
+        
+        # Выполняем полную очистку
+        analysis_manager.cleanup_all(upload_folder, task_days, file_hours)
+        
+        return jsonify({
+            'success': True,
+            'message': 'Очистка выполнена успешно'
+        })
+        
+    except Exception as e:
+        logger.error(f"Error during manual cleanup: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'Ошибка при очистке файлов'
+        }), 500
+
+@app.route('/api/cleanup/status')
+@login_required
+def cleanup_status():
+    """API для получения статистики файлов в папке uploads"""
+    try:
+        import os
+        import time
+        
+        upload_folder = 'uploads'
+        
+        if not os.path.exists(upload_folder):
+            return jsonify({
+                'success': True,
+                'stats': {
+                    'total_files': 0,
+                    'total_size': 0,
+                    'old_files': 0,
+                    'old_size': 0
+                }
+            })
+        
+        current_time = time.time()
+        total_files = 0
+        total_size = 0
+        old_files = 0
+        old_size = 0
+        max_age_hours = 24
+        
+        # Получаем активные файлы из БД
+        conn = sqlite3.connect('ai_study.db')
+        c = conn.cursor()
+        
+        c.execute('''
+            SELECT filename FROM analysis_tasks 
+            WHERE status = 'processing'
+        ''')
+        
+        active_files = set()
+        for row in c.fetchall():
+            filename = row[0]
+            if filename and not filename.startswith('video_from_url_'):
+                active_files.add(filename)
+        
+        conn.close()
+        
+        # Анализируем файлы
+        for filename in os.listdir(upload_folder):
+            filepath = os.path.join(upload_folder, filename)
+            
+            if os.path.isfile(filepath):
+                file_size = os.path.getsize(filepath)
+                file_age_hours = (current_time - os.path.getmtime(filepath)) / 3600
+                
+                total_files += 1
+                total_size += file_size
+                
+                # Если файл старый и не активен
+                if file_age_hours > max_age_hours and filename not in active_files:
+                    old_files += 1
+                    old_size += file_size
+        
+        return jsonify({
+            'success': True,
+            'stats': {
+                'total_files': total_files,
+                'total_size': total_size,
+                'total_size_mb': round(total_size / (1024*1024), 2),
+                'old_files': old_files,
+                'old_size': old_size,
+                'old_size_mb': round(old_size / (1024*1024), 2),
+                'active_files': len(active_files)
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting cleanup status: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'Ошибка при получении статистики'
+        }), 500
+
+def start_background_cleanup():
+    """Запуск фоновой очистки файлов"""
+    import threading
+    import time
+    
+    def cleanup_worker():
+        """Рабочий поток для периодической очистки"""
+        while True:
+            try:
+                logger.info("🧹 Starting scheduled cleanup...")
+                
+                # Выполняем полную очистку каждые 6 часов
+                analysis_manager.cleanup_all(
+                    upload_folder='uploads',
+                    task_days=7,      # Удаляем задачи старше 7 дней
+                    file_hours=24     # Удаляем файлы старше 24 часов
+                )
+                
+                logger.info("✅ Scheduled cleanup completed")
+                
+            except Exception as e:
+                logger.error(f"❌ Error during scheduled cleanup: {e}")
+            
+            # Ждем 6 часов до следующей очистки
+            time.sleep(6 * 60 * 60)  # 6 часов
+    
+    # Запускаем поток очистки в фоновом режиме
+    cleanup_thread = threading.Thread(target=cleanup_worker, daemon=True)
+    cleanup_thread.start()
+    logger.info("🧹 Background cleanup scheduler started (every 6 hours)")
+
 if __name__ == '__main__':
     init_db()
+    
+    # Запускаем фоновую очистку файлов
+    start_background_cleanup()
+    
+    # Выполняем первоначальную очистку при запуске
+    try:
+        logger.info("🧹 Performing initial cleanup on startup...")
+        analysis_manager.cleanup_all(
+            upload_folder='uploads',
+            task_days=7,
+            file_hours=24
+        )
+    except Exception as e:
+        logger.warning(f"⚠️ Initial cleanup failed: {e}")
+    
     app.run(debug=True, host='0.0.0.0', port=5000)

@@ -18,6 +18,7 @@ class SubscriptionLimits:
     max_video_uploads: int # Максимум загрузок видео в месяц (-1 = безлимитно)
     ai_chat_messages: int  # Сообщения в AI чате (-1 = безлимитно)
     pptx_support: bool     # Поддержка PPTX файлов
+    video_support: bool    # Поддержка видео файлов
     features: list         # Доступные функции
     export_watermark: bool # Водяной знак при экспорте
     priority_processing: bool # Приоритетная обработка
@@ -32,6 +33,7 @@ SUBSCRIPTION_PLANS = {
         max_video_uploads=1,
         ai_chat_messages=10,  # Увеличено с 2 до 10
         pptx_support=False,
+        video_support=False,  # Видео недоступно в FREEMIUM
         features=['basic_flashcards', 'basic_mind_maps_preview'],
         export_watermark=True,
         priority_processing=False,
@@ -44,6 +46,7 @@ SUBSCRIPTION_PLANS = {
         max_video_uploads=3,
         ai_chat_messages=50,
         pptx_support=False,   # Пока без PPTX для мотивации апгрейда
+        video_support=False,  # Видео недоступно в LITE
         features=['basic_flashcards', 'full_mind_maps', 'learning_stats'],
         export_watermark=False,
         priority_processing=False,
@@ -56,6 +59,7 @@ SUBSCRIPTION_PLANS = {
         max_video_uploads=5,  # Увеличено с 3 до 5
         ai_chat_messages=100, # Увеличено с 50 до 100
         pptx_support=True,    # ТЕПЕРЬ ДОСТУПЕН PPTX!
+        video_support=True,   # Видео доступно в STARTER
         features=['basic_flashcards', 'advanced_flashcards', 'interactive_mind_maps', 
                  'learning_progress', 'spaced_repetition'],
         export_watermark=False,
@@ -69,6 +73,7 @@ SUBSCRIPTION_PLANS = {
         max_video_uploads=15, # Увеличено с 10 до 15
         ai_chat_messages=500, # Увеличено с 300 до 500
         pptx_support=True,
+        video_support=True,   # Видео доступно в BASIC
         features=['basic_flashcards', 'advanced_flashcards', 'interactive_mind_maps', 
                  'study_plans', 'advanced_analytics', 'calendar_integration', 'advanced_export'],
         export_watermark=False,
@@ -82,6 +87,7 @@ SUBSCRIPTION_PLANS = {
         max_video_uploads=-1,
         ai_chat_messages=-1,
         pptx_support=True,
+        video_support=True,   # Видео доступно в PRO
         features=['basic_flashcards', 'advanced_flashcards', 'interactive_mind_maps', 
                  'study_plans', 'advanced_analytics', 'calendar_integration', 'advanced_export',
                  'priority_processing', 'api_access', 'white_label', 'premium_support'],
@@ -255,7 +261,20 @@ class SubscriptionManager:
         limits = subscription['limits']
         
         if not limits.pptx_support:
-            return False, "Загрузка PPTX файлов доступна только в планах BASIC и PRO. Обновите план для продолжения."
+            return False, "Загрузка PPTX файлов доступна только в планах STARTER, BASIC и PRO. Обновите план для продолжения."
+        
+        return True, ""
+    
+    def check_video_support(self, user_id: int) -> Tuple[bool, str]:
+        """Проверка поддержки видео файлов"""
+        subscription = self.get_user_subscription(user_id)
+        if not subscription:
+            return False, "Подписка не найдена"
+        
+        limits = subscription['limits']
+        
+        if not limits.video_support:
+            return False, "Загрузка видео файлов доступна только в планах STARTER, BASIC и PRO. Обновите план для продолжения."
         
         return True, ""
     

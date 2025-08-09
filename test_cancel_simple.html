@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест отмены анализа - Простая версия</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .btn {
+            padding: 12px 24px;
+            margin: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-warning { background: #ffc107; color: black; }
+        
+        .status {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .status.info { background: #d1ecf1; color: #0c5460; }
+        .status.success { background: #d4edda; color: #155724; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        .status.warning { background: #fff3cd; color: #856404; }
+        
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        .variables {
+            background: #e9ecef;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .variable {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .variable:last-child {
+            border-bottom: none;
+        }
+        
+        .variable-name {
+            font-weight: bold;
+        }
+        
+        .variable-value {
+            font-family: monospace;
+            color: #495057;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Тест отмены анализа - Простая версия</h1>
+        
+        <div class="status info">
+            <strong>Инструкция:</strong> Эта страница поможет диагностировать проблему с отменой анализа
+        </div>
+        
+        <!-- Переменные состояния -->
+        <div class="variables">
+            <h3>📊 Переменные состояния:</h3>
+            <div class="variable">
+                <span class="variable-name">currentTaskId:</span>
+                <span class="variable-value" id="currentTaskId-value">не определено</span>
+            </div>
+            <div class="variable">
+                <span class="variable-name">currentUploadXHR:</span>
+                <span class="variable-value" id="currentUploadXHR-value">не определено</span>
+            </div>
+            <div class="variable">
+                <span class="variable-name">analysisStatusInterval:</span>
+                <span class="variable-value" id="analysisStatusInterval-value">не определено</span>
+            </div>
+            <div class="variable">
+                <span class="variable-name">localStorage.currentTaskId:</span>
+                <span class="variable-value" id="localStorage-value">не определено</span>
+            </div>
+        </div>
+        
+        <!-- Кнопки управления -->
+        <div>
+            <button class="btn btn-primary" onclick="checkVariables()">
+                🔍 Проверить переменные
+            </button>
+            <button class="btn btn-warning" onclick="simulateTaskId()">
+                🎯 Симулировать taskId
+            </button>
+            <button class="btn btn-danger" onclick="testCancel()">
+                ⏹️ Тестировать отмену
+            </button>
+            <button class="btn btn-success" onclick="clearLog()">
+                🗑️ Очистить лог
+            </button>
+        </div>
+        
+        <!-- Лог -->
+        <div class="log" id="log">
+            <div><strong>📝 Лог событий:</strong></div>
+        </div>
+    </div>
+
+    <script>
+        // Функция логирования
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.style.color = type === 'error' ? '#dc3545' : type === 'success' ? '#28a745' : '#495057';
+            entry.innerHTML = `[${timestamp}] ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+            
+            updateVariablesDisplay();
+        }
+        
+        function clearLog() {
+            document.getElementById('log').innerHTML = '<div><strong>📝 Лог событий:</strong></div>';
+        }
+        
+        function updateVariablesDisplay() {
+            // Проверяем переменные в родительском окне (если есть)
+            let currentTaskId = 'не определено';
+            let currentUploadXHR = 'не определено';
+            let analysisStatusInterval = 'не определено';
+            let localStorageValue = 'не определено';
+            
+            try {
+                if (window.parent && window.parent !== window) {
+                    // Если мы в iframe, проверяем родительское окно
+                    currentTaskId = window.parent.currentTaskId || 'null';
+                    currentUploadXHR = window.parent.currentUploadXHR ? 'установлен' : 'null';
+                    analysisStatusInterval = window.parent.analysisStatusInterval ? 'активен' : 'null';
+                } else {
+                    // Если мы в основном окне, проверяем глобальные переменные
+                    currentTaskId = typeof window.currentTaskId !== 'undefined' ? window.currentTaskId : 'не определено';
+                    currentUploadXHR = typeof window.currentUploadXHR !== 'undefined' ? (window.currentUploadXHR ? 'установлен' : 'null') : 'не определено';
+                    analysisStatusInterval = typeof window.analysisStatusInterval !== 'undefined' ? (window.analysisStatusInterval ? 'активен' : 'null') : 'не определено';
+                }
+                
+                localStorageValue = localStorage.getItem('currentTaskId') || 'null';
+            } catch (e) {
+                log('Ошибка при проверке переменных: ' + e.message, 'error');
+            }
+            
+            document.getElementById('currentTaskId-value').textContent = currentTaskId;
+            document.getElementById('currentUploadXHR-value').textContent = currentUploadXHR;
+            document.getElementById('analysisStatusInterval-value').textContent = analysisStatusInterval;
+            document.getElementById('localStorage-value').textContent = localStorageValue;
+        }
+        
+        function checkVariables() {
+            log('🔍 Проверяем переменные состояния...');
+            
+            try {
+                // Проверяем в текущем окне
+                log('📊 Текущее окно:');
+                log(`   currentTaskId: ${typeof currentTaskId !== 'undefined' ? currentTaskId : 'UNDEFINED'}`);
+                log(`   currentUploadXHR: ${typeof currentUploadXHR !== 'undefined' ? !!currentUploadXHR : 'UNDEFINED'}`);
+                log(`   analysisStatusInterval: ${typeof analysisStatusInterval !== 'undefined' ? !!analysisStatusInterval : 'UNDEFINED'}`);
+                
+                // Проверяем в родительском окне
+                if (window.parent && window.parent !== window) {
+                    log('📊 Родительское окно:');
+                    log(`   parent.currentTaskId: ${window.parent.currentTaskId || 'UNDEFINED'}`);
+                    log(`   parent.currentUploadXHR: ${!!window.parent.currentUploadXHR || 'UNDEFINED'}`);
+                    log(`   parent.analysisStatusInterval: ${!!window.parent.analysisStatusInterval || 'UNDEFINED'}`);
+                }
+                
+                // Проверяем localStorage
+                const storedTaskId = localStorage.getItem('currentTaskId');
+                log(`📊 localStorage: ${storedTaskId || 'EMPTY'}`);
+                
+                // Проверяем модальное окно
+                const modal = document.getElementById('processing-modal') || (window.parent && window.parent.document.getElementById('processing-modal'));
+                if (modal) {
+                    log(`📊 Модальное окно: ${modal.classList.contains('active') ? 'АКТИВНО' : 'НЕАКТИВНО'}`);
+                } else {
+                    log('📊 Модальное окно: НЕ НАЙДЕНО');
+                }
+                
+                updateVariablesDisplay();
+                
+            } catch (e) {
+                log('❌ Ошибка при проверке переменных: ' + e.message, 'error');
+            }
+        }
+        
+        function simulateTaskId() {
+            log('🎯 Симулируем установку taskId...');
+            
+            const taskId = Math.floor(Math.random() * 1000) + 1;
+            
+            try {
+                // Устанавливаем в текущем окне
+                window.currentTaskId = taskId;
+                log(`✅ currentTaskId установлен: ${taskId}`);
+                
+                // Сохраняем в localStorage
+                localStorage.setItem('currentTaskId', taskId);
+                log(`✅ currentTaskId сохранен в localStorage: ${taskId}`);
+                
+                // Если есть родительское окно, устанавливаем и там
+                if (window.parent && window.parent !== window) {
+                    window.parent.currentTaskId = taskId;
+                    log(`✅ parent.currentTaskId установлен: ${taskId}`);
+                }
+                
+                updateVariablesDisplay();
+                
+            } catch (e) {
+                log('❌ Ошибка при симуляции taskId: ' + e.message, 'error');
+            }
+        }
+        
+        function testCancel() {
+            log('⏹️ Тестируем отмену анализа...');
+            
+            try {
+                // Проверяем наличие функции cancelAnalysis
+                let cancelFunction = null;
+                
+                if (typeof cancelAnalysis === 'function') {
+                    cancelFunction = cancelAnalysis;
+                    log('✅ Функция cancelAnalysis найдена в текущем окне');
+                } else if (window.parent && typeof window.parent.cancelAnalysis === 'function') {
+                    cancelFunction = window.parent.cancelAnalysis;
+                    log('✅ Функция cancelAnalysis найдена в родительском окне');
+                } else {
+                    log('❌ Функция cancelAnalysis НЕ НАЙДЕНА', 'error');
+                    
+                    // Пытаемся найти альтернативными способами
+                    const cancelBtn = document.querySelector('button[onclick*="cancelAnalysis"]') || 
+                                    (window.parent && window.parent.document.querySelector('button[onclick*="cancelAnalysis"]'));
+                    
+                    if (cancelBtn) {
+                        log('🔍 Найдена кнопка отмены, пытаемся кликнуть...');
+                        cancelBtn.click();
+                        return;
+                    } else {
+                        log('❌ Кнопка отмены не найдена', 'error');
+                        return;
+                    }
+                }
+                
+                // Вызываем функцию отмены
+                log('🔄 Вызываем функцию cancelAnalysis...');
+                cancelFunction();
+                log('✅ Функция cancelAnalysis вызвана успешно', 'success');
+                
+            } catch (e) {
+                log('❌ Ошибка при тестировании отмены: ' + e.message, 'error');
+            }
+        }
+        
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', () => {
+            log('🎯 Тест отмены анализа инициализирован');
+            checkVariables();
+            
+            // Автоматическое обновление каждые 5 секунд
+            setInterval(() => {
+                updateVariablesDisplay();
+            }, 5000);
+        });
+        
+        // Слушаем сообщения от родительского окна
+        window.addEventListener('message', (event) => {
+            if (event.data && event.data.type === 'variableUpdate') {
+                log(`📡 Получено обновление переменной: ${event.data.name} = ${event.data.value}`);
+                updateVariablesDisplay();
+            }
+        });
+    </script>
+</body>
+</html>

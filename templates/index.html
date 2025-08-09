@@ -172,6 +172,13 @@
         color: var(--text-primary);
     }
 
+    .file-type.disabled {
+        background: rgba(243, 244, 246, 0.5);
+        border: 1px dashed #d1d5db;
+        opacity: 0.7;
+        cursor: not-allowed;
+    }
+
     /* File Selected */
     .file-selected {
         display: none;
@@ -571,19 +578,34 @@
 
     .progress-bar {
         width: 100%;
-        height: 6px;
+        height: 12px;
         background: var(--bg-tertiary);
-        border-radius: 6px;
+        border-radius: 12px;
         overflow: hidden;
-        margin-bottom: 12px;
+        margin-bottom: 20px;
+        position: relative;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
     .progress-fill {
         height: 100%;
         background: var(--gradient-primary);
-        width: 40%;
+        width: 0%;
         transition: width 0.5s ease;
         position: relative;
+        border-radius: 12px;
+    }
+    
+    /* Анимированный блеск для прогресс-бара */
+    .modal .progress-fill {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #06b6d4 100%);
+        background-size: 200% 100%;
+        animation: progressShine 2s infinite;
+    }
+    
+    @keyframes progressShine {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
     }
 
     .progress-fill::after {
@@ -595,6 +617,47 @@
         height: 100%;
         background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
         animation: shimmer 2s infinite;
+    }
+
+    .progress-text {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        z-index: 1;
+    }
+
+    .upload-progress {
+        display: none;
+        background: var(--bg-glass);
+        border: 1px solid var(--border-primary);
+        border-radius: 16px;
+        padding: 24px;
+        margin-top: 16px;
+        text-align: center;
+    }
+
+    .upload-progress.active {
+        display: block;
+    }
+
+    .upload-stats {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 12px;
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+    }
+
+    .upload-speed {
+        font-weight: 600;
+    }
+
+    .upload-eta {
+        font-weight: 600;
     }
 
     @keyframes shimmer {
@@ -714,8 +777,404 @@
         transform: translateY(-2px);
     }
 
+    /* Modern Subscription Limits */
+    .subscription-limits-modern {
+        margin-bottom: 24px;
+    }
+
+    .limits-card-modern {
+        background: rgba(255, 255, 255, 0.95);
+        border: 1px solid rgba(99, 102, 241, 0.2);
+        border-radius: 20px;
+        padding: 20px;
+        box-shadow: 0 4px 20px rgba(99, 102, 241, 0.08);
+        backdrop-filter: blur(20px);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .limits-card-modern::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #06b6d4 100%);
+        border-radius: 20px 20px 0 0;
+        animation: gradientShift 3s ease-in-out infinite;
+    }
+
+    @keyframes gradientShift {
+        0%, 100% { background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #06b6d4 100%); }
+        50% { background: linear-gradient(135deg, #06b6d4 0%, #6366f1 50%, #8b5cf6 100%); }
+    }
+
+    .limits-header-modern {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .plan-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .plan-badge-modern {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 700;
+        color: var(--text-primary);
+        font-size: 1rem;
+        padding: 8px 16px;
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+        border-radius: 12px;
+        border: 1px solid rgba(99, 102, 241, 0.2);
+    }
+
+    .plan-badge-modern i {
+        color: #f59e0b;
+        font-size: 1.1rem;
+        filter: drop-shadow(0 2px 4px rgba(245, 158, 11, 0.3));
+    }
+
+    .upgrade-btn-modern {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 12px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .upgrade-btn-modern::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s ease;
+    }
+
+    .upgrade-btn-modern:hover::before {
+        left: 100%;
+    }
+
+    .upgrade-btn-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+    }
+
+    .limits-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+    }
+
+    .limit-card {
+        background: rgba(255, 255, 255, 0.7);
+        border: 1px solid rgba(99, 102, 241, 0.15);
+        border-radius: 16px;
+        padding: 16px;
+        text-align: center;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Специальные стили для разных типов карточек */
+    .analyses-card {
+        border-color: rgba(16, 185, 129, 0.2);
+    }
+
+    .analyses-card:hover {
+        border-color: rgba(16, 185, 129, 0.4);
+        box-shadow: 0 8px 20px rgba(16, 185, 129, 0.15);
+    }
+
+    .pdf-card {
+        border-color: rgba(239, 68, 68, 0.2);
+    }
+
+    .pdf-card:hover {
+        border-color: rgba(239, 68, 68, 0.4);
+        box-shadow: 0 8px 20px rgba(239, 68, 68, 0.15);
+    }
+
+    .video-card {
+        border-color: rgba(6, 182, 212, 0.2);
+    }
+
+    .video-card:hover {
+        border-color: rgba(6, 182, 212, 0.4);
+        box-shadow: 0 8px 20px rgba(6, 182, 212, 0.15);
+    }
+
+    .video-card.disabled-card {
+        border-color: rgba(156, 163, 175, 0.3);
+        opacity: 0.7;
+    }
+
+    .video-card.disabled-card:hover {
+        border-color: rgba(156, 163, 175, 0.3);
+        box-shadow: none;
+        transform: none;
+    }
+
+    /* Стили для иконок в карточках */
+    .limit-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 12px;
+        font-size: 1.2rem;
+        color: white;
+        transition: all 0.3s ease;
+    }
+
+    .analyses-card .limit-icon {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    }
+
+    .pdf-card .limit-icon {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    }
+
+    .video-card .limit-icon {
+        background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+    }
+
+    .video-card.disabled-card .limit-icon {
+        background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
+    }
+
+    .limit-card:hover .limit-icon {
+        transform: scale(1.1);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .limit-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        transform: scaleX(0);
+        transition: transform 0.3s ease;
+    }
+
+    .limit-card:hover::before {
+        transform: scaleX(1);
+    }
+
+    .limit-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(99, 102, 241, 0.15);
+        background: rgba(255, 255, 255, 0.9);
+    }
+
+    .limit-header {
+        margin-bottom: 12px;
+    }
+
+    .limit-label {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .limit-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .limit-value-large {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        line-height: 1.2;
+    }
+
+    .limit-value-disabled {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #9ca3af;
+        opacity: 0.8;
+    }
+
+    .limit-suffix {
+        font-size: 0.9rem;
+        color: var(--success);
+        font-weight: 600;
+    }
+
+    .progress-bar-modern {
+        width: 100%;
+        height: 6px;
+        background: rgba(99, 102, 241, 0.1);
+        border-radius: 6px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .progress-bar-modern .progress-fill {
+        height: 100%;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border-radius: 6px;
+        transition: width 0.8s ease;
+        position: relative;
+    }
+
+    .progress-bar-modern .progress-fill::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+        animation: modernShimmer 2s infinite;
+    }
+
+    @keyframes modernShimmer {
+        0% { left: -100%; }
+        100% { left: 100%; }
+    }
+
+    /* Responsive для современного дизайна */
+    @media (max-width: 768px) {
+        .limits-grid {
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .limits-header-modern {
+            flex-direction: column;
+            gap: 16px;
+            align-items: stretch;
+        }
+
+        .plan-badge-modern {
+            justify-content: center;
+        }
+
+        .upgrade-btn-modern {
+            justify-content: center;
+        }
+
+        .limit-card {
+            padding: 20px 16px;
+        }
+
+        .limits-card-modern {
+            padding: 16px;
+        }
+    }
+
+    /* Analysis Progress Styles */
+    .analysis-progress {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .progress-text {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .mini-progress {
+        width: 60px;
+        height: 4px;
+        background: var(--bg-tertiary);
+        border-radius: 4px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .mini-progress-bar {
+        height: 100%;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border-radius: 4px;
+        transition: width 0.5s ease;
+        position: relative;
+    }
+
+    .mini-progress-bar::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+        animation: miniShimmer 2s infinite;
+    }
+
+    @keyframes miniShimmer {
+        0% { left: -100%; }
+        100% { left: 100%; }
+    }
+
     /* Responsive */
     @media (max-width: 768px) {
+        .limits-content {
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .limit-item {
+            text-align: left;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-primary);
+        }
+
+        .limit-item:last-child {
+            border-bottom: none;
+        }
+
+        .limit-label {
+            margin-bottom: 0;
+        }
+
+        .limits-header {
+            flex-direction: column;
+            gap: 12px;
+            align-items: stretch;
+        }
+
+        .upgrade-btn {
+            justify-content: center;
+        }
         .hero-title {
             font-size: 1.8rem;
         }
@@ -788,57 +1247,94 @@
                 <i class="fas fa-file-upload"></i>
                 <span>Загрузить файл</span>
             </button>
+            {% if user_subscription and user_subscription.limits.video_support %}
             <button class="upload-tab" onclick="switchTab('url')">
                 <i class="fas fa-link"></i>
                 <span>Видео по ссылке</span>
             </button>
+            {% else %}
+            <button class="upload-tab disabled" title="Доступно в планах STARTER, BASIC и PRO" style="opacity: 0.5; cursor: not-allowed;">
+                <i class="fas fa-lock"></i>
+                <span>Видео по ссылке 🔒</span>
+            </button>
+            {% endif %}
         </div>
         
         <!-- Subscription Limits Info -->
         {% if current_user.is_authenticated and usage_stats %}
-        <div class="subscription-limits mb-3">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body p-3">
-                    <div class="row align-items-center">
-                        <div class="col-md-8">
-                            <div class="d-flex align-items-center mb-2">
-                                <i class="fas fa-crown text-warning me-2"></i>
-                                <span class="fw-bold">План: {{ usage_stats.plan.upper() }}</span>
-                            </div>
-                            <div class="row">
-                                <div class="col-sm-4">
-                                    <small class="text-muted">Анализы:</small>
-                                    {% if usage_stats.analyses.unlimited %}
-                                        <div class="text-success fw-bold">{{ usage_stats.analyses.used }} (∞)</div>
-                                    {% else %}
-                                        <div class="progress mt-1" style="height: 4px;">
-                                            <div class="progress-bar" style="width: {{ (usage_stats.analyses.used / usage_stats.analyses.limit * 100) if usage_stats.analyses.limit > 0 else 0 }}%"></div>
-                                        </div>
-                                        <small>{{ usage_stats.analyses.used }}/{{ usage_stats.analyses.limit }}</small>
-                                    {% endif %}
-                                </div>
-                                <div class="col-sm-4">
-                                    <small class="text-muted">PDF страниц:</small>
-                                    {% if usage_stats.pdf_pages.unlimited %}
-                                        <div class="text-success fw-bold">∞</div>
-                                    {% else %}
-                                        <div class="fw-bold">до {{ usage_stats.pdf_pages.limit }}</div>
-                                    {% endif %}
-                                </div>
-                                <div class="col-sm-4">
-                                    <small class="text-muted">Видео:</small>
-                                    {% if usage_stats.video_minutes.unlimited %}
-                                        <div class="text-success fw-bold">∞</div>
-                                    {% else %}
-                                        <div class="fw-bold">до {{ usage_stats.video_minutes.limit }} мин</div>
-                                    {% endif %}
-                                </div>
-                            </div>
+        <div class="subscription-limits-modern mb-4">
+            <div class="limits-card-modern">
+                <div class="limits-header-modern">
+                    <div class="plan-info">
+                        <div class="plan-badge-modern">
+                            <i class="fas fa-crown"></i>
+                            <span>План: {{ usage_stats.plan.upper() }}</span>
                         </div>
-                        <div class="col-md-4 text-end">
-                            <a href="{{ url_for('pricing') }}" class="btn btn-sm btn-outline-primary">
-                                <i class="fas fa-arrow-up me-1"></i>Обновить
-                            </a>
+                    </div>
+                    <button class="upgrade-btn-modern" onclick="window.location.href='{{ url_for('pricing') }}'">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>Обновить</span>
+                    </button>
+                </div>
+                
+                <div class="limits-grid">
+                    <div class="limit-card analyses-card">
+                        <div class="limit-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="limit-header">
+                            <span class="limit-label">Анализы</span>
+                        </div>
+                        <div class="limit-content">
+                            {% if usage_stats.analyses.unlimited %}
+                                <div class="limit-value-large">{{ usage_stats.analyses.used }}</div>
+                                <div class="limit-suffix">∞</div>
+                            {% else %}
+                                <div class="limit-value-large">{{ usage_stats.analyses.used }}/{{ usage_stats.analyses.limit }}</div>
+                                <div class="progress-bar-modern">
+                                    <div class="progress-fill" style="width: {{ (usage_stats.analyses.used / usage_stats.analyses.limit * 100) if usage_stats.analyses.limit > 0 else 0 }}%"></div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="limit-card pdf-card">
+                        <div class="limit-icon">
+                            <i class="fas fa-file-pdf"></i>
+                        </div>
+                        <div class="limit-header">
+                            <span class="limit-label">PDF страниц</span>
+                        </div>
+                        <div class="limit-content">
+                            {% if usage_stats.pdf_pages.unlimited %}
+                                <div class="limit-value-large">∞</div>
+                            {% else %}
+                                <div class="limit-value-large">до {{ usage_stats.pdf_pages.limit }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="limit-card video-card {% if not (user_subscription and user_subscription.limits.video_support) %}disabled-card{% endif %}">
+                        <div class="limit-icon">
+                            {% if user_subscription and user_subscription.limits.video_support %}
+                                <i class="fas fa-video"></i>
+                            {% else %}
+                                <i class="fas fa-lock"></i>
+                            {% endif %}
+                        </div>
+                        <div class="limit-header">
+                            <span class="limit-label">Видео</span>
+                        </div>
+                        <div class="limit-content">
+                            {% if user_subscription and user_subscription.limits.video_support %}
+                                {% if usage_stats.video_minutes.unlimited %}
+                                    <div class="limit-value-large">∞</div>
+                                {% else %}
+                                    <div class="limit-value-large">до {{ usage_stats.video_minutes.limit }} мин</div>
+                                {% endif %}
+                            {% else %}
+                                <div class="limit-value-disabled">недоступно</div>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -849,7 +1345,7 @@
         <!-- File Upload -->
         <div id="file-upload" class="upload-content active">
             <form id="upload-form" action="{{ url_for('upload_file') }}" method="POST" enctype="multipart/form-data">
-                <input type="file" name="file" id="file-input" accept=".pdf,.pptx,.mp4,.mov,.mkv" style="display: none;" required>
+                <input type="file" name="file" id="file-input" accept="{% set accepted_formats = ['.pdf'] %}{% if user_subscription and user_subscription.limits.pptx_support %}{% set _ = accepted_formats.append('.pptx') %}{% endif %}{% if user_subscription and user_subscription.limits.video_support %}{% set _ = accepted_formats.extend(['.mp4', '.mov', '.mkv']) %}{% endif %}{{ accepted_formats | join(',') }}" style="display: none;" required>
                 
                 <div class="upload-area" id="upload-area">
                     <i class="fas fa-cloud-upload-alt upload-icon"></i>
@@ -861,14 +1357,28 @@
                             <i class="fas fa-file-pdf" style="color: #ef4444;"></i>
                             <span>PDF документы</span>
                         </div>
+                        {% if user_subscription and user_subscription.limits.pptx_support %}
                         <div class="file-type">
                             <i class="fas fa-file-powerpoint" style="color: #d97706;"></i>
                             <span>PowerPoint (PPTX)</span>
                         </div>
+                        {% else %}
+                        <div class="file-type disabled" title="Доступно в планах STARTER, BASIC и PRO">
+                            <i class="fas fa-file-powerpoint" style="color: #9ca3af;"></i>
+                            <span style="color: #9ca3af;">PowerPoint (PPTX) 🔒</span>
+                        </div>
+                        {% endif %}
+                        {% if user_subscription and user_subscription.limits.video_support %}
                         <div class="file-type">
                             <i class="fas fa-video" style="color: #06b6d4;"></i>
                             <span>MP4, MOV, MKV</span>
                         </div>
+                        {% else %}
+                        <div class="file-type disabled" title="Доступно в планах STARTER, BASIC и PRO">
+                            <i class="fas fa-video" style="color: #9ca3af;"></i>
+                            <span style="color: #9ca3af;">MP4, MOV, MKV 🔒</span>
+                        </div>
+                        {% endif %}
                     </div>
                     
                     <button type="button" class="btn btn-primary" onclick="document.getElementById('file-input').click()">
@@ -930,8 +1440,27 @@
                         </div>
                     </div>
                     
+                    <!-- Upload Progress -->
+                    <div id="upload-progress" class="upload-progress">
+                        <div class="processing-icon">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                        </div>
+                        <h3 class="processing-title">Загрузка файла</h3>
+                        <p class="processing-subtitle">Пожалуйста, подождите...</p>
+                        
+                        <div class="progress-bar">
+                            <div id="progress-fill" class="progress-fill"></div>
+                            <div id="progress-text" class="progress-text">0%</div>
+                        </div>
+                        
+                        <div class="upload-stats">
+                            <span id="upload-speed" class="upload-speed">Скорость: --</span>
+                            <span id="upload-eta" class="upload-eta">Осталось: --</span>
+                        </div>
+                    </div>
+                    
                     <div style="margin-top: 16px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-primary" id="submit-btn">
                             <i class="fas fa-rocket" style="margin-right: 8px;"></i>
                             Начать анализ
                         </button>
@@ -946,6 +1475,7 @@
         
         <!-- URL Upload -->
         <div id="url-upload" class="upload-content">
+            {% if user_subscription and user_subscription.limits.video_support %}
             <form id="url-form" action="{{ url_for('upload_video_url') }}" method="POST">
                 <div style="text-align: center;">
                     <i class="fas fa-link upload-icon" style="color: var(--secondary);"></i>
@@ -994,6 +1524,19 @@
                     </button>
                 </div>
             </form>
+            {% else %}
+            <div style="text-align: center; padding: 40px 20px;">
+                <i class="fas fa-lock upload-icon" style="color: #9ca3af;"></i>
+                <h3 class="upload-title" style="color: #9ca3af;">Загрузка видео недоступна</h3>
+                <p class="upload-subtitle" style="color: #9ca3af;">
+                    Загрузка видео доступна только в планах STARTER, BASIC и PRO
+                </p>
+                <a href="{{ url_for('pricing') }}" class="btn btn-primary" style="margin-top: 20px;">
+                    <i class="fas fa-arrow-up" style="margin-right: 8px;"></i>
+                    Обновить план
+                </a>
+            </div>
+            {% endif %}
         </div>
     </div>
 </section>
@@ -1111,7 +1654,12 @@
             <div class="progress-fill"></div>
         </div>
         
-        <p class="text-secondary" style="font-size: 0.8rem;">Примерное время обработки: 2-5 минут</p>
+        <p class="text-secondary" style="font-size: 0.8rem; margin-bottom: 20px;">Примерное время обработки: 2-5 минут</p>
+        
+        <button type="button" class="btn btn-outline" onclick="cancelAnalysis()" style="margin-top: 10px;">
+            <i class="fas fa-times" style="margin-right: 8px;"></i>
+            Отменить анализ
+        </button>
     </div>
 </div>
 {% endblock %}
@@ -1240,30 +1788,566 @@
     }
 
     function resetUpload() {
+        // Отменяем текущую загрузку если она идет
+        if (currentUploadXHR) {
+            currentUploadXHR.abort();
+            currentUploadXHR = null;
+        }
+        
+        // Отменяем текущий анализ если он идет
+        if (currentTaskId) {
+            cancelAnalysis();
+        }
+        
+        // Останавливаем отслеживание статуса
+        if (analysisStatusInterval) {
+            clearInterval(analysisStatusInterval);
+            analysisStatusInterval = null;
+        }
+        
+        // Сбрасываем состояние формы
+        fileInput.value = '';
+        uploadArea.style.display = 'block';
+        fileSelected.style.display = 'none';
+        pageSelection.style.display = 'none';
+        
+        // Полный сброс состояния
+        resetToInitialState();
+    }
+
+    function resetUpload() {
         fileInput.value = '';
         uploadArea.style.display = 'block';
         fileSelected.style.display = 'none';
         pageSelection.style.display = 'none';
     }
 
+    // Analysis tracking
+    let uploadStartTime = 0;
+    let uploadedBytes = 0;
+    let currentUploadXHR = null; // Для отмены загрузки
+    let currentTaskId = null; // Для отмены анализа
+    let analysisStatusInterval = null; // Для отслеживания статуса анализа
+
+    function formatBytes(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    function formatTime(seconds) {
+        if (seconds < 60) return Math.round(seconds) + ' сек';
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = Math.round(seconds % 60);
+        return minutes + ' мин ' + remainingSeconds + ' сек';
+    }
+
+    function uploadFileWithProgress(formData) {
+        console.log('📤 uploadFileWithProgress запущена');
+        
+        const xhr = new XMLHttpRequest();
+        currentUploadXHR = xhr;
+        console.log('🔗 currentUploadXHR установлен:', !!currentUploadXHR);
+        
+        const uploadProgress = document.getElementById('upload-progress');
+        const progressFill = document.getElementById('progress-fill');
+        const progressText = document.getElementById('progress-text');
+        const uploadSpeed = document.getElementById('upload-speed');
+        const uploadEta = document.getElementById('upload-eta');
+        const submitBtn = document.getElementById('submit-btn');
+        
+        // Show progress bar
+        uploadProgress.classList.add('active');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right: 8px;"></i>Загрузка...';
+        
+        // ✅ ДОБАВЛЯЕМ: Показываем модальное окно сразу при начале загрузки
+        const modal = document.getElementById('processing-modal');
+        modal.classList.add('active');
+        console.log('🔄 Модальное окно показано при начале загрузки');
+        
+        uploadStartTime = Date.now();
+        
+        xhr.upload.addEventListener('progress', (e) => {
+            if (e.lengthComputable) {
+                const percentComplete = Math.round((e.loaded / e.total) * 100);
+                const currentTime = Date.now();
+                const elapsedTime = (currentTime - uploadStartTime) / 1000;
+                
+                progressFill.style.width = percentComplete + '%';
+                progressText.textContent = percentComplete + '%';
+                
+                const speed = e.loaded / elapsedTime;
+                uploadSpeed.textContent = 'Скорость: ' + formatBytes(speed) + '/с';
+                
+                if (speed > 0) {
+                    const remainingBytes = e.total - e.loaded;
+                    const eta = remainingBytes / speed;
+                    uploadEta.textContent = 'Осталось: ' + formatTime(eta);
+                }
+                
+                uploadedBytes = e.loaded;
+            }
+        });
+        
+        xhr.addEventListener('load', () => {
+            if (xhr.status === 200) {
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    if (response.success && response.task_id) {
+                        // Загрузка завершена, начинаем отслеживание анализа
+                        currentTaskId = response.task_id;
+                        currentUploadXHR = null;
+                        
+                        progressFill.style.width = '100%';
+                        progressText.textContent = '100%';
+                        uploadSpeed.textContent = 'Загрузка завершена';
+                        uploadEta.textContent = 'Начинаем анализ...';
+                        
+                        // Переходим к отслеживанию анализа
+                        setTimeout(() => {
+                            uploadProgress.classList.remove('active');
+                            startAnalysisTracking(response.task_id);
+                        }, 1000);
+                    } else {
+                        handleUploadError('Ошибка сервера: ' + (response.error || 'Неизвестная ошибка'));
+                    }
+                } catch (e) {
+                    handleUploadError('Ошибка обработки ответа сервера');
+                }
+            } else {
+                handleUploadError('Ошибка загрузки файла. Попробуйте еще раз.');
+            }
+        });
+        
+        xhr.addEventListener('error', () => {
+            handleUploadError('Ошибка сети. Проверьте подключение к интернету.');
+        });
+        
+        xhr.addEventListener('timeout', () => {
+            handleUploadError('Превышено время ожидания. Попробуйте загрузить файл меньшего размера.');
+        });
+        
+        xhr.addEventListener('abort', () => {
+            const uploadProgress = document.getElementById('upload-progress');
+            const submitBtn = document.getElementById('submit-btn');
+            
+            uploadProgress.classList.remove('active');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-rocket" style="margin-right: 8px;"></i>Начать анализ';
+            
+            currentUploadXHR = null;
+            console.log('Загрузка файла была отменена пользователем');
+        });
+        
+        xhr.timeout = 600000;
+        xhr.open('POST', document.getElementById('upload-form').action);
+        xhr.send(formData);
+    }
+    
+    function startAnalysisTracking(taskId) {
+        console.log('🎯 startAnalysisTracking вызвана с taskId:', taskId);
+        
+        currentTaskId = taskId; // Убеждаемся что currentTaskId установлен
+        
+        // ✅ ИСПРАВЛЕНИЕ: Сохраняем в localStorage для надежности
+        if (typeof localStorage !== 'undefined') {
+            localStorage.setItem('currentTaskId', taskId);
+            console.log('💾 currentTaskId сохранен в localStorage:', taskId);
+        }
+        
+        console.log('📝 currentTaskId установлен в:', currentTaskId);
+        
+        const modal = document.getElementById('processing-modal');
+        const modalTitle = modal.querySelector('.processing-title');
+        const modalSubtitle = modal.querySelector('.processing-subtitle');
+        
+        modal.classList.add('active');
+        modalTitle.textContent = 'Анализ с помощью ИИ';
+        modalSubtitle.textContent = 'Обрабатываем ваш материал...';
+        
+        console.log('🔄 Запускаем отслеживание статуса каждые 2 секунды');
+        
+        // Проверяем статус каждые 2 секунды
+        analysisStatusInterval = setInterval(() => {
+            checkAnalysisStatus(taskId);
+        }, 2000);
+        
+        // Первая проверка сразу
+        checkAnalysisStatus(taskId);
+    }
+    
+    function checkAnalysisStatus(taskId) {
+        console.log('🔍 Проверяем статус задачи:', taskId);
+        
+        fetch(`/api/analysis/status/${taskId}`)
+            .then(response => {
+                console.log('📡 Ответ сервера на запрос статуса:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('📊 Данные статуса:', data);
+                
+                if (data.success) {
+                    const task = data.task;
+                    console.log('📋 Статус задачи:', task.status);
+                    
+                    // Обновляем прогресс-бар в модальном окне
+                    updateAnalysisProgress(task);
+                    
+                    if (task.status === 'completed') {
+                        console.log('✅ Анализ завершен успешно');
+                        clearInterval(analysisStatusInterval);
+                        analysisStatusInterval = null;
+                        currentTaskId = null;
+                        
+                        if (task.access_token) {
+                            console.log('🔗 Перенаправляем на результат:', task.access_token);
+                            window.location.href = `/result/${task.access_token}`;
+                        } else {
+                            console.error('❌ Результат завершен, но access_token не найден');
+                            alert('Анализ завершен, но результат не найден');
+                            resetToInitialState();
+                        }
+                    } else if (task.status === 'cancelled') {
+                        console.log('🚫 Анализ был отменен');
+                        clearInterval(analysisStatusInterval);
+                        analysisStatusInterval = null;
+                        currentTaskId = null;
+                        resetToInitialState();
+                    } else if (task.status === 'failed') {
+                        console.error('💥 Анализ завершился с ошибкой');
+                        clearInterval(analysisStatusInterval);
+                        analysisStatusInterval = null;
+                        currentTaskId = null;
+                        alert('Ошибка при анализе файла. Попробуйте еще раз.');
+                        resetToInitialState();
+                    } else if (task.status === 'processing') {
+                        console.log('⏳ Анализ продолжается...', `${task.progress || 0}%`);
+                    }
+                } else {
+                    console.error('❌ Ошибка получения статуса:', data.error);
+                }
+            })
+            .catch(error => {
+                console.error('🚨 Ошибка запроса статуса:', error);
+            });
+    }
+    
+    function updateAnalysisProgress(task) {
+        const modal = document.getElementById('processing-modal');
+        if (!modal.classList.contains('active')) return;
+        
+        const progressBar = modal.querySelector('.progress-fill');
+        const modalTitle = modal.querySelector('.processing-title');
+        const modalSubtitle = modal.querySelector('.processing-subtitle');
+        
+        // Обновляем прогресс-бар
+        const progress = task.progress || 0;
+        if (progressBar) {
+            progressBar.style.width = progress + '%';
+        }
+        
+        // Обновляем текст этапа
+        const currentStage = task.current_stage || 'Анализ с помощью ИИ';
+        const stageDetails = task.stage_details || 'Обрабатываем ваш материал...';
+        
+        if (modalTitle) {
+            modalTitle.textContent = currentStage;
+        }
+        
+        if (modalSubtitle) {
+            modalSubtitle.textContent = `${stageDetails} (${progress}%)`;
+        }
+        
+        console.log(`📊 Прогресс обновлен: ${progress}% - ${currentStage}`);
+    }
+    
+    function cancelAnalysis() {
+        console.log('🔴 cancelAnalysis вызвана');
+        console.log('📊 Состояние: currentTaskId =', currentTaskId, ', currentUploadXHR =', !!currentUploadXHR);
+        console.log('📊 Типы переменных: currentTaskId type =', typeof currentTaskId, ', currentUploadXHR type =', typeof currentUploadXHR);
+        
+        // Дополнительная диагностика
+        console.log('🔍 Дополнительная диагностика:');
+        console.log('   window.currentTaskId =', window.currentTaskId);
+        console.log('   analysisStatusInterval =', !!analysisStatusInterval);
+        
+        // Проверяем localStorage и sessionStorage
+        if (typeof localStorage !== 'undefined') {
+            console.log('   localStorage.currentTaskId =', localStorage.getItem('currentTaskId'));
+        }
+        if (typeof sessionStorage !== 'undefined') {
+            console.log('   sessionStorage.currentTaskId =', sessionStorage.getItem('currentTaskId'));
+        }
+        
+        // Дополнительная диагностика
+        const modal = document.getElementById('processing-modal');
+        const uploadProgress = document.getElementById('upload-progress');
+        console.log('🔍 Состояние элементов:');
+        console.log('   - Modal active:', modal ? modal.classList.contains('active') : 'modal not found');
+        console.log('   - Upload progress active:', uploadProgress ? uploadProgress.classList.contains('active') : 'progress not found');
+        
+        // Проверяем, идет ли загрузка файла
+        if (currentUploadXHR) {
+            console.log('📤 Отменяем загрузку файла...');
+            console.log('📤 currentUploadXHR перед отменой:', currentUploadXHR);
+            
+            try {
+                currentUploadXHR.abort();
+                console.log('✅ XMLHttpRequest.abort() выполнен успешно');
+            } catch (e) {
+                console.error('❌ Ошибка при вызове abort():', e);
+            }
+            
+            currentUploadXHR = null;
+            console.log('🔄 currentUploadXHR сброшен в null');
+            
+            // Сбрасываем состояние загрузки
+            const uploadProgress = document.getElementById('upload-progress');
+            const submitBtn = document.getElementById('submit-btn');
+            
+            if (uploadProgress) {
+                uploadProgress.classList.remove('active');
+                console.log('📊 Прогресс-бар скрыт');
+            }
+            
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-rocket" style="margin-right: 8px;"></i>Начать анализ';
+                console.log('🔘 Кнопка восстановлена');
+            }
+            
+            console.log('✅ Загрузка файла отменена');
+            resetToInitialState();
+            return;
+        }
+        
+        // Если currentTaskId не установлен, пытаемся восстановить из localStorage
+        if (!currentTaskId && typeof localStorage !== 'undefined') {
+            const savedTaskId = localStorage.getItem('currentTaskId');
+            if (savedTaskId) {
+                currentTaskId = parseInt(savedTaskId);
+                console.log('🔄 currentTaskId восстановлен из localStorage:', currentTaskId);
+            }
+        }
+        
+        // Проверяем, идет ли анализ
+        if (currentTaskId) {
+            console.log('📡 Отправляем запрос отмены для задачи:', currentTaskId);
+            
+            fetch(`/api/analysis/cancel/${currentTaskId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => {
+                console.log('📥 Получен ответ сервера:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('📋 Данные ответа:', data);
+                
+                if (data.success) {
+                    console.log('✅ Анализ успешно отменен');
+                    if (analysisStatusInterval) {
+                        clearInterval(analysisStatusInterval);
+                        analysisStatusInterval = null;
+                        console.log('⏹️ Остановлено отслеживание статуса');
+                    }
+                    currentTaskId = null;
+                    resetToInitialState();
+                } else {
+                    console.error('❌ Ошибка отмены анализа:', data.error);
+                    alert('Ошибка отмены анализа: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('🚨 Ошибка запроса отмены:', error);
+                alert('Ошибка сети при отмене анализа');
+            });
+        } else {
+            console.warn('⚠️ currentTaskId не установлен, пытаемся найти активную задачу...');
+            
+            // Пытаемся найти активную задачу через API
+            fetch('/api/analysis/active-tasks')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.tasks && data.tasks.length > 0) {
+                        const activeTask = data.tasks[0]; // Берем первую активную задачу
+                        console.log('🔍 Найдена активная задача:', activeTask.id);
+                        
+                        // Отменяем найденную задачу
+                        fetch(`/api/analysis/cancel/${activeTask.id}`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(cancelData => {
+                            if (cancelData.success) {
+                                console.log('✅ Активная задача отменена');
+                                alert('Анализ отменен');
+                                resetToInitialState();
+                            } else {
+                                console.error('❌ Ошибка отмены активной задачи:', cancelData.error);
+                                alert('Ошибка отмены: ' + cancelData.error);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('🚨 Ошибка запроса отмены активной задачи:', error);
+                            alert('Ошибка сети при отмене');
+                        });
+                    } else {
+                        console.warn('⚠️ Активные задачи не найдены');
+                        alert('Нет активной задачи для отмены');
+                    }
+                })
+                .catch(error => {
+                    console.error('🚨 Ошибка поиска активных задач:', error);
+                    alert('Нет активной задачи для отмены');
+                });
+        }
+    }
+    
+    function resetToInitialState() {
+        console.log('🔄 resetToInitialState вызвана');
+        
+        // ✅ ИСПРАВЛЕНИЕ: Сбрасываем все переменные состояния
+        if (currentUploadXHR) {
+            console.log('🔄 Сбрасываем currentUploadXHR');
+            currentUploadXHR = null;
+        }
+        
+        if (currentTaskId) {
+            console.log('🔄 Сбрасываем currentTaskId');
+            currentTaskId = null;
+        }
+        
+        if (analysisStatusInterval) {
+            console.log('🔄 Останавливаем analysisStatusInterval');
+            clearInterval(analysisStatusInterval);
+            analysisStatusInterval = null;
+        }
+        
+        // ✅ ИСПРАВЛЕНИЕ: Очищаем localStorage
+        if (typeof localStorage !== 'undefined') {
+            localStorage.removeItem('currentTaskId');
+            console.log('🗑️ currentTaskId удален из localStorage');
+        }
+        
+        // Скрываем модальное окно
+        const modal = document.getElementById('processing-modal');
+        if (modal) {
+            modal.classList.remove('active');
+            console.log('🔄 Модальное окно скрыто');
+        }
+        
+        // Сбрасываем состояние формы
+        const uploadProgress = document.getElementById('upload-progress');
+        const submitBtn = document.getElementById('submit-btn');
+        
+        if (uploadProgress) {
+            uploadProgress.classList.remove('active');
+            console.log('🔄 Прогресс загрузки скрыт');
+        }
+        
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-rocket" style="margin-right: 8px;"></i>Начать анализ';
+            console.log('🔄 Кнопка восстановлена');
+        }
+        
+        // Сбрасываем прогресс-бар
+        const progressFill = document.getElementById('progress-fill');
+        const progressText = document.getElementById('progress-text');
+        const uploadSpeed = document.getElementById('upload-speed');
+        const uploadEta = document.getElementById('upload-eta');
+        
+        if (progressFill) progressFill.style.width = '0%';
+        if (progressText) progressText.textContent = '0%';
+        if (uploadSpeed) uploadSpeed.textContent = 'Скорость: --';
+        if (uploadEta) uploadEta.textContent = 'Осталось: --';
+        
+        console.log('✅ Состояние полностью сброшено');
+        console.log('📊 Финальное состояние: currentTaskId =', currentTaskId, ', currentUploadXHR =', !!currentUploadXHR);
+    }
+    
+    function handleUploadError(message) {
+        const uploadProgress = document.getElementById('upload-progress');
+        const submitBtn = document.getElementById('submit-btn');
+        
+        uploadProgress.classList.remove('active');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-rocket" style="margin-right: 8px;"></i>Начать анализ';
+        
+        currentUploadXHR = null;
+        alert(message);
+    }
+
     // Form submissions
     document.getElementById('upload-form').addEventListener('submit', (e) => {
+        e.preventDefault(); // Always prevent default form submission
+        
         if (fileInput.files.length === 0) {
-            e.preventDefault();
             alert('Пожалуйста, выберите файл');
             return;
         }
-        showProcessingModal();
+        
+        // Create FormData object
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+        
+        // Add page range if applicable
+        const pageRange = document.getElementById('page-range').value;
+        if (pageRange) {
+            formData.append('page_range', pageRange);
+        }
+        
+        // Start upload with progress tracking
+        uploadFileWithProgress(formData);
     });
 
     document.getElementById('url-form').addEventListener('submit', (e) => {
+        e.preventDefault(); // Предотвращаем стандартную отправку формы
+        
         const videoUrl = document.getElementById('video-url').value.trim();
         if (!videoUrl) {
-            e.preventDefault();
             alert('Пожалуйста, введите ссылку на видео');
             return;
         }
+        
+        // Показываем модальное окно обработки
         showProcessingModal();
+        
+        // Отправляем AJAX запрос
+        const formData = new FormData();
+        formData.append('video_url', videoUrl);
+        
+        fetch('/upload_url', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.task_id) {
+                // Начинаем отслеживание анализа
+                currentTaskId = data.task_id;
+                startAnalysisTracking(data.task_id);
+            } else {
+                alert('Ошибка загрузки видео: ' + (data.error || 'Неизвестная ошибка'));
+                resetToInitialState();
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка загрузки видео:', error);
+            alert('Ошибка сети при загрузке видео');
+            resetToInitialState();
+        });
     });
 
     function showProcessingModal() {

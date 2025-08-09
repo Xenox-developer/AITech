@@ -336,10 +336,16 @@ def extract_text_from_pdf_with_pages(filepath: str, page_range: str = None) -> s
         logger.info("Falling back to full PDF extraction")
         return extract_text(filepath).strip()
 
-def transcribe_video_with_timestamps(filepath: str) -> Dict[str, Any]:
-    """Транскрипция видео/аудио с улучшенной обработкой"""
+def transcribe_video_with_timestamps(filepath: str, task_id: int = None, analysis_manager=None) -> Dict[str, Any]:
+    """Транскрипция видео/аудио с улучшенной обработкой и поддержкой отмены"""
     import shutil
     temp_copy_path = None
+    
+    def check_cancellation():
+        """Проверка отмены задачи во время транскрипции"""
+        if task_id and analysis_manager and analysis_manager.is_task_cancelled(task_id):
+            logger.info(f"🛑 Transcription cancelled for task {task_id}")
+            raise Exception("Transcription was cancelled by user")
     
     try:
         logger.info(f"Transcribing video with timestamps: {filepath}")
@@ -373,11 +379,17 @@ def transcribe_video_with_timestamps(filepath: str) -> Dict[str, Any]:
         copy_size = os.path.getsize(temp_copy_path)
         logger.info(f"Temporary copy created, size: {copy_size} bytes")
         
+        # Проверяем отмену перед загрузкой аудио
+        check_cancellation()
+        
         # Загрузка аудио из временной копии
         logger.info("Loading audio from temporary copy...")
         audio = whisperx.load_audio(temp_copy_path)
         video_duration = len(audio) / 16000
         logger.info(f"Audio loaded, duration: {video_duration:.2f} seconds ({video_duration/60:.1f} minutes)")
+        
+        # Проверяем отмену после загрузки аудио
+        check_cancellation()
         
         # Оптимизируем параметры в зависимости от длительности видео
         if video_duration > 7200:  # Более 2 часов
@@ -393,10 +405,16 @@ def transcribe_video_with_timestamps(filepath: str) -> Dict[str, Any]:
             batch_size = 48 if device == "cuda" else 12
             logger.info(f"🚀 Short video (<30min): using fast batch_size={batch_size}")
         
+        # Проверяем отмену перед началом транскрипции
+        check_cancellation()
+        
         # Транскрипция с временными отметками
         logger.info("Starting transcription...")
         result = whisper_model.transcribe(audio, batch_size=batch_size)
         logger.info(f"Transcription completed, detected language: {result.get('language', 'unknown')}")
+        
+        # Проверяем отмену после транскрипции
+        check_cancellation()
         
         # Проверяем, есть ли сегменты в результате
         if not result.get("segments"):
@@ -2024,7 +2042,7 @@ def process_file(filepath: str, filename: str, page_range: str = None) -> Dict[s
         elif file_ext in ['.mp4', '.mov', '.mkv']:
             # Используем ПОЛНУЮ обработку видео без оптимизации для лучшего качества
             logger.info("🎬 Starting FULL video processing for better quality...")
-            video_data = transcribe_video_with_timestamps(filepath)
+            video_data = transcribe_video_with_timestamps(filepath)  # Без отмены для старой функции
             raw_text = video_data['full_text']
             
             # Подсчитываем количество слов после транскрипции
@@ -2757,3 +2775,204 @@ if __name__ == "__main__":
             print(f"GPT topic: {topics_gpt['main_topics'][0]['title']}")
     else:
         print("\nSkipping GPT tests - OPENAI_API_KEY not set")
+
+def process_file_with_cancellation(filepath: str, filename: str, task_id: int, analysis_manager, page_range: str = None) -> Dict[str, Any]:
+    """Обработка файла с поддержкой отмены и отслеживанием прогресса"""
+    import time
+    start_time = time.time()
+    
+    def check_cancellation():
+        """Проверка отмены задачи"""
+        if analysis_manager.is_task_cancelled(task_id):
+            logger.info(f"Task {task_id} was cancelled, stopping processing")
+            raise Exception("Analysis was cancelled by user")
+    
+    def update_progress(progress: int, stage: str, details: str = ""):
+        """Обновление прогресса задачи"""
+        if analysis_manager:
+            analysis_manager.update_task_progress(task_id, progress, stage, details)
+    
+    try:
+        logger.info(f"🚀 Starting processing with cancellation support for task {task_id}: {filename}")
+        if page_range:
+            logger.info(f"Page range specified: {page_range}")
+        
+        # Этап 1: Подготовка (0-10%)
+        update_progress(0, "Подготовка", "Инициализация анализа...")
+        check_cancellation()
+        
+        # Извлекаем текст в зависимости от типа файла
+        file_ext = Path(filename).suffix.lower()
+        
+        # Этап 2: Извлечение текста (10-25%)
+        update_progress(10, "Извлечение текста", f"Обработка {file_ext.upper()} файла...")
+        
+        if file_ext == '.pdf':
+            text = extract_text_from_pdf_with_pages(filepath, page_range)
+            video_data = None
+            update_progress(20, "Извлечение текста", f"PDF обработан, извлечено {len(text)} символов")
+        elif file_ext == '.pptx':
+            if page_range:
+                text = extract_text_from_pptx_with_slides(filepath, page_range)
+                logger.info(f"📊 PowerPoint processed with slide range: {page_range}")
+                update_progress(20, "Извлечение текста", f"PowerPoint обработан (слайды {page_range})")
+            else:
+                text = extract_text_from_pptx(filepath)
+                logger.info("📊 PowerPoint processed (all slides)")
+                update_progress(20, "Извлечение текста", "PowerPoint обработан (все слайды)")
+            video_data = None
+        elif file_ext in ['.mp4', '.mov', '.mkv']:
+            logger.info("🎬 Starting video processing...")
+            update_progress(15, "Транскрипция видео", "Извлечение аудио из видео...")
+            
+            check_cancellation()
+            
+            video_data = transcribe_video_with_timestamps(filepath, task_id, analysis_manager)
+            raw_text = video_data['full_text']
+            
+            check_cancellation()
+            update_progress(20, "Оптимизация текста", "Обработка транскрипции...")
+            
+            raw_word_count = len(raw_text.split()) if raw_text else 0
+            logger.info(f"🎤 Transcription completed: {len(raw_text)} characters, {raw_word_count} words")
+            
+            logger.info(f"📝 Optimizing transcribed text: {len(raw_text)} characters")
+            optimization_start = time.time()
+            text = optimize_transcribed_text(raw_text)
+            optimization_time = time.time() - optimization_start
+            
+            optimized_word_count = len(text.split()) if text else 0
+            words_removed = raw_word_count - optimized_word_count
+            logger.info(f"✨ Optimized text: {len(text)} characters, {optimized_word_count} words in {optimization_time:.1f}s")
+            update_progress(25, "Оптимизация текста", f"Текст оптимизирован: {optimized_word_count} слов")
+        else:
+            raise ValueError(f"Unsupported file type: {file_ext}")
+        
+        check_cancellation()
+        
+        if not text or len(text.strip()) < 50:
+            logger.warning(f"Text is very short: {len(text.strip()) if text else 0} characters")
+            if not text or len(text.strip()) < 10:
+                raise ValueError("Extracted text is too short or empty")
+        
+        logger.info(f"📝 Extracted {len(text)} characters of text")
+        
+        # Этап 3: Анализ тем (25-40%)
+        update_progress(25, "Анализ тем", "Извлечение ключевых тем с помощью ИИ...")
+        check_cancellation()
+        
+        logger.info("🧠 Starting content generation...")
+        generation_start = time.time()
+        
+        try:
+            topics_data = extract_topics_with_gpt(text)
+            logger.info("✅ Topics extraction completed")
+            update_progress(35, "Анализ тем", f"Найдено {len(topics_data.get('main_topics', []))} основных тем")
+        except Exception as e:
+            if "cancelled" in str(e).lower():
+                raise
+            logger.warning(f"⚠️ GPT topics failed: {e}, using fallback")
+            topics_data = extract_topics_fallback(text)
+            update_progress(35, "Анализ тем", "Темы извлечены (резервный метод)")
+        
+        # Этап 4: Генерация резюме (40-55%)
+        check_cancellation()
+        update_progress(40, "Создание резюме", "Генерация краткого содержания...")
+        
+        try:
+            summary = generate_summary(text)
+            logger.info("✅ Summary completed")
+            update_progress(50, "Создание резюме", "Резюме создано")
+        except Exception as e:
+            if "cancelled" in str(e).lower():
+                raise
+            logger.warning(f"⚠️ Summary failed: {e}")
+            summary = "## 🎯 Главная идея\nМатериал содержит важную информацию для изучения."
+            update_progress(50, "Создание резюме", "Резюме создано (базовое)")
+        
+        # Этап 5: Создание флеш-карт (55-70%)
+        check_cancellation()
+        update_progress(55, "Создание флеш-карт", "Генерация карточек для запоминания...")
+        
+        try:
+            flashcards = generate_flashcards(text)
+            logger.info(f"✅ Generated {len(flashcards)} flashcards")
+            update_progress(65, "Создание флеш-карт", f"Создано {len(flashcards)} флеш-карт")
+        except Exception as e:
+            if "cancelled" in str(e).lower():
+                raise
+            logger.warning(f"⚠️ Flashcards failed: {e}")
+            flashcards = create_fallback_flashcards(topics_data.get('main_topics', []))
+            update_progress(65, "Создание флеш-карт", f"Создано {len(flashcards)} флеш-карт (базовые)")
+        
+        # Этап 6: Создание mind map (70-80%)
+        check_cancellation()
+        update_progress(70, "Создание mind map", "Построение ментальной карты...")
+        
+        mind_map = generate_mind_map(text, topics_data.get('main_topics', []))
+        logger.info("✅ Mind map generated")
+        update_progress(75, "Создание mind map", "Ментальная карта создана")
+        
+        # Этап 7: План обучения (80-90%)
+        check_cancellation()
+        update_progress(80, "План обучения", "Создание персонального плана изучения...")
+        
+        study_plan = generate_study_plan(topics_data.get('main_topics', []), flashcards, len(text))
+        logger.info("✅ Study plan generated")
+        update_progress(85, "План обучения", "План обучения создан")
+        
+        # Этап 8: Оценка качества (90-95%)
+        check_cancellation()
+        update_progress(90, "Оценка качества", "Анализ качества контента...")
+        
+        quality = assess_content_quality(text, topics_data.get('main_topics', []), summary, flashcards)
+        logger.info("✅ Quality assessment completed")
+        update_progress(95, "Финализация", "Подготовка результатов...")
+        
+        generation_time = time.time() - generation_start
+        total_time = time.time() - start_time
+        
+        logger.info(f"⚡ Processing completed: Generation {generation_time:.1f}s, Total {total_time:.1f}s")
+        
+        # Финальная проверка отмены
+        check_cancellation()
+        
+        # Этап 9: Завершение (95-100%)
+        update_progress(98, "Завершение", "Сохранение результатов...")
+        
+        # Собираем результат
+        result = {
+            "topics_data": topics_data,
+            "summary": summary,
+            "flashcards": flashcards,
+            "mind_map": mind_map,
+            "study_plan": study_plan,
+            "quality_assessment": quality,
+            "full_text": text,
+            "metadata": {
+                "filename": filename,
+                "file_type": file_ext,
+                "text_length": len(text),
+                "processing_date": datetime.now().isoformat(),
+                "processing_time": round(total_time, 1),
+                "task_id": task_id
+            }
+        }
+        
+        if video_data:
+            result["video_segments"] = video_data.get('segments', [])
+            result["key_moments"] = video_data.get('key_moments', [])
+        
+        update_progress(98, "Завершение", f"Анализ завершен за {total_time:.1f}с")
+        logger.info(f"🚀 Processing complete in {total_time:.1f}s. Quality score: {quality['overall_score']}")
+        
+        return result
+        
+    except Exception as e:
+        if "cancelled" in str(e).lower():
+            logger.info(f"Task {task_id} processing was cancelled by user")
+            update_progress(0, "Отменено", "Анализ отменен пользователем")
+        else:
+            logger.error(f"Error in processing task {task_id}: {str(e)}")
+            update_progress(0, "Ошибка", f"Ошибка: {str(e)}")
+        raise
