@@ -1868,12 +1868,28 @@ def index():
 
 
 @app.route('/upload', methods=['POST'])
-@login_required
-@require_subscription_limit('analysis')
-@track_usage('analysis')
 def upload_file():
     """Загрузка и обработка файла"""
     try:
+        # Проверяем авторизацию пользователя
+        if not current_user.is_authenticated:
+            return jsonify({
+                'success': False,
+                'error': 'auth_required',
+                'message': 'Для анализа файлов необходимо войти в аккаунт'
+            }), 401
+        
+        # Проверяем лимиты подписки
+        allowed, message = subscription_manager.check_analysis_limit(current_user.id)
+        if not allowed:
+            return jsonify({
+                'success': False,
+                'error': 'limit_exceeded',
+                'message': message
+            }), 403
+        
+        # Записываем использование
+        subscription_manager.record_usage(current_user.id, 'analysis', 1)
         # Проверка загружен ли файл
         if 'file' not in request.files:
             flash('Выберите файл', 'danger')
@@ -2004,12 +2020,28 @@ def upload_file():
         return redirect(url_for('index'))
 
 @app.route('/upload_url', methods=['POST'])
-@login_required
-@require_subscription_limit('analysis')
-@track_usage('analysis')
 def upload_video_url():
     """Загрузка и обработка видео по URL через систему задач"""
     try:
+        # Проверяем авторизацию пользователя
+        if not current_user.is_authenticated:
+            return jsonify({
+                'success': False,
+                'error': 'auth_required',
+                'message': 'Для анализа видео необходимо войти в аккаунт'
+            }), 401
+        
+        # Проверяем лимиты подписки
+        allowed, message = subscription_manager.check_analysis_limit(current_user.id)
+        if not allowed:
+            return jsonify({
+                'success': False,
+                'error': 'limit_exceeded',
+                'message': message
+            }), 403
+        
+        # Записываем использование
+        subscription_manager.record_usage(current_user.id, 'analysis', 1)
         # Проверка поддержки видео для плана пользователя
         allowed, message = subscription_manager.check_video_support(current_user.id)
         if not allowed:
@@ -2530,6 +2562,106 @@ def api_check_email():
     except Exception as e:
         logger.error(f"Error checking email: {str(e)}")
         return jsonify({'error': True, 'message': 'Ошибка сервера'})
+
+@app.route('/api/login', methods=['POST'])
+def api_login():
+    """API для входа через модальное окно"""
+    try:
+        if current_user.is_authenticated:
+            return jsonify({'success': True, 'message': 'Уже авторизован'})
+        
+        email = request.form.get('email', '').strip().lower()
+        password = request.form.get('password', '')
+        remember = bool(request.form.get('remember'))
+        
+        if not email or not password:
+            return jsonify({'success': False, 'error': 'Заполните все поля'})
+        
+        user = User.get_by_email(email)
+        if user and user.check_password(password):
+            if user.is_active:
+                login_user(user, remember=remember)
+                
+                # Обновляем время последнего входа
+                conn = sqlite3.connect('ai_study.db')
+                c = conn.cursor()
+                c.execute('UPDATE users SET last_login = ? WHERE id = ?', 
+                         (datetime.now(), user.id))
+                conn.commit()
+                conn.close()
+                
+                logger.info(f"User logged in via API: {email}")
+                return jsonify({'success': True, 'message': 'Успешный вход'})
+            else:
+                return jsonify({'success': False, 'error': 'Аккаунт деактивирован'})
+        else:
+            return jsonify({'success': False, 'error': 'Неверный email или пароль'})
+            
+    except Exception as e:
+        logger.error(f"API login error: {str(e)}")
+        return jsonify({'success': False, 'error': 'Ошибка сервера'})
+
+@app.route('/api/register', methods=['POST'])
+def api_register():
+    """API для регистрации через модальное окно"""
+    try:
+        if current_user.is_authenticated:
+            return jsonify({'success': True, 'message': 'Уже авторизован'})
+        
+        email = request.form.get('email', '').strip().lower()
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '')
+        password_confirm = request.form.get('password_confirm', '')
+        
+        # Расширенная валидация
+        if not email:
+            return jsonify({'success': False, 'error': 'Email обязателен для заполнения'})
+        if not username:
+            return jsonify({'success': False, 'error': 'Имя пользователя обязательно для заполнения'})
+        if not password:
+            return jsonify({'success': False, 'error': 'Пароль обязателен для заполнения'})
+        if not password_confirm:
+            return jsonify({'success': False, 'error': 'Подтверждение пароля обязательно'})
+        
+        # Валидация email
+        import re
+        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not re.match(email_pattern, email):
+            return jsonify({'success': False, 'error': 'Неверный формат email адреса'})
+        
+        # Валидация имени пользователя
+        if len(username) < 2:
+            return jsonify({'success': False, 'error': 'Имя пользователя должно содержать минимум 2 символа'})
+        if len(username) > 50:
+            return jsonify({'success': False, 'error': 'Имя пользователя не должно превышать 50 символов'})
+        
+        # Валидация пароля
+        if len(password) < 6:
+            return jsonify({'success': False, 'error': 'Пароль должен содержать минимум 6 символов'})
+        if len(password) > 128:
+            return jsonify({'success': False, 'error': 'Пароль не должен превышать 128 символов'})
+        
+        # Проверка совпадения паролей
+        if password != password_confirm:
+            return jsonify({'success': False, 'error': 'Пароли не совпадают'})
+        
+        # Проверка существования пользователя
+        existing_user = User.get_by_email(email)
+        if existing_user:
+            return jsonify({'success': False, 'error': 'Пользователь с таким email уже зарегистрирован'})
+        
+        # Создаем пользователя
+        user = User.create(email, username, password)
+        if user:
+            login_user(user)
+            logger.info(f"New user registered via API: {email}")
+            return jsonify({'success': True, 'message': 'Регистрация прошла успешно'})
+        else:
+            return jsonify({'success': False, 'error': 'Ошибка при создании аккаунта. Попробуйте еще раз'})
+            
+    except Exception as e:
+        logger.error(f"API registration error: {str(e)}")
+        return jsonify({'success': False, 'error': 'Произошла ошибка при регистрации. Попробуйте позже'})
 
 @app.route('/api/delete_result/<int:result_id>', methods=['DELETE'])
 @login_required
