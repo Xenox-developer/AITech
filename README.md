@@ -10,8 +10,8 @@
 ### 2. Подготовка
 ```bash
 # Клонирование репозитория
-git clone https://github.com/Xenox-developer/Junior-ML-Contest.git
-cd Junior-ML-Contest
+git clone https://github.com/Xenox-developer/AITech.git
+cd AITech
 
 # Создание .env файла
 cp .env.example .env

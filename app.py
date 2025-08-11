@@ -495,6 +495,8 @@ def is_valid_video_url(url):
         r'rutube\.ru/',
         r'ok\.ru/',
         r'vk\.com/',
+        r'vk\.ru/',
+        r'vkvideo\.ru/',
         r'dailymotion\.com/',
         r'twitch\.tv/',
         r'facebook\.com/',
